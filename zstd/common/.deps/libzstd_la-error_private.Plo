@@ -1,0 +1,12 @@
+common/libzstd_la-error_private.lo: common/error_private.c \
+ /usr/include/stdc-predef.h common/error_private.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stddef.h \
+ common/zstd_errors.h
+
+/usr/include/stdc-predef.h:
+
+common/error_private.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stddef.h:
+
+common/zstd_errors.h:

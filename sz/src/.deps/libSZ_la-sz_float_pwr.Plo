@@ -1,0 +1,284 @@
+src/libSZ_la-sz_float_pwr.lo: src/sz_float_pwr.c \
+ /usr/include/stdc-predef.h /usr/include/stdio.h /usr/include/features.h \
+ /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h \
+ /usr/include/gnu/stubs.h /usr/include/gnu/stubs-64.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stddef.h \
+ /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+ /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stdarg.h \
+ /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
+ /usr/include/bits/stdio.h /usr/include/stdlib.h \
+ /usr/include/bits/stdlib-bsearch.h /usr/include/bits/stdlib-float.h \
+ /usr/include/string.h /usr/include/bits/string.h \
+ /usr/include/bits/string2.h /usr/include/unistd.h \
+ /usr/include/bits/posix_opt.h /usr/include/bits/confname.h \
+ /usr/include/math.h /usr/include/bits/math-vector.h \
+ /usr/include/bits/libm-simd-decl-stubs.h /usr/include/bits/huge_val.h \
+ /usr/include/bits/huge_valf.h /usr/include/bits/huge_vall.h \
+ /usr/include/bits/inf.h /usr/include/bits/nan.h \
+ /usr/include/bits/mathdef.h /usr/include/bits/mathcalls.h \
+ /usr/include/bits/mathinline.h include/sz.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stdint.h \
+ /usr/include/stdint.h /usr/include/bits/wchar.h /usr/include/sys/time.h \
+ /usr/include/time.h /usr/include/bits/time.h /usr/include/sys/select.h \
+ /usr/include/bits/select.h /usr/include/bits/sigset.h \
+ include/CompressElement.h include/DynamicByteArray.h \
+ include/DynamicIntArray.h include/VarSet.h include/Huffman.h \
+ include/TightDataPointStorageD.h include/TightDataPointStorageF.h \
+ include/TightDataPointStorageI.h include/conf.h \
+ include/dataCompression.h include/sz.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stdbool.h \
+ include/ByteToolkit.h include/TypeManager.h include/sz_int8.h \
+ include/sz_int16.h include/sz_int32.h include/sz_int64.h \
+ include/sz_uint8.h include/sz_uint16.h include/sz_uint32.h \
+ include/sz_uint64.h include/sz_float.h include/DynamicFloatArray.h \
+ include/sz_double.h include/szd_int8.h include/szd_int16.h \
+ include/szd_int32.h include/szd_int64.h include/szd_uint8.h \
+ include/szd_uint16.h include/szd_uint32.h include/szd_uint64.h \
+ include/szd_float.h include/szd_double.h include/sz_float_pwr.h \
+ include/sz_double_pwr.h include/sz_opencl.h include/callZlib.h \
+ include/rw.h include/pastri.h /usr/include/assert.h \
+ include/pastriGeneral.h include/pastriD.h include/pastriF.h \
+ include/sz_float_ts.h include/szd_float_ts.h include/utility.h \
+ include/CacheTable.h include/MultiLevelCacheTable.h \
+ /usr/include/memory.h include/MultiLevelCacheTableWideInterval.h \
+ include/exafelSZ.h include/sz_stats.h include/defines.h \
+ include/CompressElement.h include/DynamicByteArray.h \
+ include/DynamicIntArray.h include/TightDataPointStorageF.h \
+ include/sz_float.h include/sz_float_pwr.h ../zlib/zlib.h ../zlib/zconf.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include-fixed/limits.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include-fixed/syslimits.h \
+ /usr/include/limits.h /usr/include/sys/types.h include/rw.h \
+ include/utility.h
+
+/usr/include/stdc-predef.h:
+
+/usr/include/stdio.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stddef.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/include/libio.h:
+
+/usr/include/_G_config.h:
+
+/usr/include/wchar.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stdarg.h:
+
+/usr/include/bits/stdio_lim.h:
+
+/usr/include/bits/sys_errlist.h:
+
+/usr/include/bits/stdio.h:
+
+/usr/include/stdlib.h:
+
+/usr/include/bits/stdlib-bsearch.h:
+
+/usr/include/bits/stdlib-float.h:
+
+/usr/include/string.h:
+
+/usr/include/bits/string.h:
+
+/usr/include/bits/string2.h:
+
+/usr/include/unistd.h:
+
+/usr/include/bits/posix_opt.h:
+
+/usr/include/bits/confname.h:
+
+/usr/include/math.h:
+
+/usr/include/bits/math-vector.h:
+
+/usr/include/bits/libm-simd-decl-stubs.h:
+
+/usr/include/bits/huge_val.h:
+
+/usr/include/bits/huge_valf.h:
+
+/usr/include/bits/huge_vall.h:
+
+/usr/include/bits/inf.h:
+
+/usr/include/bits/nan.h:
+
+/usr/include/bits/mathdef.h:
+
+/usr/include/bits/mathcalls.h:
+
+/usr/include/bits/mathinline.h:
+
+include/sz.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stdint.h:
+
+/usr/include/stdint.h:
+
+/usr/include/bits/wchar.h:
+
+/usr/include/sys/time.h:
+
+/usr/include/time.h:
+
+/usr/include/bits/time.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/bits/select.h:
+
+/usr/include/bits/sigset.h:
+
+include/CompressElement.h:
+
+include/DynamicByteArray.h:
+
+include/DynamicIntArray.h:
+
+include/VarSet.h:
+
+include/Huffman.h:
+
+include/TightDataPointStorageD.h:
+
+include/TightDataPointStorageF.h:
+
+include/TightDataPointStorageI.h:
+
+include/conf.h:
+
+include/dataCompression.h:
+
+include/sz.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stdbool.h:
+
+include/ByteToolkit.h:
+
+include/TypeManager.h:
+
+include/sz_int8.h:
+
+include/sz_int16.h:
+
+include/sz_int32.h:
+
+include/sz_int64.h:
+
+include/sz_uint8.h:
+
+include/sz_uint16.h:
+
+include/sz_uint32.h:
+
+include/sz_uint64.h:
+
+include/sz_float.h:
+
+include/DynamicFloatArray.h:
+
+include/sz_double.h:
+
+include/szd_int8.h:
+
+include/szd_int16.h:
+
+include/szd_int32.h:
+
+include/szd_int64.h:
+
+include/szd_uint8.h:
+
+include/szd_uint16.h:
+
+include/szd_uint32.h:
+
+include/szd_uint64.h:
+
+include/szd_float.h:
+
+include/szd_double.h:
+
+include/sz_float_pwr.h:
+
+include/sz_double_pwr.h:
+
+include/sz_opencl.h:
+
+include/callZlib.h:
+
+include/rw.h:
+
+include/pastri.h:
+
+/usr/include/assert.h:
+
+include/pastriGeneral.h:
+
+include/pastriD.h:
+
+include/pastriF.h:
+
+include/sz_float_ts.h:
+
+include/szd_float_ts.h:
+
+include/utility.h:
+
+include/CacheTable.h:
+
+include/MultiLevelCacheTable.h:
+
+/usr/include/memory.h:
+
+include/MultiLevelCacheTableWideInterval.h:
+
+include/exafelSZ.h:
+
+include/sz_stats.h:
+
+include/defines.h:
+
+include/CompressElement.h:
+
+include/DynamicByteArray.h:
+
+include/DynamicIntArray.h:
+
+include/TightDataPointStorageF.h:
+
+include/sz_float.h:
+
+include/sz_float_pwr.h:
+
+../zlib/zlib.h:
+
+../zlib/zconf.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include-fixed/limits.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include-fixed/syslimits.h:
+
+/usr/include/limits.h:
+
+/usr/include/sys/types.h:
+
+include/rw.h:
+
+include/utility.h:

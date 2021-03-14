@@ -1,0 +1,76 @@
+libzlib_la-inffast.lo: inffast.c /usr/include/stdc-predef.h zutil.h \
+ zlib.h zconf.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stddef.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include-fixed/limits.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include-fixed/syslimits.h \
+ /usr/include/limits.h /usr/include/features.h /usr/include/sys/cdefs.h \
+ /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
+ /usr/include/gnu/stubs-64.h /usr/include/sys/types.h \
+ /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+ /usr/include/time.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stdarg.h \
+ /usr/include/unistd.h /usr/include/bits/posix_opt.h \
+ /usr/include/bits/confname.h /usr/include/string.h \
+ /usr/include/bits/string.h /usr/include/bits/string2.h \
+ /usr/include/stdlib.h /usr/include/bits/stdlib-bsearch.h \
+ /usr/include/bits/stdlib-float.h inftrees.h inflate.h inffast.h
+
+/usr/include/stdc-predef.h:
+
+zutil.h:
+
+zlib.h:
+
+zconf.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stddef.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include-fixed/limits.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include-fixed/syslimits.h:
+
+/usr/include/limits.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/include/sys/types.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/include/time.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stdarg.h:
+
+/usr/include/unistd.h:
+
+/usr/include/bits/posix_opt.h:
+
+/usr/include/bits/confname.h:
+
+/usr/include/string.h:
+
+/usr/include/bits/string.h:
+
+/usr/include/bits/string2.h:
+
+/usr/include/stdlib.h:
+
+/usr/include/bits/stdlib-bsearch.h:
+
+/usr/include/bits/stdlib-float.h:
+
+inftrees.h:
+
+inflate.h:
+
+inffast.h:

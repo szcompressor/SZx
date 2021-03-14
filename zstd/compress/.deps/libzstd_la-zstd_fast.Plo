@@ -1,0 +1,67 @@
+compress/libzstd_la-zstd_fast.lo: compress/zstd_fast.c \
+ /usr/include/stdc-predef.h compress/zstd_compress_internal.h \
+ common/zstd_internal.h common/compiler.h common/mem.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stddef.h \
+ /usr/include/string.h /usr/include/features.h /usr/include/sys/cdefs.h \
+ /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
+ /usr/include/gnu/stubs-64.h /usr/include/bits/string.h \
+ /usr/include/bits/string2.h \
+ /usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stdint.h \
+ /usr/include/stdint.h /usr/include/bits/wchar.h common/debug.h \
+ common/error_private.h common/zstd_errors.h zstd.h common/fse.h \
+ common/bitstream.h common/huf.h common/xxhash.h compress/zstd_fast.h \
+ common/mem.h
+
+/usr/include/stdc-predef.h:
+
+compress/zstd_compress_internal.h:
+
+common/zstd_internal.h:
+
+common/compiler.h:
+
+common/mem.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stddef.h:
+
+/usr/include/string.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/include/bits/string.h:
+
+/usr/include/bits/string2.h:
+
+/usr/local/lib/gcc/x86_64-pc-linux-gnu/7.3.0/include/stdint.h:
+
+/usr/include/stdint.h:
+
+/usr/include/bits/wchar.h:
+
+common/debug.h:
+
+common/error_private.h:
+
+common/zstd_errors.h:
+
+zstd.h:
+
+common/fse.h:
+
+common/bitstream.h:
+
+common/huf.h:
+
+common/xxhash.h:
+
+compress/zstd_fast.h:
+
+common/mem.h:
