@@ -83,9 +83,12 @@ int main(int argc, char * argv[])
     //char *bytes = SZ_compress_rev(SZ_FLOAT, data, revValue, &outSize, r5, r4, r3, r2, r1);
     cost_start();
     //unsigned char *bytes = SZ_compress(SZ_FLOAT, data, &outSize, r5, r4, r3, r2, r1);
-    unsigned char* bytes =  SZ_fast_compress_args(SZ_FLOAT, data, &outSize, ABS, 0.02, 0.001, 0, r5, r4, r3, r2, r1);
+    //unsigned char* bytes =  SZ_fast_compress_args(SZ_FLOAT, data, &outSize, ABS, 0.00026, 0.001, 0, r5, r4, r3, r2, r1);
+    int blockSize = 64;
+    unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, &outSize, 0.000122, r1, blockSize);
     cost_end();
     printf("timecost=%f, %d\n",totalCost, bytes[0]); 
+    printf("compression size = %zu, CR = %f\n", outSize, 1.0f*r1*sizeof(float)/outSize);
     writeByteData(bytes, outSize, outputFilePath, &status);
     if(status != SZ_SCES)
     {

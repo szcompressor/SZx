@@ -87,7 +87,9 @@ int main(int argc, char * argv[])
  
     cost_start();
     //float *data = SZ_decompress(SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
-    float *data = SZ_fast_decompress(SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
+    //float *data = SZ_fast_decompress(SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
+    float *data = NULL;
+    SZ_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
     cost_end();
     //float data[r3][r2][r1];
     //nbEle = SZ_decompress_args(SZ_FLOAT, bytes, *byteLength, data, r5, r4, r3, r2, r1);
