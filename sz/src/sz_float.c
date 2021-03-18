@@ -31,306 +31,41 @@
 #include "MultiLevelCacheTableWideInterval.h"
 #include "sz_stats.h"
 
-unsigned char* SZ_fast_compress_args_with_prediction_float(int dataType, float* pred, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float medianValue, float radius)
+unsigned char* SZ_fast_compress_args_with_prediction_float(float* pred, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float medianValue, float radius)
 {
 	size_t dataLength = computeDataLength(r5, r4, r3, r2, r1);
 	float* delta = (float*)malloc(sizeof(float)*dataLength);
 	size_t i = 0;
 	for(i=0;i<dataLength;i++)
 		delta[i] = data[i] - pred[i];
-	unsigned char* output = SZ_fast_compress_args_unpredictable_float2(dataType, delta, outSize, absErrBound, r5, r4, r3, r2, r1, medianValue, radius);
+	unsigned char* output = SZ_fast_compress_args_unpredictable_float(delta, outSize, absErrBound, r5, r4, r3, r2, r1, medianValue, radius);
 	return output;
 }
 
-unsigned char* SZ_fast_compress_args_unpredictable_float2(int dataType, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float mValue, float radius)
+inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, size_t nbEle, float absErrBound, unsigned char* outputBytes, int *outSize, unsigned char* leadNumberArray_int, float medianValue, float radius)
 {
-	size_t totalSize = 0;
-	float medianValue = mValue;
+	size_t totalSize = 0, i = 0;
 	
-	size_t dataLength = computeDataLength(r5, r4, r3, r2, r1);
-
-	size_t maxPreservedBufferSize = sizeof(float)*dataLength; //assume that the compressed data size would not exceed the original size
-	
-	unsigned char* outputBytes = (unsigned char*)malloc(maxPreservedBufferSize);
-	memset(outputBytes, 0, maxPreservedBufferSize);
-
-//	sz_cost_start();
-	size_t i;
 	int reqLength;
+	
+	//compute median, value range, and radius
+	
 	short radExpo = getExponent_float(radius);
-	
-	computeReqLength_float(absErrBound, radExpo, &reqLength, &medianValue);	
-
-	int reqBytesLength = reqLength/8;
-	int resiBitsLength = reqLength%8;
-	int resiIndex = 0;
-	
-	int fromByteIndex = 4-reqBytesLength; //consider this is little-endian type	
-
-	size_t leadNumberArray_size = dataLength%4==0?dataLength/4:dataLength/4+1;
-	
-	lfloat lfBuf[3] = {0}; //lfBuf[0]: pre , lfBuf[1]: cur , lfBuf[2]: tmp
-	lfloat *lfBuf_pre, *lfBuf_cur, *lfBuf_tmp, *lfBuf_swap;
-	lfBuf_pre = &(lfBuf[0]);
-	lfBuf_cur = &(lfBuf[1]);
-	lfBuf_tmp = &(lfBuf[2]);
-	
-	unsigned char* leadNumberArray = outputBytes + 1+sizeof(float)+2*sizeof(size_t);
-
-	unsigned char* exactMidbyteArray = leadNumberArray + leadNumberArray_size;
-	//unsigned char* p = exactMidbyteArray;
-
-	unsigned char* residualMidBits = NULL;
-	
-	if(resiBitsLength!=0)
-		residualMidBits = (unsigned char*)malloc(dataLength);
-
-	int ignBytesLength = 32 - reqLength;
-	if(ignBytesLength<0)
-		ignBytesLength = 0;
-
-	unsigned char leadingNum = 0;
-	int intMidBytes_Length = 0;
-	
-	unsigned char* leadNumberArray_int = (unsigned char*)malloc(dataLength);
-
-	unsigned char* residualMidBits_result = NULL;
-
-	resiIndex = 3 - reqBytesLength; //i.e., 4 - reqBytesLength - 1;
-	int resiBitsLength_ = 8-resiBitsLength;
-
-	size_t residualMidBytes_size = 0;
-	if(sysEndianType==LITTLE_ENDIAN_SYSTEM)
-	{
-		for(i=0;i<dataLength;i++)
-		{
-			leadingNum = 0;
-			lfBuf_cur->value = data[i] - medianValue;
-			
-			lfBuf_cur->ivalue = lfBuf_cur->ivalue >> ignBytesLength << ignBytesLength;
-			
-			lfBuf_tmp->ivalue = lfBuf_cur->ivalue ^ lfBuf_pre->ivalue;
-	
-			if(lfBuf_tmp->ivalue >> 8 == 0)
-				leadingNum = 3;
-			else if(lfBuf_tmp->ivalue >> 16 == 0)
-				leadingNum = 2;
-			else if(lfBuf_tmp->ivalue >> 24 == 0)
-				leadingNum = 1;
-			
-			/*int j = 0;
-			for(j=3;j>=1;j--)
-			{
-				if(lfBuf_tmp->byte[j]==0)
-					leadingNum++;
-				else
-					break;
-			}*/
-		
-			
-			leadNumberArray_int[i] = leadingNum;
-			
-			//int toByteIndex = reqBytesLength;
-
-			if(leadingNum < reqBytesLength)
-			{
-				intMidBytes_Length = reqBytesLength - leadingNum;
-				//memcpy(p, &(lfBuf_cur->byte[fromByteIndex]), intMidBytes_Length);
-				memcpy(&exactMidbyteArray[residualMidBytes_size], &(lfBuf_cur->byte[fromByteIndex]), intMidBytes_Length);
-				//p += intMidBytes_Length;
-				residualMidBytes_size += intMidBytes_Length;
-			}
-			
-			if(leadingNum <= reqBytesLength && resiBitsLength!=0)
-				residualMidBits[i] = (lfBuf_cur->byte[resiIndex] & 0xFF) >> resiBitsLength_;
-			
-			//swap lfBuf_pre and lfBuf_cur, so that lfBuf_pre points to lfBuf_cur
-			lfBuf_swap = lfBuf_pre;
-			lfBuf_pre = lfBuf_cur;
-			lfBuf_cur = lfBuf_swap;
-			//lfBuf_pre->value = lfBuf_cur->value;
-		}	
-		
-		convertIntArray2ByteArray_fast_2b_args(leadNumberArray_int, dataLength, leadNumberArray);
-		size_t residualMidBits_size = 0;
-		if(resiBitsLength!=0)
-		{
-			//sz_cost_start();
-			residualMidBits_size = convertIntArray2ByteArray_fast_dynamic(residualMidBits, resiBitsLength, dataLength, &residualMidBits_result);
-			//sz_cost_end();
-			//printf("time = %f\n", sz_totalCost);
-			memcpy(&exactMidbyteArray[residualMidBytes_size], residualMidBits_result, residualMidBits_size);
-		}	
-		
-		int k = 0;
-		
-		unsigned char reqLengthB = (unsigned char)reqLength;
-		outputBytes[k] = reqLengthB;
-		k++;
-		floatToBytes(&(outputBytes[k]), medianValue);
-		k+=sizeof(float);
-		sizeToBytes(&(outputBytes[k]), leadNumberArray_size);
-		k+=sizeof(size_t);
-		sizeToBytes(&(outputBytes[k]), residualMidBytes_size);
-		k+=sizeof(size_t);		
-		
-		totalSize = 1+sizeof(float)+2*sizeof(size_t)+leadNumberArray_size+residualMidBytes_size+residualMidBits_size;		
-	}
-	else
-	{
-
-	}
-	
-	*outSize = totalSize;
-	
-	if(residualMidBits!=NULL)
-		free(residualMidBits);
-	if(residualMidBits_result!=NULL)
-		free(residualMidBits_result);
-		
-	free(leadNumberArray_int);
-//	sz_cost_end();
-//	printf("compression time = %f\n", sz_totalCost);	
-		
-	return outputBytes;
-}
-
-
-unsigned char* SZ_fast_compress_args_unpredictable_float3(int dataType, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float mValue, float radius)
-{
-	size_t totalSize = 0;
-	float medianValue = mValue;
-	
-	size_t dataLength = computeDataLength(r5, r4, r3, r2, r1);
-
-	size_t maxPreservedBufferSize = sizeof(float)*dataLength; //assume that the compressed data size would not exceed the original size
-	
-	unsigned char* outputBytes = (unsigned char*)malloc(maxPreservedBufferSize);
-	memset(outputBytes, 0, maxPreservedBufferSize);
-
-//	sz_cost_start();
-	size_t i;
-	int reqLength;
-	short radExpo = getExponent_float(radius);
-	
-	computeReqLength_float(absErrBound, radExpo, &reqLength, &medianValue);	
-	
-	int reqBytesLength = reqLength/8;
-
-	size_t leadNumberArray_size = dataLength%4==0?dataLength/4:dataLength/4+1;
-	
-	lfloat lfBuf[3] = {0}; //lfBuf[0]: pre , lfBuf[1]: cur , lfBuf[2]: tmp
-	lfloat *lfBuf_pre, *lfBuf_cur, *lfBuf_tmp, *lfBuf_swap;
-	lfBuf_pre = &(lfBuf[0]);
-	lfBuf_cur = &(lfBuf[1]);
-	lfBuf_tmp = &(lfBuf[2]);
-	
-	unsigned char* leadNumberArray = outputBytes + 1+sizeof(float)+2*sizeof(size_t);
-	unsigned char* midResiBitArray = leadNumberArray + leadNumberArray_size;
-
-	int ignBitsLength = 32 - reqLength;
-	if(ignBitsLength<0)
-		ignBitsLength = 0;
-
-	unsigned char leadingNum = 0;
-
-	size_t leadNumberArrayP = 0;
-	size_t midResiBitArrayP = 0;
-
-	size_t residualMidBytes_size = 0;
-	if(sysEndianType==LITTLE_ENDIAN_SYSTEM)
-	{
-		for(i=0;i<dataLength;i++)
-		{
-			leadingNum = 0;
-			lfBuf_cur->value = data[i] - medianValue;
-			
-			lfBuf_cur->ivalue = lfBuf_cur->ivalue >> ignBitsLength << ignBitsLength;
-			
-			lfBuf_tmp->ivalue = lfBuf_cur->ivalue ^ lfBuf_pre->ivalue;
-	
-			if(lfBuf_tmp->ivalue >> 8 == 0)
-				leadingNum = 3;
-			else if(lfBuf_tmp->ivalue >> 16 == 0)
-				leadingNum = 2;
-			else if(lfBuf_tmp->ivalue >> 24 == 0)
-				leadingNum = 1;
-		
-			sz_writeBits_Fast_int8(leadNumberArray, &leadNumberArrayP, 2, leadingNum);
-			
-			if(leadingNum < reqBytesLength)
-				sz_writeBits_Fast_int32(midResiBitArray, &midResiBitArrayP, reqLength-(leadingNum<<3), lfBuf_cur->ivalue >> ignBitsLength);
-						
-			//swap lfBuf_pre and lfBuf_cur, so that lfBuf_pre points to lfBuf_cur
-			lfBuf_swap = lfBuf_pre;
-			lfBuf_pre = lfBuf_cur;
-			lfBuf_cur = lfBuf_swap;
-		}	
-		
-		size_t residualMidBits_size = 0;
-		
-		int k = 0;
-		
-		unsigned char reqLengthB = (unsigned char)reqLength;
-		outputBytes[k] = reqLengthB;
-		k++;
-		floatToBytes(&(outputBytes[k]), medianValue);
-		k+=sizeof(float);
-		sizeToBytes(&(outputBytes[k]), leadNumberArray_size);
-		k+=sizeof(size_t);
-		sizeToBytes(&(outputBytes[k]), residualMidBytes_size);
-		k+=sizeof(size_t);		
-		
-		totalSize = 1+sizeof(float)+2*sizeof(size_t)+leadNumberArray_size+residualMidBytes_size+residualMidBits_size;		
-	}
-	else
-	{
-
-	}
-	
-	*outSize = totalSize;
-	
-//	sz_cost_end();
-//	printf("compression time = %f\n", sz_totalCost);	
-		
-	return outputBytes;
-}
-
-unsigned char* SZ_fast_compress_args_unpredictable_float4(int dataType, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float mValue, float radius)
-{
-	size_t totalSize = 0;
-	float medianValue = mValue;
-	
-	size_t dataLength = computeDataLength(r5, r4, r3, r2, r1);
-
-	size_t maxPreservedBufferSize = sizeof(float)*dataLength; //assume that the compressed data size would not exceed the original size
-	
-	unsigned char* outputBytes = (unsigned char*)malloc(maxPreservedBufferSize);
-	memset(outputBytes, 0, maxPreservedBufferSize);
-
-//	sz_cost_start();
-	size_t i;
-	int reqLength;
-	short radExpo = getExponent_float(radius);
-	
-	computeReqLength_float(absErrBound, radExpo, &reqLength, &medianValue);	
+	computeReqLength_float(absErrBound, radExpo, &reqLength, &medianValue);			
 
 	int reqBytesLength = reqLength/8;
 	int resiBitsLength = reqLength%8;
 	int rightShiftBits = 0;
 
-	size_t leadNumberArray_size = dataLength%4==0?dataLength/4:dataLength/4+1;
+	unsigned char leadNumberArray_size = nbEle%4==0?nbEle/4:nbEle/4+1;
 	
-	lfloat lfBuf[3] = {0}; //lfBuf[0]: pre , lfBuf[1]: cur , lfBuf[2]: tmp
-	lfloat *lfBuf_pre, *lfBuf_cur, *lfBuf_tmp;//, *lfBuf_swap;
-	lfBuf_pre = &(lfBuf[0]);
-	lfBuf_cur = &(lfBuf[1]);
-	lfBuf_tmp = &(lfBuf[2]);
+	register lfloat lfBuf_pre;
+	register lfloat lfBuf_cur;
+	lfBuf_pre.ivalue = 0;
 	
-	unsigned char* leadNumberArray = outputBytes + 1+sizeof(float)+sizeof(size_t);
+	unsigned char* leadNumberArray = outputBytes + 1+sizeof(float);
 
 	unsigned char* exactMidbyteArray = leadNumberArray + leadNumberArray_size;
-	//unsigned char* p = exactMidbyteArray;
 
 	if(resiBitsLength!=0)
 	{
@@ -338,67 +73,123 @@ unsigned char* SZ_fast_compress_args_unpredictable_float4(int dataType, float *d
 		reqBytesLength ++;		
 	}
 	
-	int fromByteIndex = 4-reqBytesLength; //consider this is little-endian type			
 	int ignBytesLength = 32 - reqLength;
 	if(ignBytesLength<0)
 		ignBytesLength = 0;
 
-	unsigned char leadingNum = 0;
-	int intMidBytes_Length = 0;
-	
-	unsigned char* leadNumberArray_int = (unsigned char*)malloc(dataLength);
+	register unsigned char leadingNum = 0;
 
 	size_t residualMidBytes_size = 0;
 	if(sysEndianType==LITTLE_ENDIAN_SYSTEM)
 	{
-		for(i=0;i<dataLength;i++)
+		if(reqBytesLength == 3)
 		{
-			leadingNum = 0;
-			lfBuf_cur->value = data[i] - medianValue;
-			
-			//lfBuf_cur->ivalue = lfBuf_cur->ivalue >> ignBytesLength << (ignBytesLength - rightShiftBits);			
-			lfBuf_cur->ivalue = lfBuf_cur->ivalue >> rightShiftBits;
-			
-			lfBuf_tmp->ivalue = lfBuf_cur->ivalue ^ lfBuf_pre->ivalue;
-	
-			if(lfBuf_tmp->ivalue >> 8 == 0)
-				leadingNum = 3;
-			else if(lfBuf_tmp->ivalue >> 16 == 0)
-				leadingNum = 2;
-			else if(lfBuf_tmp->ivalue >> 24 == 0)
-				leadingNum = 1;
-			
-			/*int j = 0;
-			for(j=3;j>=1;j--)
+			for(i=0;i<nbEle;i++)
 			{
-				if(lfBuf_tmp->byte[j]==0)
-					leadingNum++;
-				else
-					break;
-			}*/
+				leadingNum = 0;
+				lfBuf_cur.value = oriData[i] - medianValue;
+				
+				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
+				
+				lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
 		
-			
-			leadNumberArray_int[i] = leadingNum;
-			
-			//int toByteIndex = reqBytesLength;
+				if(lfBuf_pre.ivalue >> 8 == 0)
+					leadingNum = 3;
+				else if(lfBuf_pre.ivalue >> 16 == 0)
+					leadingNum = 2;
+				else if(lfBuf_pre.ivalue >> 24 == 0)
+					leadingNum = 1;
+				
+				leadNumberArray_int[i] = leadingNum;
 
-			if(leadingNum < reqBytesLength)
+				if(leadingNum == 0)
+				{
+					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[1];
+					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[2];
+					exactMidbyteArray[residualMidBytes_size+2] = lfBuf_cur.byte[3];
+					residualMidBytes_size += 3;
+				}
+				else if(leadingNum == 1)
+				{
+					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[1];
+					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[2];
+					residualMidBytes_size += 2;
+				}
+				else if(leadingNum == 2)
+				{
+					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[1];
+					residualMidBytes_size ++;
+				}
+				
+				lfBuf_pre = lfBuf_cur;
+			}			
+		}
+		else if(reqBytesLength == 2)
+		{
+			for(i=0;i<nbEle;i++)
 			{
-				intMidBytes_Length = reqBytesLength - leadingNum;
-				//memcpy(p, &(lfBuf_cur->byte[fromByteIndex]), intMidBytes_Length);
-				memcpy(&exactMidbyteArray[residualMidBytes_size], &(lfBuf_cur->byte[fromByteIndex]), intMidBytes_Length);
-				//p += intMidBytes_Length;
-				residualMidBytes_size += intMidBytes_Length;
-			}
-			
-			//swap lfBuf_pre and lfBuf_cur, so that lfBuf_pre points to lfBuf_cur
-			//lfBuf_swap = lfBuf_pre;
-			//lfBuf_pre = lfBuf_cur;
-			//lfBuf_cur = lfBuf_swap;
-			lfBuf_pre->ivalue = lfBuf_cur->ivalue;
-		}	
+				leadingNum = 0;
+				lfBuf_cur.value = oriData[i] - medianValue;
+				
+				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
+				
+				lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
 		
-		convertIntArray2ByteArray_fast_2b_args(leadNumberArray_int, dataLength, leadNumberArray);
+				if(lfBuf_pre.ivalue >> 8 == 0)
+					leadingNum = 3;
+				else if(lfBuf_pre.ivalue >> 16 == 0)
+					leadingNum = 2;
+				else if(lfBuf_pre.ivalue >> 24 == 0)
+					leadingNum = 1;
+				
+				leadNumberArray_int[i] = leadingNum;
+
+				if(leadingNum == 0)
+				{
+					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[2];
+					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[3];
+					residualMidBytes_size += 2;
+				}
+				else if(leadingNum == 1)
+				{
+					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[2];
+					residualMidBytes_size ++;
+				}
+				
+				lfBuf_pre = lfBuf_cur;
+			}			
+		}
+		else if(reqBytesLength == 1)
+		{
+			for(i=0;i<nbEle;i++)
+			{
+				leadingNum = 0;
+				lfBuf_cur.value = oriData[i] - medianValue;
+				
+				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
+				
+				lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
+		
+				if(lfBuf_pre.ivalue >> 8 == 0)
+					leadingNum = 3;
+				else if(lfBuf_pre.ivalue >> 16 == 0)
+					leadingNum = 2;
+				else if(lfBuf_pre.ivalue >> 24 == 0)
+					leadingNum = 1;
+				
+				leadNumberArray_int[i] = leadingNum;
+
+				if(leadingNum == 0)
+				{
+					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[3];
+					residualMidBytes_size ++;
+				}
+				
+				lfBuf_pre = lfBuf_cur;
+			}				
+		}
+	
+		convertIntArray2ByteArray_fast_2b_args(leadNumberArray_int, nbEle, leadNumberArray);
 		
 		int k = 0;
 		
@@ -407,9 +198,10 @@ unsigned char* SZ_fast_compress_args_unpredictable_float4(int dataType, float *d
 		k++;
 		floatToBytes(&(outputBytes[k]), medianValue);
 		k+=sizeof(float);
-		sizeToBytes(&(outputBytes[k]), leadNumberArray_size);	
+		//sizeToBytes(&(outputBytes[k]), leadNumberArray_size);	
+		//outputBytes[k] = leadNumberArray_size;  //leadNumberArray_size can be calculated based on block size (=blockSize/4)
 		
-		totalSize = 1+sizeof(float)+sizeof(size_t)+leadNumberArray_size+residualMidBytes_size;
+		totalSize = 1+sizeof(float)+leadNumberArray_size+residualMidBytes_size;
 	}
 	else
 	{
@@ -417,60 +209,140 @@ unsigned char* SZ_fast_compress_args_unpredictable_float4(int dataType, float *d
 	}
 	
 	*outSize = totalSize;
-		
-	free(leadNumberArray_int);
-//	sz_cost_end();
-//	printf("compression time = %f\n", sz_totalCost);	
-		
-	return outputBytes;
 }
 
-//just truncate 2 bytes
-unsigned char* SZ_fast_compress_args_unpredictable_float5(int dataType, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float mValue, float radius)
+size_t computeStateMedianRadius_float(float* oriData, size_t nbEle, float absErrBound, int blockSize, unsigned char* stateArray, float* medianArray, float* radiusArray)
 {
-	size_t totalSize = 0;
+	size_t nbConstantBlocks = 0;
+	size_t i = 0, j = 0;
+	size_t nbBlocks = nbEle/blockSize;		
+	size_t offset = 0;
 	
-	size_t dataLength = computeDataLength(r5, r4, r3, r2, r1);
-
-	size_t maxPreservedBufferSize = sizeof(float)*dataLength; //assume that the compressed data size would not exceed the original size
-	
-	unsigned char* outputBytes = (unsigned char*)malloc(maxPreservedBufferSize);
-	memset(outputBytes, 0, maxPreservedBufferSize);
-
-	size_t i;
-	
-	lfloat lfBuf[1] = {0}; //
-	lfloat *lfBuf_cur;//, *lfBuf_swap;
-	lfBuf_cur = &(lfBuf[0]);
-	
-	sz_cost_start();
-
-	size_t residualMidBytes_size = 0;
-	if(sysEndianType==LITTLE_ENDIAN_SYSTEM)
+	for(i = 0;i < nbBlocks;i++)
 	{
-		for(i=0;i<dataLength;i++)
+		float min = oriData[offset];
+		float max = oriData[offset]; 
+		for(j=1;j<blockSize;j++)
 		{
-			lfBuf_cur->value = data[i];
-			memcpy(&outputBytes[residualMidBytes_size], &(lfBuf_cur->byte[2]), 2);
-			residualMidBytes_size=residualMidBytes_size+2;
-		}	
+			float v = oriData[offset + j];
+			if(min>v)
+				min = v;
+			else if(max<v)
+				max = v;
+		}
+		float valueRange = max - min;
+		float radius = valueRange/2;
+		float medianValue = min + radius;	
 		
-		totalSize = residualMidBytes_size;
-	}
-	else
-	{
+		if(radius <= absErrBound)
+		{
+			stateArray[i] = 0;
+			nbConstantBlocks++;
+		}
+		else
+			stateArray[i] = 1;
 
+		stateArray[i] = radius <= absErrBound? 0:1;
+		medianArray[i] = medianValue;
+		radiusArray[i] = radius;
+		offset += blockSize;		
+	}			
+	
+	int remainCount = nbEle%blockSize;
+	if(remainCount!=0)
+	{
+		float min = oriData[offset];
+		float max = oriData[offset]; 
+		for(j=1;j<remainCount;j++)
+		{
+			float v = oriData[offset + j];
+			if(min>v)
+				min = v;
+			else if(max<v)
+				max = v;
+		}
+		float valueRange = max - min;
+		float radius = valueRange/2;
+		float medianValue = min + radius;	
+		if(radius <= absErrBound)
+		{
+			stateArray[i] = 0;
+			nbConstantBlocks++;
+		}
+		else
+			stateArray[i] = 1;
+		medianArray[i] = medianValue;
+		radiusArray[i] = radius;		
+	}
+	return nbConstantBlocks;
+}
+
+unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize)
+{
+	float* op = oriData;
+
+	*outSize = 0;
+	size_t maxPreservedBufferSize = sizeof(float)*nbEle; //assume that the compressed data size would not exceed the original size
+	unsigned char* outputBytes = (unsigned char*)malloc(maxPreservedBufferSize);
+	memset(outputBytes, 0, maxPreservedBufferSize);	
+	unsigned char* leadNumberArray_int = (unsigned char*)malloc(blockSize*sizeof(int));
+
+	size_t i = 0;
+	int oSize = 0;
+	
+	size_t nbBlocks = nbEle/blockSize;
+	size_t remainCount = nbEle%blockSize;
+	size_t stateNBBytes = remainCount == 0 ? (nbBlocks%8==0?nbBlocks/8:nbBlocks/8+1) : ((nbBlocks+1)%8==0? (nbBlocks+1)/8:(nbBlocks+1)/8+1);
+	size_t actualNBBlocks = remainCount==0 ? nbBlocks : nbBlocks+1;
+		
+	unsigned char* stateArray = (unsigned char*)malloc(nbBlocks);
+	float* medianArray = (float*)malloc(actualNBBlocks*sizeof(float));
+	float* radiusArray = (float*)malloc(actualNBBlocks*sizeof(float));
+	
+	size_t nbConstantBlocks = computeStateMedianRadius_float(oriData, nbEle, absErrBound, blockSize, stateArray, medianArray, radiusArray);
+	
+	unsigned char* r = outputBytes; // + sizeof(size_t) + stateNBBytes; 
+	r[0] = (unsigned char)blockSize;
+	r++;
+	sizeToBytes(r, nbConstantBlocks);
+	r += sizeof(size_t); //r is the starting address of 'stateNBBytes'
+	
+	unsigned char* p = r + stateNBBytes; //p is the starting address of constant median values.
+	unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data sblocks
+	*outSize += (1 + sizeof(size_t) + stateNBBytes + sizeof(float)*nbConstantBlocks);
+	
+	//printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f*(nbConstantBlocks*blockSize)/nbEle);
+	for(i=0;i<nbBlocks;i++, op += blockSize)
+	{
+		if(stateArray[i])
+		{
+			SZ_fast_compress_args_unpredictable_one_block_float(op, blockSize, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i]);
+			q += oSize;
+			*outSize += oSize;
+		}
+		else
+		{
+			floatToBytes(p, medianArray[i]);
+			p += sizeof(float);
+		}
 	}
 	
-	*outSize = totalSize;
-		
-	sz_cost_end();
-	printf("compression time = %f\n", sz_totalCost);	
-		
+	if(remainCount!=0)
+	{
+		if(stateArray[i])
+			SZ_fast_compress_args_unpredictable_one_block_float(op, remainCount, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i]);
+		*outSize += oSize;
+	}	
+	
+	convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, r);
+
+	free(leadNumberArray_int);
+
 	return outputBytes;
 }
 
-unsigned char* SZ_fast_compress_args_unpredictable_float6(int dataType, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float mValue, float radius)
+
+unsigned char* SZ_fast_compress_args_unpredictable_float(float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float mValue, float radius)
 {
 	size_t totalSize = 0;
 	float medianValue = mValue;
@@ -502,7 +374,6 @@ unsigned char* SZ_fast_compress_args_unpredictable_float6(int dataType, float *d
 	unsigned char* leadNumberArray = outputBytes + 1+sizeof(float)+sizeof(size_t);
 
 	unsigned char* exactMidbyteArray = leadNumberArray + leadNumberArray_size;
-	//unsigned char* p = exactMidbyteArray;
 
 	if(resiBitsLength!=0)
 	{
@@ -510,13 +381,11 @@ unsigned char* SZ_fast_compress_args_unpredictable_float6(int dataType, float *d
 		reqBytesLength ++;		
 	}
 	
-	//int fromByteIndex = 4-reqBytesLength; //consider this is little-endian type			
 	int ignBytesLength = 32 - reqLength;
 	if(ignBytesLength<0)
 		ignBytesLength = 0;
 
 	register unsigned char leadingNum = 0;
-	//int intMidBytes_Length = 0;
 	
 	unsigned char* leadNumberArray_int = (unsigned char*)malloc(dataLength);
 
@@ -657,95 +526,6 @@ unsigned char* SZ_fast_compress_args_unpredictable_float6(int dataType, float *d
 	return outputBytes;
 }
 
-unsigned char* SZ_fast_compress_args_unpredictable_float(int dataType, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
-{
-	float valueRangeSize = 0, medianValue = 0;
-	
-	size_t dataLength = computeDataLength(r5, r4, r3, r2, r1);
-	computeRangeSize_float(data, dataLength, &valueRangeSize, &medianValue);	
-
-	size_t i;
-	int reqLength;
-	short radExpo = getExponent_float(valueRangeSize/2);
-	
-	computeReqLength_float(absErrBound, radExpo, &reqLength, &medianValue);	
-
-	int reqBytesLength = reqLength/8;
-	int resiBitsLength = reqLength%8;
-
-	DynamicIntArray *exactLeadNumArray;
-	new_DIA(&exactLeadNumArray, DynArrayInitLen);
-	
-	DynamicByteArray *exactMidByteArray;
-	new_DBA(&exactMidByteArray, DynArrayInitLen);
-	
-	DynamicIntArray *resiBitArray;
-	new_DIA(&resiBitArray, DynArrayInitLen);
-	
-	unsigned char preDataBytes[4];
-	intToBytes_bigEndian(preDataBytes, 0);
-
-	FloatValueCompressElement *vce = (FloatValueCompressElement*)malloc(sizeof(FloatValueCompressElement));
-	LossyCompressionElement *lce = (LossyCompressionElement*)malloc(sizeof(LossyCompressionElement));
-	
-	//total: 1.6 s
-	for(i=0;i<dataLength;i++)
-	{
-		compressSingleFloatValue(vce, data[i], absErrBound, medianValue, reqLength, reqBytesLength, resiBitsLength); //0.6 s
-		updateLossyCompElement_Float(vce->curBytes, preDataBytes, reqBytesLength, resiBitsLength, lce); //0.8 s
-		memcpy(preDataBytes,vce->curBytes,sizeof(float));
-		addExactData(exactMidByteArray, exactLeadNumArray, resiBitArray, lce);		
-	}
-	
-	//construct output bytes	
-	size_t exactDataNum = exactLeadNumArray->size;
-	unsigned char* leadNumIntArray = exactLeadNumArray->array;
-	size_t residualMidBytes_size = exactMidByteArray->size;
-	
-	unsigned char* leadNumArray;
-	unsigned char* residualMidBytes = exactMidByteArray->array;
-	unsigned char* residualMidBits;
-	
-	size_t leadNumArray_size = convertIntArray2ByteArray_fast_2b(leadNumIntArray, exactDataNum, &leadNumArray);
-	size_t residualMidBits_size = convertIntArray2ByteArray_fast_dynamic(resiBitArray->array, resiBitsLength, exactDataNum, &residualMidBits);
-
-	size_t totalSize = 1+sizeof(float)+2*sizeof(size_t)+leadNumArray_size+residualMidBytes_size+residualMidBits_size;
-	unsigned char* bytes = (unsigned char*)malloc(totalSize);
-	memset(bytes, 0, totalSize);
-	size_t k = 0;
-	
-	unsigned char reqLengthB = (unsigned char)reqLength;
-	bytes[k] = reqLengthB;
-	k++;
-	floatToBytes(&(bytes[k]), medianValue);
-	k+=sizeof(float);
-	//floatToBytes(&(bytes[k]), absErrBound);
-	//k+=sizeof(float);
-	sizeToBytes(&(bytes[k]), leadNumArray_size);
-	k+=sizeof(size_t);
-	sizeToBytes(&(bytes[k]), residualMidBytes_size);
-	k+=sizeof(size_t);
-	//sizeToBytes(&(bytes[k]), residualMidBits_size);
-	//k+=sizeof(size_t);
-		
-	memcpy(&(bytes[k]), leadNumArray, leadNumArray_size);
-	k+=leadNumArray_size;
-	memcpy(&(bytes[k]), residualMidBytes, residualMidBytes_size);
-	k+=residualMidBytes_size;
-	memcpy(&(bytes[k]), residualMidBits, residualMidBits_size);
-
-	free_DIA(exactLeadNumArray);
-	free_DBA(exactMidByteArray);
-	free_DIA(resiBitArray);
-	free(vce);
-	free(lce);
-	
-	free(leadNumArray);
-	
-	*outSize = totalSize;
-	return bytes;
-}
-
 unsigned char* SZ_fast_compress_args_float(float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, size_t length)
 {
 	
@@ -772,7 +552,7 @@ unsigned char* SZ_skip_compress_float(float* data, size_t dataLength, size_t* ou
 	return out;
 }
 
-void computeReqLength_float(double realPrecision, short radExpo, int* reqLength, float* medianValue)
+inline void computeReqLength_float(double realPrecision, short radExpo, int* reqLength, float* medianValue)
 {
 	short reqExpo = getPrecisionReqLength_double(realPrecision);
 	*reqLength = 9+radExpo - reqExpo+1; //radExpo-reqExpo == reqMantiLength

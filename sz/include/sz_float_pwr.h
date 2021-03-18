@@ -17,6 +17,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 
+unsigned char* SZ_fast_compress_args_unpredictable_float_pwr(float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float pwrBoundRatio);
+
 void compute_segment_precisions_float_1D(float *oriData, size_t dataLength, float* pwrErrBound, unsigned char* pwrErrBoundBytes, double globalPrecision);
 unsigned int optimize_intervals_float_1D_pwr(float *oriData, size_t dataLength, float* pwrErrBound);
 

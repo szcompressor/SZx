@@ -178,14 +178,14 @@ float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_
 	else if(errBoundMode==REL)
 		realPrecision = valueRange*relBoundRatio;
 
-	short exp = getExponent_float(realPrecision);
-	float tunedPrecision = pow(2,exp);
+	//short exp = getExponent_float(realPrecision);
+	//float tunedPrecision = pow(2,exp);
 	
 	unsigned char* bytes = NULL;
 	if(dataType==SZ_FLOAT)
 	{
 		//bytes = SZ_fast_compress_args_float(data, outSize, tunedPrecision, r5, r4, r3, r2, r1, length);		
-		bytes = SZ_fast_compress_args_with_prediction_float(SZ_FLOAT, pred, data, outSize, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);
+		bytes = SZ_fast_compress_args_with_prediction_float(pred, data, outSize, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);
 	}
 	else if(dataType==SZ_DOUBLE)
 	{
@@ -224,24 +224,37 @@ float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_
 		realPrecision = absErrBound;
 	else if(errBoundMode==REL)
 		realPrecision = valueRange*relBoundRatio;
-
-	short exp = getExponent_float(realPrecision);
-	float tunedPrecision = pow(2,exp);
+	
+	//short exp = getExponent_float(realPrecision);
+	//float tunedPrecision = pow(2,exp);
 	
 	//sz_cost_end();
 	//printf("time of computeReqLength_float = %f seconds\n", sz_totalCost);
 	
-	unsigned char* bytes = NULL;
-	if(dataType==SZ_FLOAT)
+	unsigned char* bytes = NULL;	
+	if(errBoundMode != PW_REL)
 	{
-		//bytes = SZ_fast_compress_args_float(data, outSize, tunedPrecision, r5, r4, r3, r2, r1, length);		
-		bytes = SZ_fast_compress_args_unpredictable_float6(SZ_FLOAT, data, outSize, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);
-		//bytes = SZ_fast_compress_args_unpredictable_float3(SZ_FLOAT, data, outSize, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);
+		if(dataType==SZ_FLOAT)
+		{
+			bytes = SZ_fast_compress_args_unpredictable_float(data, outSize, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);
+		}
+		else if(dataType==SZ_DOUBLE)
+		{
+			//TODO
+		}		
 	}
-	else if(dataType==SZ_DOUBLE)
+	else //pw_rel
 	{
-		//TODO
+		if(dataType==SZ_FLOAT)
+		{
+			bytes = SZ_fast_compress_args_unpredictable_float_pwr(data, outSize, realPrecision, r5, r4, r3, r2, r1, pwrBoundRatio);
+		}
+		else if(dataType == SZ_DOUBLE)
+		{
+			
+		}
 	}
+
 	
 	return bytes;
 	
@@ -295,8 +308,7 @@ void* SZ_fast_decompress(int dataType, unsigned char *bytes, size_t byteLength, 
 	if(dataType == SZ_FLOAT)
 	{
 		float* newFloatData = NULL;
-		SZ_fast_decompress_args_unpredictable_float4(&newFloatData, r5, r4, r3, r2, r1, bytes, byteLength);
-		//SZ_fast_decompress_args_unpredictable_float2(&newFloatData, r5, r4, r3, r2, r1, bytes, byteLength);
+		SZ_fast_decompress_args_unpredictable_float(&newFloatData, r5, r4, r3, r2, r1, bytes, byteLength);
 		return newFloatData;	
 	}
 	else if(dataType == SZ_DOUBLE)

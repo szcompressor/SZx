@@ -15,13 +15,14 @@
 extern "C" {
 #endif
 
-unsigned char* SZ_fast_compress_args_with_prediction_float(int dataType, float* pred, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float medianValue, float radius);
-unsigned char* SZ_fast_compress_args_unpredictable_float2(int dataType, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float medianValue, float radius);
-unsigned char* SZ_fast_compress_args_unpredictable_float(int dataType, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
-unsigned char* SZ_fast_compress_args_unpredictable_float3(int dataType, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float mValue, float radius);
-unsigned char* SZ_fast_compress_args_unpredictable_float4(int dataType, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float mValue, float radius);
-unsigned char* SZ_fast_compress_args_unpredictable_float5(int dataType, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float mValue, float radius);
-unsigned char* SZ_fast_compress_args_unpredictable_float6(int dataType, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float mValue, float radius);
+unsigned char* SZ_fast_compress_args_with_prediction_float(float* pred, float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float medianValue, float radius);
+
+void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, size_t nbEle, float absErrBound, unsigned char* outputBytes, int *outSize, unsigned char* leadNumberArray_int, float medianValue, float radius);
+
+size_t computeStateMedianRadius_float(float* oriData, size_t nbEle, float absErrBound, int blockSize, unsigned char* stateArray, float* medianArray, float* radiusArray);
+unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *data, size_t *outSize, float absErrBound, size_t nbEle, int blockSize);
+
+unsigned char* SZ_fast_compress_args_unpredictable_float(float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float mValue, float radius);
 
 unsigned char* SZ_fast_compress_args_float(float *data, size_t *outSize, float absErrBound, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, size_t length);
 

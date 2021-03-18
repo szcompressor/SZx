@@ -14,6 +14,32 @@
 
 //int convertIntArray2ByteArray_fast_8b()
 
+size_t convertIntArray2ByteArray_fast_1b_args(unsigned char* intArray, size_t intArrayLength, unsigned char *result)
+{
+	size_t byteLength = 0;
+	size_t i, j; 
+	if(intArrayLength%8==0)
+		byteLength = intArrayLength/8;
+	else
+		byteLength = intArrayLength/8+1;
+
+	size_t n = 0;
+	int tmp, type;
+	for(i = 0;i<byteLength;i++)
+	{
+		tmp = 0;
+		for(j = 0;j<8&&n<intArrayLength;j++)
+		{
+			type = intArray[n];
+			//if(type == 1)
+			tmp = (tmp | (type << (7-j)));
+			n++;
+		}
+    	result[i] = (unsigned char)tmp;
+	}
+	return byteLength;
+}
+
 size_t convertIntArray2ByteArray_fast_1b(unsigned char* intArray, size_t intArrayLength, unsigned char **result)
 {
 	size_t byteLength = 0;
@@ -68,6 +94,50 @@ size_t convertIntArray2ByteArray_fast_1b_to_result(unsigned char* intArray, size
     	result[i] = (unsigned char)tmp;
 	}
 	return byteLength;
+}
+
+void convertByteArray2IntArray_fast_1b_args(size_t intArrayLength, unsigned char* byteArray, size_t byteArrayLength, unsigned char* intArray)
+{   
+	size_t n = 0, i;
+	int tmp;
+	for (i = 0; i < byteArrayLength-1; i++) 
+	{
+		tmp = byteArray[i];
+		intArray[n++] = (tmp & 0x80) >> 7;
+		intArray[n++] = (tmp & 0x40) >> 6;
+		intArray[n++] = (tmp & 0x20) >> 5;
+		intArray[n++] = (tmp & 0x10) >> 4;
+		intArray[n++] = (tmp & 0x08) >> 3;
+		intArray[n++] = (tmp & 0x04) >> 2;
+		intArray[n++] = (tmp & 0x02) >> 1;
+		intArray[n++] = (tmp & 0x01) >> 0;		
+	}
+	
+	tmp = byteArray[i];	
+	if(n == intArrayLength)
+		return;
+	intArray[n++] = (tmp & 0x80) >> 7;
+	if(n == intArrayLength)
+		return;	
+	intArray[n++] = (tmp & 0x40) >> 6;
+	if(n == intArrayLength)
+		return;	
+	intArray[n++] = (tmp & 0x20) >> 5;
+	if(n == intArrayLength)
+		return;
+	intArray[n++] = (tmp & 0x10) >> 4;
+	if(n == intArrayLength)
+		return;	
+	intArray[n++] = (tmp & 0x08) >> 3;
+	if(n == intArrayLength)
+		return;	
+	intArray[n++] = (tmp & 0x04) >> 2;
+	if(n == intArrayLength)
+		return;	
+	intArray[n++] = (tmp & 0x02) >> 1;
+	if(n == intArrayLength)
+		return;	
+	intArray[n++] = (tmp & 0x01) >> 0;	
 }
 
 void convertByteArray2IntArray_fast_1b(size_t intArrayLength, unsigned char* byteArray, size_t byteArrayLength, unsigned char **intArray)	
@@ -126,7 +196,7 @@ void convertByteArray2IntArray_fast_1b(size_t intArrayLength, unsigned char* byt
 }
 
 
-size_t convertIntArray2ByteArray_fast_2b_args(unsigned char* timeStepType, size_t timeStepTypeLength, unsigned char *result)
+inline size_t convertIntArray2ByteArray_fast_2b_args(unsigned char* timeStepType, size_t timeStepTypeLength, unsigned char *result)
 {
 	register unsigned char tmp = 0;
 	size_t i, j = 0, byteLength = 0;
