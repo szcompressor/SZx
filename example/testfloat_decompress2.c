@@ -122,7 +122,7 @@ int main(int argc, char * argv[])
 			maxpw_relerr = relerr;
         }
 
-	/*if(err > 0.001)
+	/*if(err > 1600000)
 	{
 		printf("i=%zu, ori=%f, dec=%f, diff=%f\n", i, ori_data[i], data[i], err);
 		exit(0);

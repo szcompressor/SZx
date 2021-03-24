@@ -380,8 +380,15 @@ unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData,
 	if(remainCount!=0)
 	{
 		if(stateArray[i])
+		{
 			SZ_fast_compress_args_unpredictable_one_block_float(op, remainCount, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i]);
-		*outSize += oSize;
+			*outSize += oSize;
+		}
+		else
+		{
+			floatToBytes(p, medianArray[i]);			
+		}
+
 	}	
 	
 	convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, r);
