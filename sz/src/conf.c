@@ -225,8 +225,12 @@ int SZ_ReadConf(const char* sz_cfgFile) {
 			confparams_cpr->szMode = SZ_BEST_SPEED;
 		else if(strcmp(modeBuf, "SZ_DEFAULT_COMPRESSION")==0)
 			confparams_cpr->szMode = SZ_DEFAULT_COMPRESSION;
+		else if(strcmp(modeBuf, "SZ_GOOD_SPEED")==0)
+			confparams_cpr->szMode = SZ_GOOD_SPEED;
 		else if(strcmp(modeBuf, "SZ_BEST_COMPRESSION")==0)
 			confparams_cpr->szMode = SZ_BEST_COMPRESSION;
+		else if(strcmp(modeBuf, "SZ_TEMPORAL_COMPRESSION")==0)
+			confparams_cpr->szMode = SZ_TEMPORAL_COMPRESSION;
 		else
 		{
 			printf("[SZ] Error: Wrong szMode setting (please check sz.config file)\n");

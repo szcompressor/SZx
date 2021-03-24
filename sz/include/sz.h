@@ -280,6 +280,9 @@ size_t *outSize, int errBoundMode, double absErr_Bound, double relBoundRatio);
 
 unsigned char *SZ_compress(int dataType, void *data, size_t *outSize, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 
+unsigned char* SZx_compress_args(int dataType, void *data, size_t *outSize, int errBoundMode, double absErrBound, 
+double relBoundRatio, double pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
+
 unsigned char* SZ_compress_args(int dataType, void *data, size_t *outSize, int errBoundMode, double absErrBound, 
 double relBoundRatio, double pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 

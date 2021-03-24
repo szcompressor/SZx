@@ -322,6 +322,37 @@ void* SZ_fast_decompress(int dataType, unsigned char *bytes, size_t byteLength, 
 	return NULL;
 }
 
+unsigned char* SZx_compress_args(int dataType, void *data, size_t *outSize, int errBoundMode, double absErrBound, 
+double relBoundRatio, double pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
+{
+	if(confparams_cpr == NULL)
+		SZ_Init(NULL);
+	confparams_cpr->dataType = dataType;
+	if(dataType==SZ_FLOAT)
+	{
+		unsigned char *newByteData = NULL;
+		
+		SZ_compress_args_float(-1, &newByteData, (float *)data, r5, r4, r3, r2, r1, 
+		outSize, errBoundMode, absErrBound, relBoundRatio, pwrBoundRatio);
+		
+		return newByteData;
+	}
+	else if(dataType==SZ_DOUBLE)
+	{
+		unsigned char *newByteData;
+		SZ_compress_args_double(-1, &newByteData, (double *)data, r5, r4, r3, r2, r1, 
+		outSize, errBoundMode, absErrBound, relBoundRatio, pwrBoundRatio);
+		
+		return newByteData;
+	}
+	else
+	{
+		printf("SZx compression supports only float and double type\n");
+		exit(0);
+	}	
+}
+
+
 /*-------------------------------------------------------------------------*/
 /**
     @brief      Perform Compression 

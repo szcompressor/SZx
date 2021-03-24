@@ -82,7 +82,42 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 	size_t residualMidBytes_size = 0;
 	if(sysEndianType==LITTLE_ENDIAN_SYSTEM)
 	{
-		if(reqBytesLength == 3)
+		if(reqBytesLength == 2)
+		{
+			for(i=0;i<nbEle;i++)
+			{
+				leadingNum = 0;
+				lfBuf_cur.value = oriData[i] - medianValue;
+				
+				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
+				
+				lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
+		
+				if(lfBuf_pre.ivalue >> 8 == 0)
+					leadingNum = 3;
+				else if(lfBuf_pre.ivalue >> 16 == 0)
+					leadingNum = 2;
+				else if(lfBuf_pre.ivalue >> 24 == 0)
+					leadingNum = 1;
+				
+				leadNumberArray_int[i] = leadingNum;
+
+				if(leadingNum == 0)
+				{
+					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[2];
+					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[3];
+					residualMidBytes_size += 2;
+				}
+				else if(leadingNum == 1)
+				{
+					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[2];
+					residualMidBytes_size ++;
+				}
+				
+				lfBuf_pre = lfBuf_cur;
+			}			
+		}
+		else if(reqBytesLength == 3)
 		{
 			for(i=0;i<nbEle;i++)
 			{
@@ -124,41 +159,6 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 				lfBuf_pre = lfBuf_cur;
 			}			
 		}
-		else if(reqBytesLength == 2)
-		{
-			for(i=0;i<nbEle;i++)
-			{
-				leadingNum = 0;
-				lfBuf_cur.value = oriData[i] - medianValue;
-				
-				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
-				
-				lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
-		
-				if(lfBuf_pre.ivalue >> 8 == 0)
-					leadingNum = 3;
-				else if(lfBuf_pre.ivalue >> 16 == 0)
-					leadingNum = 2;
-				else if(lfBuf_pre.ivalue >> 24 == 0)
-					leadingNum = 1;
-				
-				leadNumberArray_int[i] = leadingNum;
-
-				if(leadingNum == 0)
-				{
-					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[2];
-					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[3];
-					residualMidBytes_size += 2;
-				}
-				else if(leadingNum == 1)
-				{
-					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[2];
-					residualMidBytes_size ++;
-				}
-				
-				lfBuf_pre = lfBuf_cur;
-			}			
-		}
 		else if(reqBytesLength == 1)
 		{
 			for(i=0;i<nbEle;i++)
@@ -187,6 +187,56 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 				
 				lfBuf_pre = lfBuf_cur;
 			}				
+		}
+		else //reqBytesLength == 4
+		{
+			for(i=0;i<nbEle;i++)
+			{
+				leadingNum = 0;
+				lfBuf_cur.value = oriData[i] - medianValue;
+				
+				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
+				
+				lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
+		
+				if(lfBuf_pre.ivalue >> 8 == 0)
+					leadingNum = 3;
+				else if(lfBuf_pre.ivalue >> 16 == 0)
+					leadingNum = 2;
+				else if(lfBuf_pre.ivalue >> 24 == 0)
+					leadingNum = 1;
+				
+				leadNumberArray_int[i] = leadingNum;
+
+				if(leadingNum == 0)
+				{
+					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[0];
+					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[1];
+					exactMidbyteArray[residualMidBytes_size+2] = lfBuf_cur.byte[2];
+					exactMidbyteArray[residualMidBytes_size+3] = lfBuf_cur.byte[3];					
+					residualMidBytes_size += 4;
+				}
+				else if(leadingNum == 1)
+				{
+					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[0];
+					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[1];
+					exactMidbyteArray[residualMidBytes_size+2] = lfBuf_cur.byte[2];					
+					residualMidBytes_size += 3;
+				}
+				else if(leadingNum == 2)
+				{
+					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[0];
+					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[1];
+					residualMidBytes_size += 2;
+				}
+				else //leadingNum == 3
+				{
+					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[0];
+					residualMidBytes_size ++;			
+				}
+				
+				lfBuf_pre = lfBuf_cur;
+			}
 		}
 	
 		convertIntArray2ByteArray_fast_2b_args(leadNumberArray_int, nbEle, leadNumberArray);

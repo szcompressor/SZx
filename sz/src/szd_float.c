@@ -34,7 +34,7 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 	size_t nbEle = blockSize;
 	
 	register float medianValue;
-	size_t leadNumArray_size = blockSize >> 2; //i.e., blockSize/4
+	size_t leadNumArray_size = nbEle%4==0?nbEle/4:nbEle/4+1;
 	
 	size_t k = 0;
 	int reqLength = (int)cmpBytes[k];
@@ -180,6 +180,56 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 				lfBuf_pre = lfBuf_cur;
 			}				
 		}
+		else //reqBytesLength == 4
+		{
+			for(i=0;i < nbEle;i++)
+			{
+				lfBuf_cur.value = 0;
+				
+				j = (i >> 2); //i/4
+				k = (i & 0x03) << 1; //(i%4)*2
+				leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
+				
+				if(leadingNum == 1)
+				{	
+					lfBuf_cur.byte[0] = q[0];
+					lfBuf_cur.byte[1] = q[1];
+					lfBuf_cur.byte[2] = q[2];				
+					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];					
+					q += 3;
+				}
+				else if(leadingNum == 2)
+				{
+					lfBuf_cur.byte[0] = q[0];									
+					lfBuf_cur.byte[1] = q[1];									
+					lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
+					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];					
+					q += 2;
+				}
+				else if(leadingNum == 3)
+				{
+					lfBuf_cur.byte[0] = q[0];									
+					lfBuf_cur.byte[1] = lfBuf_pre.byte[1];
+					lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
+					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];	
+					q += 1;				
+				}
+				else //==0
+				{
+					lfBuf_cur.byte[0] = q[0];
+					lfBuf_cur.byte[1] = q[1];
+					lfBuf_cur.byte[2] = q[2];					
+					lfBuf_cur.byte[3] = q[3];					
+					q += 4;
+				}
+
+				lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
+				newData[i] = lfBuf_cur.value + medianValue;
+				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
+				
+				lfBuf_pre = lfBuf_cur;			
+			}
+		}
 	}
 	else
 	{
@@ -216,7 +266,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t
 	for(i = 0;i < nbConstantBlocks;i++, j+=4) //get the median values for constant-value blocks
 		constantMedianArray[i] = bytesToFloat(p+j);
 
-	unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data sblocks
+	unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data blocks
 	float* op = *newData;
 	
 	for(i=0;i<nbBlocks;i++, op += blockSize)
