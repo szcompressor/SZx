@@ -16,11 +16,23 @@ target_link_libraries (testdouble_compress SZ)
 add_executable (testdouble_decompress testdouble_decompress.c)
 target_link_libraries (testdouble_decompress SZ)
 
+add_executable (testfloat_compress_fastmode1 testfloat_compress_fastmode1.c)
+target_link_libraries (testfloat_compress_fastmode1 SZ)
+
+add_executable (testfloat_decompress_fastmode1 testfloat_decompress_fastmode1.c)
+target_link_libraries (testfloat_decompress_fastmode1 SZ)
+
+add_executable (testfloat_compress_fastmode2 testfloat_compress_fastmode2.c)
+target_link_libraries (testfloat_compress_fastmode2 SZ)
+
+add_executable (testfloat_decompress_fastmode2 testfloat_decompress_fastmode2.c)
+target_link_libraries (testfloat_decompress_fastmode2 SZ)
+
 add_executable (sz sz.c)
 target_link_libraries (sz SZ)
 
-install (TARGETS testint_compress testint_decompress testfloat_compress testfloat_decompress
-	testdouble_compress testdouble_decompress sz
+install (TARGETS testint_compress testint_decompress testfloat_compress testfloat_decompress testfloat_compress_fastmode1 testfloat_compress_fastmode2
+	testfloat_decompress_fastmode1 testfloat_decompress_fastmode2 testdouble_compress testdouble_decompress sz
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 
