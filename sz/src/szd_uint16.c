@@ -39,8 +39,8 @@ int SZ_decompress_args_uint16(uint16_t** newData, size_t r5, size_t r4, size_t r
 		if(confparams_dec->losslessCompressor!=-1)
 			confparams_dec->szMode = SZ_BEST_COMPRESSION;
 		else
-			confparams_dec->szMode = SZ_BEST_SPEED;		
-		if(confparams_dec->szMode==SZ_BEST_SPEED)
+			confparams_dec->szMode = SZ_GOOD_SPEED;		
+		if(confparams_dec->szMode==SZ_GOOD_SPEED)
 		{
 			tmpSize = cmpSize;
 			szTmpBytes = cmpBytes;	
@@ -107,7 +107,7 @@ int SZ_decompress_args_uint16(uint16_t** newData, size_t r5, size_t r4, size_t r
 		}		
 	}	
 	free_TightDataPointStorageI2(tdps);
-	if(confparams_dec->szMode!=SZ_BEST_SPEED && cmpSize!=4+sizeof(uint16_t)+exe_params->SZ_SIZE_TYPE+MetaDataByteLength)
+	if(confparams_dec->szMode!=SZ_GOOD_SPEED && cmpSize!=4+sizeof(uint16_t)+exe_params->SZ_SIZE_TYPE+MetaDataByteLength)
 		free(szTmpBytes);
 	return status;
 }

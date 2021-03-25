@@ -39,38 +39,17 @@ void cost_end()
 
 int main(int argc, char * argv[])
 {
-    size_t r5=0,r4=0,r3=0,r2=0,r1=0;
     size_t nbEle, totalNbEle;
     char zipFilePath[640], outputFilePath[645];
     if(argc < 2)
     {
-		printf("Test case: testfloat_decompress [srcFilePath] [dimension sizes...]\n");
-		printf("Example: testfloat_decompress testfloat_8_8_128.dat.sz 8 8 128\n");
+		printf("Usage: testfloat_decompress_fastmode1 [srcFilePath] [nbEle]\n");
+		printf("Example: testfloat_decompress_fastmode1 testfloat_8_8_128.dat.sz 8192\n");
 		exit(0);
 	}	
    
     sprintf(zipFilePath, "%s", argv[1]);
-	if(argc>=3)
-		r1 = atoi(argv[2]); //8  
-	if(argc>=4)
-		r2 = atoi(argv[3]); //8
-	if(argc>=5)
-		r3 = atoi(argv[4]); //128  
-	if(argc>=6)
-		r4 = atoi(argv[5]);
-	if(argc>=7)
-		r5 = atoi(argv[6]);
-    
-    if(r2==0)
-	nbEle = r1;
-    else if(r3==0)
-	nbEle = r1*r2;
-    else if(r4==0) 
-    	nbEle = r1*r2*r3;
-    else if(r5==0)
-	nbEle = r1*r2*r3*r4;
-    else
-	nbEle = r1*r2*r3*r4*r5;
+    nbEle = atoi(argv[2]);
 
     sprintf(outputFilePath, "%s.out", zipFilePath);
     
@@ -83,16 +62,11 @@ int main(int argc, char * argv[])
         exit(0);
     }
   
-    //printf("r1=%d,r2=%d,r3=%d,r4=%d,r5=%d\n", r1,r2,r3,r4,r5);
  
     cost_start();
-    float *data = SZ_decompress(SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
+    float *data = SZ_fast_decompress(SZ_NO_BLOCK_FAST_CMPR, SZ_FLOAT, bytes, byteLength, 0, 0, 0, 0, nbEle);
     cost_end();
-    //float data[r3][r2][r1];
-    //nbEle = SZ_decompress_args(SZ_FLOAT, bytes, *byteLength, data, r5, r4, r3, r2, r1);
     
-    //writeFloatData(data, nbEle, outputFilePath);
-  
     free(bytes); 
     printf("timecost=%f\n",totalCost); 
     writeFloatData_inBytes(data, nbEle, outputFilePath, &status);
@@ -103,9 +77,7 @@ int main(int argc, char * argv[])
     }
     printf("done\n");
     
-    //SZ_Finalize();
-    
-    char oriFilePath[640];
+    char oriFilePath[645];
     strncpy(oriFilePath, zipFilePath, (unsigned)strlen(zipFilePath)-3);
     oriFilePath[strlen(zipFilePath)-3] = '\0';
     float *ori_data = readFloatData(oriFilePath, &totalNbEle, &status);
@@ -149,6 +121,11 @@ int main(int argc, char * argv[])
 			maxpw_relerr = relerr;
         }
 
+	/*if(err > 0.0001)
+	{
+		printf("i=%zu, ori=%f, dec=%f, diff=%f\n", i, ori_data[i], data[i], err);
+		exit(0);
+	}*/
 	if (diffMax < err)
 		diffMax = err;
         prodSum += (ori_data[i]-mean1)*(data[i]-mean2);
@@ -166,7 +143,7 @@ int main(int argc, char * argv[])
     double psnr = 20*log10(range)-10*log10(mse);
     double nrmse = sqrt(mse)/range;
      
-    double compressionRatio = 1.0*nbEle*sizeof(float)/byteLength;
+    double compressionRatio = 1.0*nbEle*sizeof(float)/byteLength;	
 
     printf ("Min=%.20G, Max=%.20G, range=%.20G\n", Min, Max, range);
     printf ("Max absolute error = %.10f\n", diffMax);

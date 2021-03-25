@@ -221,8 +221,8 @@ int SZ_ReadConf(const char* sz_cfgFile) {
 			iniparser_freedict(ini);
 			return SZ_NSCS;					
 		}
-		else if(strcmp(modeBuf, "SZ_BEST_SPEED")==0)
-			confparams_cpr->szMode = SZ_BEST_SPEED;
+		else if(strcmp(modeBuf, "SZ_GOOD_SPEED")==0)
+			confparams_cpr->szMode = SZ_GOOD_SPEED;
 		else if(strcmp(modeBuf, "SZ_DEFAULT_COMPRESSION")==0)
 			confparams_cpr->szMode = SZ_DEFAULT_COMPRESSION;
 		else if(strcmp(modeBuf, "SZ_GOOD_SPEED")==0)

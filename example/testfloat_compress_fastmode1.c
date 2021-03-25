@@ -22,45 +22,34 @@ double totalCost = 0;
 void cost_start()
 {
 	totalCost = 0;
-        gettimeofday(&costStart, NULL);
+	gettimeofday(&costStart, NULL);
 }
 
 void cost_end()
 {
-        double elapsed;
-        struct timeval costEnd;
-        gettimeofday(&costEnd, NULL);
-        elapsed = ((costEnd.tv_sec*1000000+costEnd.tv_usec)-(costStart.tv_sec*1000000+costStart.tv_usec))/1000000.0;
-        totalCost += elapsed;
+	double elapsed;
+	struct timeval costEnd;
+	gettimeofday(&costEnd, NULL);
+	elapsed = ((costEnd.tv_sec*1000000+costEnd.tv_usec)-(costStart.tv_sec*1000000+costStart.tv_usec))/1000000.0;
+	totalCost += elapsed;
 }
 
 
 int main(int argc, char * argv[])
 {
-    size_t r5=0,r4=0,r3=0,r2=0,r1=0;
     char oriFilePath[640], outputFilePath[645];
     char *cfgFile;
     
     if(argc < 3)
     {
-		printf("Test case: testfloat_compress [config_file] [srcFilePath] [dimension sizes...]\n");
-		printf("Example: testfloat_compress sz.config testfloat_8_8_128.dat 8 8 128\n");
+		printf("Usage: testfloat_compress_fastmode1 [config_file] [srcFilePath] [err bound]\n");
+		printf("Example: testfloat_compress_fastmode1 sz.config testfloat_8_8_128.dat 1E-3\n");
 		exit(0);
     }
    
     cfgFile=argv[1];
     sprintf(oriFilePath, "%s", argv[2]);
-    if(argc>=4)
-		r1 = atoi(argv[3]); //8
-    if(argc>=5)
-		r2 = atoi(argv[4]); //8
-    if(argc>=6)
-		r3 = atoi(argv[5]); //128
-    if(argc>=7)
-        r4 = atoi(argv[6]);
-    if(argc>=8)
-        r5 = atoi(argv[7]);
-   
+    float errorBound = atof(argv[3]); 
     printf("cfgFile=%s\n", cfgFile); 
     int status = SZ_Init(cfgFile);
     if(status == SZ_NSCS)
@@ -74,17 +63,13 @@ int main(int argc, char * argv[])
 		printf("Error: data file %s cannot be read!\n", oriFilePath);
 		exit(0);
     }
-    //float *revValue = (float *)malloc(sizeof(float));
-    //*revValue = 1.0E36;
    
     size_t outSize; 
-    //char *bytes = (char *)malloc(nbEle*sizeof(float)); //
-    //SZ_compress_args2(SZ_FLOAT, data, bytes, &outSize, ABS, 0.0001, 0.0001, r5, r4, r3, r2, r1);    
-    //char *bytes = SZ_compress_rev(SZ_FLOAT, data, revValue, &outSize, r5, r4, r3, r2, r1);
     cost_start();
-    unsigned char *bytes = SZ_compress(SZ_FLOAT, data, &outSize, r5, r4, r3, r2, r1);
+    unsigned char* bytes =  SZ_fast_compress_args(SZ_NO_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errorBound, 0.001, 0, 0, 0, 0, 0, nbEle);
     cost_end();
-    printf("timecost=%f\n",totalCost); 
+    printf("timecost=%f, %d\n",totalCost, bytes[0]); 
+    printf("compression size = %zu, CR = %f\n", outSize, 1.0f*nbEle*sizeof(float)/outSize);
     writeByteData(bytes, outSize, outputFilePath, &status);
     if(status != SZ_SCES)
     {

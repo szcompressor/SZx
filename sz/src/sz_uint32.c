@@ -1247,7 +1247,7 @@ int errBoundMode, double absErr_Bound, double relBoundRatio)
 			status = SZ_DERR; //dimension error
 		}
 		//Call Gzip to do the further compression.
-		if(confparams_cpr->szMode==SZ_BEST_SPEED)
+		if(confparams_cpr->szMode==SZ_GOOD_SPEED)
 		{
 			*outSize = tmpOutSize;
 			*newByteData = tmpByteData;

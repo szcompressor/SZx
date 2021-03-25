@@ -498,10 +498,10 @@ size_t cmpSize, int compressionType, float* hist_data)
 			if(confparams_dec->losslessCompressor!=-1)
 				confparams_dec->szMode = SZ_BEST_COMPRESSION;
 			else
-				confparams_dec->szMode = SZ_BEST_SPEED;			
+				confparams_dec->szMode = SZ_GOOD_SPEED;			
 		}
 		
-		if(confparams_dec->szMode==SZ_BEST_SPEED)
+		if(confparams_dec->szMode==SZ_GOOD_SPEED)
 		{
 			tmpSize = cmpSize;
 			szTmpBytes = cmpBytes;	
@@ -608,7 +608,7 @@ size_t cmpSize, int compressionType, float* hist_data)
 	//cost_end_();
 	//printf("totalCost_=%f\n", totalCost_);
 	free_TightDataPointStorageF2(tdps);
-	if(confparams_dec->szMode!=SZ_BEST_SPEED && cmpSize!=8+MetaDataByteLength+exe_params->SZ_SIZE_TYPE)
+	if(confparams_dec->szMode!=SZ_GOOD_SPEED && cmpSize!=8+MetaDataByteLength+exe_params->SZ_SIZE_TYPE)
 		free(szTmpBytes);
 	return status;
 }
@@ -8054,10 +8054,10 @@ unsigned char* cmpBytes, size_t cmpSize)
 			if(confparams_dec->losslessCompressor!=-1)
 				confparams_dec->szMode = SZ_BEST_COMPRESSION;
 			else
-				confparams_dec->szMode = SZ_BEST_SPEED;			
+				confparams_dec->szMode = SZ_GOOD_SPEED;			
 		}
 		
-		if(confparams_dec->szMode==SZ_BEST_SPEED)
+		if(confparams_dec->szMode==SZ_GOOD_SPEED)
 		{
 			tmpSize = cmpSize;
 			szTmpBytes = cmpBytes;	
@@ -8134,7 +8134,7 @@ unsigned char* cmpBytes, size_t cmpSize)
 	}	
 	
 	free_TightDataPointStorageF2(tdps);
-	if(confparams_dec->szMode!=SZ_BEST_SPEED && cmpSize!=8+MetaDataByteLength+exe_params->SZ_SIZE_TYPE)
+	if(confparams_dec->szMode!=SZ_GOOD_SPEED && cmpSize!=8+MetaDataByteLength+exe_params->SZ_SIZE_TYPE)
 		free(szTmpBytes);
 	return status;
 }

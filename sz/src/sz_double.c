@@ -2685,7 +2685,7 @@ int errBoundMode, double absErr_Bound, double relBoundRatio, double pwRelBoundRa
 		}
 				
 		//Call Gzip to do the further compression.
-		if(confparams_cpr->szMode==SZ_BEST_SPEED)
+		if(confparams_cpr->szMode==SZ_GOOD_SPEED)
 		{
 			*outSize = tmpOutSize;
 			*newByteData = tmpByteData;			
@@ -2787,7 +2787,7 @@ size_t r1, size_t s1, size_t e1)
 {
 	TightDataPointStorageD* tdps = SZ_compress_double_1D_MDQ_subblock(oriData, realPrecision, valueRangeSize, medianValue_d, r1, s1, e1);
 
-	if (confparams_cpr->szMode==SZ_BEST_SPEED)
+	if (confparams_cpr->szMode==SZ_GOOD_SPEED)
 		convertTDPStoFlatBytes_double_args(tdps, compressedBytes, outSize);
 	else if(confparams_cpr->szMode==SZ_BEST_COMPRESSION || confparams_cpr->szMode==SZ_DEFAULT_COMPRESSION)
 	{
@@ -2814,7 +2814,7 @@ size_t r2, size_t r1, size_t s2, size_t s1, size_t e2, size_t e1)
 {
 	TightDataPointStorageD* tdps = SZ_compress_double_2D_MDQ_subblock(oriData, realPrecision, valueRangeSize, medianValue_d, r2, r1, s2, s1, e2, e1);
 
-	if (confparams_cpr->szMode==SZ_BEST_SPEED)
+	if (confparams_cpr->szMode==SZ_GOOD_SPEED)
 		convertTDPStoFlatBytes_double_args(tdps, compressedBytes, outSize);
 	else if(confparams_cpr->szMode==SZ_BEST_COMPRESSION || confparams_cpr->szMode==SZ_DEFAULT_COMPRESSION)
 	{
@@ -2841,7 +2841,7 @@ size_t r3, size_t r2, size_t r1, size_t s3, size_t s2, size_t s1, size_t e3, siz
 {
 	TightDataPointStorageD* tdps = SZ_compress_double_3D_MDQ_subblock(oriData, realPrecision, valueRangeSize, medianValue_d, r3, r2, r1, s3, s2, s1, e3, e2, e1);
 
-	if (confparams_cpr->szMode==SZ_BEST_SPEED)
+	if (confparams_cpr->szMode==SZ_GOOD_SPEED)
 		convertTDPStoFlatBytes_double_args(tdps, compressedBytes, outSize);
 	else if(confparams_cpr->szMode==SZ_BEST_COMPRESSION || confparams_cpr->szMode==SZ_DEFAULT_COMPRESSION)
 	{
@@ -2868,7 +2868,7 @@ size_t r4, size_t r3, size_t r2, size_t r1, size_t s4, size_t s3, size_t s2, siz
 {
 	TightDataPointStorageD* tdps = SZ_compress_double_4D_MDQ_subblock(oriData, realPrecision, valueRangeSize, medianValue_d, r4, r3, r2, r1, s4, s3, s2, s1, e4, e3, e2, e1);
 
-	if (confparams_cpr->szMode==SZ_BEST_SPEED)
+	if (confparams_cpr->szMode==SZ_GOOD_SPEED)
 		convertTDPStoFlatBytes_double_args(tdps, compressedBytes, outSize);
 	else if(confparams_cpr->szMode==SZ_BEST_COMPRESSION || confparams_cpr->szMode==SZ_DEFAULT_COMPRESSION)
 	{

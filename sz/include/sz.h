@@ -252,11 +252,11 @@ HuffmanTree* SZ_Reset();
 
 unsigned char* SZ_fast_compress_ts_args(int dataType, void* pred, void *data, size_t *outSize, int errBoundMode, float absErrBound, 
 float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
-unsigned char* SZ_fast_compress_args(int dataType, void *data, size_t *outSize, int errBoundMode, float absErrBound, 
+unsigned char* SZ_fast_compress_args(int fastMode, int dataType, void *data, size_t *outSize, int errBoundMode, float absErrBound, 
 float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 
-void* SZ_fast_decompress_ts(int dataType, float* preData, unsigned char *curBytes, size_t byteLength, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
-void* SZ_fast_decompress(int dataType, unsigned char *bytes, size_t byteLength, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
+void* SZ_fast_decompress_pred(int dataType, float* preData, unsigned char *curBytes, size_t byteLength, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
+void* SZ_fast_decompress(int fastMode, int dataType, unsigned char *bytes, size_t byteLength, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 
 int SZ_Init(const char *configFilePath);
 
@@ -279,9 +279,6 @@ size_t e5, size_t e4, size_t e3, size_t e2, size_t e1,
 size_t *outSize, int errBoundMode, double absErr_Bound, double relBoundRatio);
 
 unsigned char *SZ_compress(int dataType, void *data, size_t *outSize, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
-
-unsigned char* SZx_compress_args(int dataType, void *data, size_t *outSize, int errBoundMode, double absErrBound, 
-double relBoundRatio, double pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 
 unsigned char* SZ_compress_args(int dataType, void *data, size_t *outSize, int errBoundMode, double absErrBound, 
 double relBoundRatio, double pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
