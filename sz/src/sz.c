@@ -201,15 +201,35 @@ float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_
 {
 	unsigned char*  bytes = NULL;
 	size_t length = computeDataLength(r5, r4, r3, r2, r1);
-	
+	size_t i = 0;	
 	if(fastMode == SZ_WITH_BLOCK_FAST_CMPR)
 	{
-		bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, absErrBound, length, 28);
+		float realPrecision = 0;		
+		if(errBoundMode==REL)
+		{
+			float* oriData = (float*)data;
+			float min = oriData[0];
+			float max = oriData[0];
+			for(i=0;i<length;i++)
+			{
+				float v = oriData[i];
+				if(min>v)
+					min = v;
+				else if(max<v)
+					max = v;
+			}
+			float valueRange = max - min;
+			if(errBoundMode==ABS)
+				realPrecision = absErrBound;
+			else if(errBoundMode==REL)
+				realPrecision = valueRange*relBoundRatio;			
+		}
+
+		bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, 96);
 		return bytes;
 	}	
 	//sz_cost_start();
 	//compute value range
-	size_t i = 0;
 	float* oriData = (float*)data;
 	float min = oriData[0];
 	float max = oriData[0];
