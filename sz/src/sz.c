@@ -571,6 +571,18 @@ void *SZ_decompress(int dataType, unsigned char *bytes, size_t byteLength, size_
 	memset(exe_params, 0, sizeof(sz_exedata));
 	exe_params->SZ_SIZE_TYPE = 8;
 	
+	//determine the mode
+	int isZstdOrZlib = is_lossless_compressed_data(bytes, byteLength);
+	if(isZstdOrZlib==-1)
+	{
+		if(bytes[0]==SZ_VER_MAJOR && bytes[1]==SZ_VER_MINOR)
+			confparams_dec->szMode = SZ_GOOD_SPEED;
+		else
+			confparams_dec->szMode = SZ_BEST_SPEED;
+	}
+	else
+		confparams_dec->szMode = SZ_BEST_COMPRESSION;
+	
 	int x = 1;
 	char *y = (char*)&x;
 	if(*y==1)
