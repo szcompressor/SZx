@@ -88,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = testfloat_compress$(EXEEXT) \
+bin_PROGRAMS = sz$(EXEEXT) testfloat_compress$(EXEEXT) \
 	testfloat_decompress$(EXEEXT) \
 	testfloat_compress_fastmode1$(EXEEXT) \
 	testfloat_compress_fastmode2$(EXEEXT) \
@@ -106,14 +106,18 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_testfloat_compress_OBJECTS = testfloat_compress.$(OBJEXT)
-testfloat_compress_OBJECTS = $(am_testfloat_compress_OBJECTS)
-testfloat_compress_DEPENDENCIES = ../sz/.libs/libSZ.a \
-	../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a
+am_sz_OBJECTS = sz.$(OBJEXT)
+sz_OBJECTS = $(am_sz_OBJECTS)
+sz_DEPENDENCIES = ../sz/.libs/libSZ.a ../zlib/.libs/libzlib.a \
+	../zstd/.libs/libzstd.a
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_testfloat_compress_OBJECTS = testfloat_compress.$(OBJEXT)
+testfloat_compress_OBJECTS = $(am_testfloat_compress_OBJECTS)
+testfloat_compress_DEPENDENCIES = ../sz/.libs/libSZ.a \
+	../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a
 am_testfloat_compress_fastmode1_OBJECTS =  \
 	testfloat_compress_fastmode1.$(OBJEXT)
 testfloat_compress_fastmode1_OBJECTS =  \
@@ -157,7 +161,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/testfloat_compress.Po \
+am__depfiles_remade = ./$(DEPDIR)/sz.Po \
+	./$(DEPDIR)/testfloat_compress.Po \
 	./$(DEPDIR)/testfloat_compress_fastmode1.Po \
 	./$(DEPDIR)/testfloat_compress_fastmode2.Po \
 	./$(DEPDIR)/testfloat_decompress.Po \
@@ -182,13 +187,13 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(testfloat_compress_SOURCES) \
+SOURCES = $(sz_SOURCES) $(testfloat_compress_SOURCES) \
 	$(testfloat_compress_fastmode1_SOURCES) \
 	$(testfloat_compress_fastmode2_SOURCES) \
 	$(testfloat_decompress_SOURCES) \
 	$(testfloat_decompress_fastmode1_SOURCES) \
 	$(testfloat_decompress_fastmode2_SOURCES)
-DIST_SOURCES = $(testfloat_compress_SOURCES) \
+DIST_SOURCES = $(sz_SOURCES) $(testfloat_compress_SOURCES) \
 	$(testfloat_compress_fastmode1_SOURCES) \
 	$(testfloat_compress_fastmode2_SOURCES) \
 	$(testfloat_decompress_SOURCES) \
@@ -353,6 +358,8 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
 AM_CFLAGS = -I../sz/include -I../zlib -I../zstd $(GSL_CFLAGS) $(GSL_STATIC)
 AM_FCFLAGS = -I../sz/include -I../sz -I../zlib -I../zstd $(GSL_CFLAGS) $(GSL_STATIC)
+sz_SOURCES = sz.c
+sz_LDADD = ../sz/.libs/libSZ.a ../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a -lm
 testfloat_compress_SOURCES = testfloat_compress.c
 testfloat_compress_LDADD = ../sz/.libs/libSZ.a ../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a -lm
 testfloat_decompress_SOURCES = testfloat_decompress.c
@@ -448,6 +455,10 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+sz$(EXEEXT): $(sz_OBJECTS) $(sz_DEPENDENCIES) $(EXTRA_sz_DEPENDENCIES) 
+	@rm -f sz$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(sz_OBJECTS) $(sz_LDADD) $(LIBS)
+
 testfloat_compress$(EXEEXT): $(testfloat_compress_OBJECTS) $(testfloat_compress_DEPENDENCIES) $(EXTRA_testfloat_compress_DEPENDENCIES) 
 	@rm -f testfloat_compress$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(testfloat_compress_OBJECTS) $(testfloat_compress_LDADD) $(LIBS)
@@ -478,6 +489,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sz.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_compress.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_compress_fastmode1.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_compress_fastmode2.Po@am__quote@ # am--include-marker
@@ -648,7 +660,8 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/testfloat_compress.Po
+		-rm -f ./$(DEPDIR)/sz.Po
+	-rm -f ./$(DEPDIR)/testfloat_compress.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode1.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode2.Po
 	-rm -f ./$(DEPDIR)/testfloat_decompress.Po
@@ -699,7 +712,8 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/testfloat_compress.Po
+		-rm -f ./$(DEPDIR)/sz.Po
+	-rm -f ./$(DEPDIR)/testfloat_compress.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode1.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode2.Po
 	-rm -f ./$(DEPDIR)/testfloat_decompress.Po

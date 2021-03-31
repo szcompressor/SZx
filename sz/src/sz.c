@@ -204,7 +204,7 @@ float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_
 	size_t i = 0;	
 	if(fastMode == SZ_WITH_BLOCK_FAST_CMPR)
 	{
-		float realPrecision = 0;		
+		float realPrecision = absErrBound;		
 		if(errBoundMode==REL)
 		{
 			float* oriData = (float*)data;
@@ -219,10 +219,7 @@ float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_
 					max = v;
 			}
 			float valueRange = max - min;
-			if(errBoundMode==ABS)
-				realPrecision = absErrBound;
-			else if(errBoundMode==REL)
-				realPrecision = valueRange*relBoundRatio;			
+			realPrecision = valueRange*relBoundRatio;			
 		}
 
 		bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, 96);
