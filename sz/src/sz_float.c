@@ -352,14 +352,19 @@ unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData,
 	size_t nbConstantBlocks = computeStateMedianRadius_float(oriData, nbEle, absErrBound, blockSize, stateArray, medianArray, radiusArray);
 	
 	unsigned char* r = outputBytes; // + sizeof(size_t) + stateNBBytes; 
-	r[0] = (unsigned char)blockSize;
-	r++;
+	r[0] = SZ_VER_MAJOR;
+	r[1] = SZ_VER_MINOR;
+	r[2] = SZ_VER_SUPERFAST;
+	r[3] = 0; // indicates this is not a random access version
+	r[4] = (unsigned char)blockSize;
+	r=r+5; //1 byte
 	sizeToBytes(r, nbConstantBlocks);
 	r += sizeof(size_t); //r is the starting address of 'stateNBBytes'
-	
+
 	unsigned char* p = r + stateNBBytes; //p is the starting address of constant median values.
 	unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data sblocks
-	*outSize += (1 + sizeof(size_t) + stateNBBytes + sizeof(float)*nbConstantBlocks);
+	//3: versions, 1: metadata: state, 1: metadata: blockSize, sizeof(size_t): nbConstantBlocks, .... 
+	*outSize += (3 + 1 + 1 + sizeof(size_t) + stateNBBytes + sizeof(float)*nbConstantBlocks);
 	
 	//printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f*(nbConstantBlocks*blockSize)/nbEle);
 	for(i=0;i<nbBlocks;i++, op += blockSize)
@@ -392,6 +397,88 @@ unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData,
 	}	
 	
 	convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, r);
+
+	free(leadNumberArray_int);
+
+	return outputBytes;
+}
+
+unsigned char* SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize)
+{
+	float* op = oriData;
+
+	*outSize = 0;
+	size_t maxPreservedBufferSize = sizeof(float)*nbEle; //assume that the compressed data size would not exceed the original size
+	unsigned char* outputBytes = (unsigned char*)malloc(maxPreservedBufferSize);
+	memset(outputBytes, 0, maxPreservedBufferSize);	
+	unsigned char* leadNumberArray_int = (unsigned char*)malloc(blockSize*sizeof(int));
+
+	size_t i = 0;
+	int oSize = 0;
+	
+	size_t nbBlocks = nbEle/blockSize;
+	size_t remainCount = nbEle%blockSize;
+	size_t stateNBBytes = remainCount == 0 ? (nbBlocks%8==0?nbBlocks/8:nbBlocks/8+1) : ((nbBlocks+1)%8==0? (nbBlocks+1)/8:(nbBlocks+1)/8+1);
+	size_t actualNBBlocks = remainCount==0 ? nbBlocks : nbBlocks+1;
+		
+	unsigned char* stateArray = (unsigned char*)malloc(nbBlocks);
+	float* medianArray = (float*)malloc(actualNBBlocks*sizeof(float));
+	float* radiusArray = (float*)malloc(actualNBBlocks*sizeof(float));
+	
+	size_t nbConstantBlocks = computeStateMedianRadius_float(oriData, nbEle, absErrBound, blockSize, stateArray, medianArray, radiusArray);
+	
+	size_t nbNonConstantBlocks = actualNBBlocks - nbConstantBlocks;
+	
+	unsigned char* r = outputBytes; // + sizeof(size_t) + stateNBBytes; 
+	r[0] = SZ_VER_MAJOR;
+	r[1] = SZ_VER_MINOR;
+	r[2] = SZ_VER_SUPERFAST;
+	r[3] = 1; //support random access decompression	
+	r[4] = (unsigned char)blockSize;
+	r=r+5; //1 byte
+	sizeToBytes(r, nbConstantBlocks);
+	r += sizeof(size_t); //r is the starting address of 'block-size array'
+
+	unsigned char* R = r + nbNonConstantBlocks; //R is the starting address of the state array
+	unsigned char* p = R + stateNBBytes; //p is the starting address of constant median values.
+	unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data sblocks
+	//3: versions, 1: metadata: state, 1: metadata: blockSize, sizeof(size_t): nbConstantBlocks, .... 
+	*outSize = (3 + 1 + 1 + sizeof(size_t) + nbNonConstantBlocks + stateNBBytes + sizeof(float)*nbConstantBlocks);
+	
+	size_t nonConstantBlockID = 0;
+	//printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f*(nbConstantBlocks*blockSize)/nbEle);
+	for(i=0;i<nbBlocks;i++, op += blockSize)
+	{
+		if(stateArray[i])
+		{
+			SZ_fast_compress_args_unpredictable_one_block_float(op, blockSize, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i]);
+			q += oSize;
+			*outSize += oSize;
+			r[nonConstantBlockID++] = oSize;
+		}
+		else
+		{
+			floatToBytes(p, medianArray[i]);
+			p += sizeof(float);
+		}
+	}
+	
+	if(remainCount!=0)
+	{
+		if(stateArray[i])
+		{
+			SZ_fast_compress_args_unpredictable_one_block_float(op, remainCount, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i]);
+			*outSize += oSize;
+			r[nonConstantBlockID] = oSize;
+		}
+		else
+		{
+			floatToBytes(p, medianArray[i]);			
+		}
+
+	}	
+	
+	convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, R);
 
 	free(leadNumberArray_int);
 

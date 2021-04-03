@@ -222,7 +222,10 @@ float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_
 			realPrecision = valueRange*relBoundRatio;			
 		}
 
-		bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, 96);
+		if(confparams_cpr->randomAccess)
+			bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, outSize, realPrecision, length, 96);
+		else
+			bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, 96);
 		return bytes;
 	}	
 	//sz_cost_start();
@@ -335,7 +338,10 @@ void* SZ_fast_decompress(int fastMode, int dataType, unsigned char *bytes, size_
 		else //SZ_WITH_BLOCK_FAST_CMPR
 		{
 			size_t nbEle = computeDataLength(r5, r4, r3, r2, r1);
-			SZ_fast_decompress_args_unpredictable_blocked_float(&newFloatData, nbEle, bytes); 
+			if(fastMode == SZ_RANDOMACCESS_FAST_CMPR)
+				SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(&newFloatData, nbEle, bytes);
+			else
+				SZ_fast_decompress_args_unpredictable_blocked_float(&newFloatData, nbEle, bytes); 
 		}
 		return newFloatData;	
 	}
@@ -569,13 +575,18 @@ void *SZ_decompress(int dataType, unsigned char *bytes, size_t byteLength, size_
 	exe_params->SZ_SIZE_TYPE = 8;
 	
 	//determine the mode
+	int randomAccess = 0;
 	int isZstdOrZlib = is_lossless_compressed_data(bytes, byteLength);
 	if(isZstdOrZlib==-1)
 	{
-		if(bytes[0]==SZ_VER_MAJOR && bytes[1]==SZ_VER_MINOR)
-			confparams_dec->szMode = SZ_GOOD_SPEED;
-		else
+		if(bytes[2]==SZ_VER_SUPERFAST)
+		{
 			confparams_dec->szMode = SZ_BEST_SPEED;
+			if(bytes[3]==1)
+				randomAccess = 1;
+		}
+		else
+			confparams_dec->szMode = SZ_GOOD_SPEED;
 	}
 	else
 		confparams_dec->szMode = SZ_BEST_COMPRESSION;
@@ -593,10 +604,18 @@ void *SZ_decompress(int dataType, unsigned char *bytes, size_t byteLength, size_
 		
 		if(confparams_dec->szMode == SZ_BEST_SPEED)
 		{
-			if(r2 == 0)
-				newFloatData = SZ_fast_decompress(SZ_NO_BLOCK_FAST_CMPR, SZ_FLOAT, bytes, byteLength, 0, 0, 0, 0, r1);
+			if(randomAccess)
+			{
+				newFloatData = SZ_fast_decompress(SZ_RANDOMACCESS_FAST_CMPR, SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
+			}
 			else
-				newFloatData = SZ_fast_decompress(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
+			{
+				if(r2 == 0)
+					newFloatData = SZ_fast_decompress(SZ_NO_BLOCK_FAST_CMPR, SZ_FLOAT, bytes, byteLength, 0, 0, 0, 0, r1);
+				else
+					newFloatData = SZ_fast_decompress(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);				
+			}
+
 		}			
 		else
 			SZ_decompress_args_float(&newFloatData, r5, r4, r3, r2, r1, bytes, byteLength, 0, NULL);

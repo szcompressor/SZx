@@ -15,6 +15,7 @@
 #define SZ_VER_MINOR 1
 #define SZ_VER_BUILD 11
 #define SZ_VER_REVISION 0
+#define SZ_VER_SUPERFAST 100
 
 #define PASTRI 103
 #define HZ 102 //deprecated
@@ -72,6 +73,7 @@
 
 #define SZ_NO_BLOCK_FAST_CMPR 1
 #define SZ_WITH_BLOCK_FAST_CMPR 2
+#define SZ_RANDOMACCESS_FAST_CMPR 3
 
 #define SZ_NO_REGRESSION 0
 #define SZ_WITH_LINEAR_REGRESSION 1

@@ -190,7 +190,7 @@ typedef struct sz_params
 	int accelerate_pw_rel_compression;
 	int plus_bits;
 	
-	int randomAccess;
+	int randomAccess; //0 or 1
 	int withRegression;
 	
 } sz_params;
