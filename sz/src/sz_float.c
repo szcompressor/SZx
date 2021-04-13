@@ -518,7 +518,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     }
     *outSize += q - q0;
 
-#pragma omp parallel for num_threads(4)
+#pragma omp parallel for
     for (i = 0; i < nbConstantBlocks; i++) {
         floatToBytes(p + i * sizeof(float), medianArray[constantBlocks[i]]);
     }
