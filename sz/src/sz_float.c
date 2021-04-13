@@ -402,16 +402,16 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
     return outputBytes;
 }
 
-struct timeval costStart; /*only used for recording the cost*/
+struct timeval timer; /*only used for recording the cost*/
 void timer_start() {
-    gettimeofday(&costStart, NULL);
+    gettimeofday(&timer, NULL);
 }
 
 void timer_end(char *msg) {
     double elapsed;
     struct timeval costEnd;
     gettimeofday(&costEnd, NULL);
-    elapsed = ((costEnd.tv_sec * 1000000 + costEnd.tv_usec) - (costStart.tv_sec * 1000000 + costStart.tv_usec)) /
+    elapsed = ((costEnd.tv_sec * 1000000 + costEnd.tv_usec) - (timer.tv_sec * 1000000 + timer.tv_usec)) /
               1000000.0;
     printf("timecost=%f, %s\n", elapsed, msg);
 }
