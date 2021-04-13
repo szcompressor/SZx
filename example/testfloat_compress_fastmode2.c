@@ -157,7 +157,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_2(float *oriData,
 
 #pragma omp parallel for
     for (i = 0; i < nbNonConstantBlocks; i++) {
-        printf(" Thread %d: %d\n", omp_get_thread_num(), i);
+//        printf(" Thread %d: %d\n", omp_get_thread_num(), i);
         int oSize = 0;
         SZ_fast_compress_args_unpredictable_one_block_float(op + nonConstantBlocks[i] * blockSize, blockSize,
                                                             absErrBound,
@@ -209,10 +209,9 @@ int main(int argc, char * argv[])
     char *cfgFile;
 #ifdef _OPENMP
     omp_set_num_threads(omp_get_max_threads());
-    printf("omp thread = %d\n", omp_get_num_threads());
 #pragma omp parallel for
     for(int n = 0; n < 10; n++) {
-        printf(" Thread %d: %d\n", omp_get_thread_num(), n);
+        printf(" ThreadID = %d, Total= %d\n", omp_get_thread_num(), omp_get_num_threads());
     }
 #endif
     if(argc < 4)
