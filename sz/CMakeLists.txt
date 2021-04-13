@@ -69,7 +69,7 @@ target_link_libraries (SZ PUBLIC OpenMP::OpenMP_CXX ${ZLIB_dep} ${ZSTD_dep} m)
 
 
 target_compile_options(SZ
-	PRIVATE $<$<CONFIG:Debug>:-Wall -Wextra -Wpedantic -Wno-unused-parameter -fopenmp>
+	PRIVATE $<$<CONFIG:Debug>:-Wall -Wextra -Wpedantic -Wno-unused-parameter>
 	)
 
 if(BUILD_PASTRI)
