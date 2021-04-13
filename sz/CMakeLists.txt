@@ -1,4 +1,4 @@
-add_library (SZ
+add_library (SZ STATIC
   src/ArithmeticCoding.c
   src/ByteToolkit.c
   src/CacheTable.c
