@@ -41,7 +41,8 @@ int main(int argc, char * argv[])
     char *cfgFile;
 //#ifdef _OPENMP
     printf("omp thread= %d\n", omp_get_max_threads());
-#pragma omp  for num_threads(8)
+    omp_set_num_threads(omp_get_max_threads());
+#pragma omp  for
     for (int i = 0; i < 10000; i++) {
         printf("%d ", omp_get_thread_num());
 
