@@ -65,8 +65,10 @@ target_include_directories(SZ
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/sz>
   )
 
-target_link_libraries (SZ PUBLIC OpenMP::OpenMP_C ${ZLIB_dep} ${ZSTD_dep} m)
-
+target_link_libraries (SZ PUBLIC ${ZLIB_dep} ${ZSTD_dep} m)
+if(OpenMP_C_FOUND)
+    target_link_libraries(SZ PUBLIC OpenMP::OpenMP_C)
+endif()
 
 target_compile_options(SZ
 	PRIVATE $<$<CONFIG:Debug>:-Wall -Wextra -Wpedantic -Wno-unused-parameter>
