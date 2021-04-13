@@ -499,7 +499,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     unsigned char *leadNumberArray_int = (unsigned char *) malloc(blockSize * sizeof(int) * nbNonConstantBlocks);
     unsigned char *tmp_q = (unsigned char *) malloc(blockSize * sizeof(float) * nbNonConstantBlocks);
 
-#pragma omp parallel for num_threads(4)
+#pragma omp parallel for
     for (i = 0; i < nbNonConstantBlocks; i++) {
         printf(" Thread %d: %d\n", omp_get_thread_num(), i);
         int oSize = 0;
