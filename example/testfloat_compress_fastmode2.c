@@ -12,9 +12,6 @@
 #include <stdlib.h>
 #include "sz.h"
 #include "rw.h"
-#ifdef  _OPENMP
-#include "omp.h"
-#endif
 
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
@@ -43,13 +40,6 @@ int main(int argc, char * argv[])
 {
     char oriFilePath[640], outputFilePath[645];
     char *cfgFile;
-#ifdef _OPENMP
-    omp_set_num_threads(omp_get_max_threads());
-#pragma omp parallel for
-    for(int n = 0; n < 10; n++) {
-        printf(" ThreadID = %d, Total= %d\n", omp_get_thread_num(), omp_get_num_threads());
-    }
-#endif
     if(argc < 4)
     {
 		printf("Usage: testfloat_compress_fastmode2 [config_file] [srcFilePath] [block size] [err bound]\n");
@@ -84,7 +74,7 @@ int main(int argc, char * argv[])
 
     //unsigned char* bytes =  SZ_fast_compress_args(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errBound, 0.001, 0, 0, 0, 0, 0, nbEle);
     cost_end();
-    printf("timecost=%f, %d\n",totalCost, bytes[0]);
+    printf("\ntimecost=%f, total fastmode2\n",totalCost);
     printf("compression size = %zu, CR = %f\n", outSize, 1.0f*nbEle*sizeof(float)/outSize);
     writeByteData(bytes, outSize, outputFilePath, &status);
     if(status != SZ_SCES)

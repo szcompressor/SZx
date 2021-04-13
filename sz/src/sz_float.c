@@ -30,8 +30,11 @@
 #include "CacheTable.h"
 #include "MultiLevelCacheTableWideInterval.h"
 #include "sz_stats.h"
+
 #ifdef _OPENMP
+
 #include "omp.h"
+
 #endif
 
 unsigned char *
@@ -299,68 +302,26 @@ size_t computeStateMedianRadius_float(float *oriData, size_t nbEle, float absErr
     return nbConstantBlocks;
 }
 
-void computeStateMedianRadius_float2(float *oriData, size_t nbEle, float absErrBound, int blockSize,
-                                     unsigned char *stateArray, float *medianArray, float *radiusArray,
-                                     size_t *nbConstantBlocks, size_t *constantBlocks,
-                                     size_t *nbNonConstantBlocks, size_t *nonConstantBlocks) {
-//    size_t nbConstantBlocks = 0;
-    size_t i = 0, j = 0;
-    size_t nbBlocks = nbEle / blockSize;
-    size_t offset = 0;
-
-    for (i = 0; i < nbBlocks; i++) {
-        float min = oriData[offset];
-        float max = oriData[offset];
-        for (j = 1; j < blockSize; j++) {
-            float v = oriData[offset + j];
-            if (min > v)
-                min = v;
-            else if (max < v)
-                max = v;
-        }
-        float valueRange = max - min;
-        float radius = valueRange / 2;
-        float medianValue = min + radius;
-
-        if (radius <= absErrBound) {
-            stateArray[i] = 0;
-            constantBlocks[(*nbConstantBlocks)++] = i;
-        } else {
-            stateArray[i] = 1;
-            nonConstantBlocks[(*nbNonConstantBlocks)++] = i;
-        }
-        stateArray[i] = radius <= absErrBound ? 0 : 1;
-        medianArray[i] = medianValue;
-        radiusArray[i] = radius;
-        offset += blockSize;
+void computeStateMedianRadius_float2(float *oriData, size_t nbEle, float absErrBound,
+                                     unsigned char *state, float *median, float *radius) {
+    float min = oriData[0];
+    float max = oriData[0];
+    for (size_t i = 1; i < nbEle; i++) {
+        float v = oriData[i];
+        if (min > v)
+            min = v;
+        else if (max < v)
+            max = v;
     }
+    float valueRange = max - min;
+    *radius = valueRange / 2;
+    *median = min + *radius;
 
-    int remainCount = nbEle % blockSize;
-    if (remainCount != 0) {
-        float min = oriData[offset];
-        float max = oriData[offset];
-        for (j = 1; j < remainCount; j++) {
-            float v = oriData[offset + j];
-            if (min > v)
-                min = v;
-            else if (max < v)
-                max = v;
-        }
-        float valueRange = max - min;
-        float radius = valueRange / 2;
-        float medianValue = min + radius;
-        if (radius <= absErrBound) {
-            stateArray[i] = 0;
-            constantBlocks[(*nbConstantBlocks)++] = i;
-        } else {
-            stateArray[i] = 1;
-            nonConstantBlocks[(*nbNonConstantBlocks)++] = i;
-        }
-
-        medianArray[i] = medianValue;
-        radiusArray[i] = radius;
+    if (*radius <= absErrBound) {
+        *state = 0;
+    } else {
+        *state = 1;
     }
-//    return nbConstantBlocks;
 }
 
 
@@ -441,22 +402,29 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
     return outputBytes;
 }
 
+struct timeval costStart; /*only used for recording the cost*/
+void cost_start() {
+    gettimeofday(&costStart, NULL);
+}
+
+void cost_end(char *msg) {
+    double elapsed;
+    struct timeval costEnd;
+    gettimeofday(&costEnd, NULL);
+    elapsed = ((costEnd.tv_sec * 1000000 + costEnd.tv_usec) - (costStart.tv_sec * 1000000 + costStart.tv_usec)) /
+              1000000.0;
+    printf("timecost=%f, %s\n", elapsed, msg);
+}
 
 unsigned char *
 SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, size_t *outSize, float absErrBound,
                                                                size_t nbEle, int blockSize) {
 #ifdef _OPENMP
     printf("use openmp\n");
+
     float *op = oriData;
 
-    *outSize = 0;
-    size_t maxPreservedBufferSize =
-            sizeof(float) * nbEle; //assume that the compressed data size would not exceed the original size
-    unsigned char *outputBytes = (unsigned char *) malloc(maxPreservedBufferSize);
-    memset(outputBytes, 0, maxPreservedBufferSize);
-
     size_t i = 0;
-
     size_t nbBlocks = nbEle / blockSize;
     size_t remainCount = nbEle % blockSize;
     size_t stateNBBytes =
@@ -467,15 +435,68 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
 
     unsigned char *stateArray = (unsigned char *) malloc(nbBlocks);
     float *medianArray = (float *) malloc(actualNBBlocks * sizeof(float));
-    float *radiusArray = (float *) malloc(actualNBBlocks * sizeof(float));
+//    float *radiusArray = (float *) malloc(actualNBBlocks * sizeof(float));
 
-    size_t nbConstantBlocks = 0, nbNonConstantBlocks = 0;
-    size_t *constantBlocks = (size_t *) malloc(actualNBBlocks * sizeof(size_t));
-    size_t *nonConstantBlocks = (size_t *) malloc(actualNBBlocks * sizeof(size_t));
-    computeStateMedianRadius_float2(oriData, nbEle, absErrBound, blockSize, stateArray, medianArray, radiusArray,
-                                    &nbConstantBlocks, constantBlocks, &nbNonConstantBlocks, nonConstantBlocks);
+//    size_t nbConstantBlocks = 0;
+//    size_t *constantBlocks = (size_t *) malloc(actualNBBlocks * sizeof(size_t));
+//    size_t *nonConstantBlocks = (size_t *) malloc(actualNBBlocks * sizeof(size_t));
+//    cost_start();
+//    computeStateMedianRadius_float2(oriData, nbEle, absErrBound, blockSize, stateArray, medianArray, radiusArray,
+//                                    &nbConstantBlocks, constantBlocks, &nbNonConstantBlocks, nonConstantBlocks);
+//    cost_end("median_radius");
+//    assert(nbConstantBlocks + nbNonConstantBlocks == actualNBBlocks);
 
-    assert(nbConstantBlocks + nbNonConstantBlocks == actualNBBlocks);
+    size_t nbNonConstantBlocks = 0;
+    int nbThreads = 1;
+#pragma omp parallel
+    {
+        nbThreads = omp_get_num_threads();
+    }
+    printf("nbThreads = %d\n", nbThreads);
+    unsigned char *leadNumberArray_int = (unsigned char *) malloc(blockSize * sizeof(int) * nbThreads);
+    unsigned char *tmp_q = (unsigned char *) malloc(blockSize * sizeof(float) * actualNBBlocks);
+    int *outSizes = (int *) malloc(actualNBBlocks * sizeof(int));
+
+    cost_start();
+#pragma omp parallel for reduction(+:nbNonConstantBlocks)
+    for (i = 0; i < nbBlocks; i++) {
+        float radius;
+        computeStateMedianRadius_float2(op + i * blockSize, blockSize, absErrBound, stateArray + i, medianArray + i,
+                                        &radius);
+        if (stateArray[i]) {
+            SZ_fast_compress_args_unpredictable_one_block_float(op + i * blockSize, blockSize, absErrBound,
+                                                                tmp_q + i * blockSize * sizeof(float), outSizes + i,
+                                                                leadNumberArray_int +
+                                                                omp_get_thread_num() * blockSize * sizeof(int),
+                                                                medianArray[i], radius);
+            nbNonConstantBlocks += 1;
+        }
+    }
+
+    cost_end("parallel");
+
+    cost_start();
+
+    if (remainCount != 0) {
+        float radius;
+        computeStateMedianRadius_float2(op + i * blockSize, remainCount, absErrBound, stateArray + i, medianArray + i,
+                                        &radius);
+        if (stateArray[i]) {
+            SZ_fast_compress_args_unpredictable_one_block_float(op + i * blockSize, remainCount, absErrBound,
+                                                                tmp_q + i * blockSize * sizeof(float), outSizes + i,
+                                                                leadNumberArray_int, medianArray[i], radius);
+        }
+    }
+    cost_end("parallel-remain");
+    size_t nbConstantBlocks = actualNBBlocks - nbNonConstantBlocks;
+    printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f * (nbConstantBlocks * blockSize) / nbEle);
+
+    cost_start();
+    (*outSize) = 0;
+    size_t maxPreservedBufferSize =
+            sizeof(float) * nbEle; //assume that the compressed data size would not exceed the original size
+    unsigned char *outputBytes = (unsigned char *) malloc(maxPreservedBufferSize);
+    memset(outputBytes, 0, maxPreservedBufferSize);
     unsigned char *r = outputBytes; // + sizeof(size_t) + stateNBBytes;
     r[0] = SZ_VER_MAJOR;
     r[1] = SZ_VER_MINOR;
@@ -491,58 +512,32 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     unsigned char *q =
             p + sizeof(float) * nbConstantBlocks; //q is the starting address of the non-constant data sblocks
     unsigned char *q0 = q;
-    //3: versions, 1: metadata: state, 1: metadata: blockSize, sizeof(size_t): nbConstantBlocks, ....
-    *outSize = (3 + 1 + 1 + sizeof(size_t) + nbNonConstantBlocks + stateNBBytes + sizeof(float) * nbConstantBlocks);
+//3: versions, 1: metadata: state, 1: metadata: blockSize, sizeof(size_t): nbConstantBlocks, ....
+    *outSize = (3 + 1 + 1 + sizeof(size_t) + nbNonConstantBlocks + stateNBBytes +
+                sizeof(float) * nbConstantBlocks);
 
-    size_t nonConstantBlockID = 0;
-    //printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f*(nbConstantBlocks*blockSize)/nbEle);
-    unsigned char *leadNumberArray_int = (unsigned char *) malloc(blockSize * sizeof(int) * nbNonConstantBlocks);
-    unsigned char *tmp_q = (unsigned char *) malloc(blockSize * sizeof(float) * nbNonConstantBlocks);
-
-#pragma omp parallel for
-    for (i = 0; i < nbNonConstantBlocks; i++) {
-//        printf(" Thread %d: %d\n", omp_get_thread_num(), i);
-        int oSize = 0;
-        SZ_fast_compress_args_unpredictable_one_block_float(op + nonConstantBlocks[i] * blockSize, blockSize,
-                                                            absErrBound,
-                                                            tmp_q + i * blockSize, &oSize,
-                                                            leadNumberArray_int + i * blockSize,
-                                                            medianArray[nonConstantBlocks[i]],
-                                                            radiusArray[nonConstantBlocks[i]]);
-#pragma omp critical
-        {
-            memcpy(q, tmp_q + i * blockSize, oSize);
-            q += oSize;
-            r[i] = oSize;
-        }
-    }
-    *outSize += q - q0;
-
-#pragma omp parallel for
-    for (i = 0; i < nbConstantBlocks; i++) {
-        floatToBytes(p + i * sizeof(float), medianArray[constantBlocks[i]]);
-    }
-    p += nbConstantBlocks * sizeof(float);
-
-    if (remainCount != 0) {
-        int oSize = 0;
+    cost_end("prepare compressed data");
+    cost_start();
+    size_t nonConstantBlockID=0;
+    for (i = 0; i < actualNBBlocks; i++) {
         if (stateArray[i]) {
-            SZ_fast_compress_args_unpredictable_one_block_float(op, remainCount, absErrBound, q, &oSize,
-                                                                leadNumberArray_int, medianArray[i], radiusArray[i]);
-            *outSize += oSize;
-            r[nbNonConstantBlocks] = oSize;
+            memcpy(tmp_q+i * blockSize * sizeof(float),q,outSizes[i]);
+            q += outSizes[i];
+            *outSize += outSizes[i];
+            r[nonConstantBlockID++] = outSizes[i];
         } else {
             floatToBytes(p, medianArray[i]);
+            p += sizeof(float);
         }
-
     }
-
+    cost_end("write compressed data");
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, R);
 
     free(leadNumberArray_int);
-    free(constantBlocks);
-    free(nonConstantBlocks);
     free(tmp_q);
+    free(medianArray);
+    free(stateArray);
+    free(outSizes);
     return outputBytes;
 #else
     printf("no openmp\n");
@@ -3464,9 +3459,9 @@ int SZ_compress_args_float(int cmprType, unsigned char **newByteData, float *ori
     if (confparams_cpr->errorBoundMode == PW_REL && confparams_cpr->accelerate_pw_rel_compression) {
         signs = (unsigned char *) malloc(dataLength);
         memset(signs, 0, dataLength);
-		min = computeRangeSize_float_MSST19(oriData, dataLength, &valueRangeSize, &medianValue, signs, &positive, &nearZero);
-	}
-	else
+        min = computeRangeSize_float_MSST19(oriData, dataLength, &valueRangeSize, &medianValue, signs, &positive,
+                                            &nearZero);
+    } else
         min = computeRangeSize_float(oriData, dataLength, &valueRangeSize, &medianValue);
     float max = min + valueRangeSize;
     confparams_cpr->fmin = min;
@@ -3537,9 +3532,9 @@ int SZ_compress_args_float(int cmprType, unsigned char **newByteData, float *ori
                                                                                 r2, r1, &tmpOutSize, valueRangeSize,
                                                                                 signs, &positive, min, max, nearZero);
                 else
-					SZ_compress_args_float_NoCkRngeNoGzip_2D_pwr_pre_log(&tmpByteData, oriData, pwRelBoundRatio, r2, r1, &tmpOutSize, min, max);
-			}
-			else
+                    SZ_compress_args_float_NoCkRngeNoGzip_2D_pwr_pre_log(&tmpByteData, oriData, pwRelBoundRatio, r2, r1,
+                                                                         &tmpOutSize, min, max);
+            } else
 #ifdef HAVE_TIMECMPR
                                                                                                                                         if(confparams_cpr->szMode == SZ_TEMPORAL_COMPRESSION)
 					multisteps->compressionType = SZ_compress_args_float_NoCkRngeNoGzip_2D(cmprType, &tmpByteData, oriData, r2, r1, realPrecision, &tmpOutSize, valueRangeSize, medianValue);
@@ -3575,9 +3570,9 @@ int SZ_compress_args_float(int cmprType, unsigned char **newByteData, float *ori
                                                                                 r3, r2, r1, &tmpOutSize, valueRangeSize,
                                                                                 signs, &positive, min, max, nearZero);
                 else
-					SZ_compress_args_float_NoCkRngeNoGzip_3D_pwr_pre_log(&tmpByteData, oriData, pwRelBoundRatio, r3, r2, r1, &tmpOutSize, min, max);
-			}
-			else
+                    SZ_compress_args_float_NoCkRngeNoGzip_3D_pwr_pre_log(&tmpByteData, oriData, pwRelBoundRatio, r3, r2,
+                                                                         r1, &tmpOutSize, min, max);
+            } else
 #ifdef HAVE_TIMECMPR
                                                                                                                                         if(confparams_cpr->szMode == SZ_TEMPORAL_COMPRESSION)
 						multisteps->compressionType = SZ_compress_args_float_NoCkRngeNoGzip_3D(cmprType, &tmpByteData, oriData, r3, r2, r1, realPrecision, &tmpOutSize, valueRangeSize, medianValue);
@@ -3614,9 +3609,9 @@ int SZ_compress_args_float(int cmprType, unsigned char **newByteData, float *ori
                                                                                 valueRangeSize, signs, &positive, min,
                                                                                 max, nearZero);
                 else
-					SZ_compress_args_float_NoCkRngeNoGzip_3D_pwr_pre_log(&tmpByteData, oriData, pwRelBoundRatio, r4*r3, r2, r1, &tmpOutSize, min, max);
-			}
-			else
+                    SZ_compress_args_float_NoCkRngeNoGzip_3D_pwr_pre_log(&tmpByteData, oriData, pwRelBoundRatio,
+                                                                         r4 * r3, r2, r1, &tmpOutSize, min, max);
+            } else
 #ifdef HAVE_TIMECMPR
                                                                                                                                         if(confparams_cpr->szMode == SZ_TEMPORAL_COMPRESSION)
 					multisteps->compressionType = SZ_compress_args_float_NoCkRngeNoGzip_4D(&tmpByteData, oriData, r4, r3, r2, r1, realPrecision, &tmpOutSize, valueRangeSize, medianValue);
@@ -3680,41 +3675,36 @@ int SZ_compress_args_float_subblock(unsigned char *compressedBytes, float *oriDa
                 //SZ_compress_args_float_NoCkRngeNoGzip_1D_pwr_subblock();
                 printf("Current subblock version does not support point-wise relative error bound.\n");
             } else
-				SZ_compress_args_float_NoCkRnge_1D_subblock(compressedBytes, oriData, realPrecision, outSize, valueRangeSize, medianValue, r1, s1, e1);
-		}
-		else
-		if (r3==0)
-		{
+                SZ_compress_args_float_NoCkRnge_1D_subblock(compressedBytes, oriData, realPrecision, outSize,
+                                                            valueRangeSize, medianValue, r1, s1, e1);
+        } else if (r3 == 0) {
             //TODO
             if (errBoundMode >= PW_REL) {
                 //TODO
                 //SZ_compress_args_float_NoCkRngeNoGzip_2D_pwr_subblock();
                 printf("Current subblock version does not support point-wise relative error bound.\n");
             } else
-				SZ_compress_args_float_NoCkRnge_2D_subblock(compressedBytes, oriData, realPrecision, outSize, valueRangeSize, medianValue, r2, r1, s2, s1, e2, e1);
-		}
-		else
-		if (r4==0)
-		{
+                SZ_compress_args_float_NoCkRnge_2D_subblock(compressedBytes, oriData, realPrecision, outSize,
+                                                            valueRangeSize, medianValue, r2, r1, s2, s1, e2, e1);
+        } else if (r4 == 0) {
             if (errBoundMode >= PW_REL) {
                 //TODO
                 //SZ_compress_args_float_NoCkRngeNoGzip_3D_pwr_subblock();
                 printf("Current subblock version does not support point-wise relative error bound.\n");
             } else
-				SZ_compress_args_float_NoCkRnge_3D_subblock(compressedBytes, oriData, realPrecision, outSize, valueRangeSize, medianValue, r3, r2, r1, s3, s2, s1, e3, e2, e1);
-		}
-		else
-		if (r5==0)
-		{
+                SZ_compress_args_float_NoCkRnge_3D_subblock(compressedBytes, oriData, realPrecision, outSize,
+                                                            valueRangeSize, medianValue, r3, r2, r1, s3, s2, s1, e3, e2,
+                                                            e1);
+        } else if (r5 == 0) {
             if (errBoundMode >= PW_REL) {
                 //TODO
                 //SZ_compress_args_float_NoCkRngeNoGzip_4D_pwr_subblock();
                 printf("Current subblock version does not support point-wise relative error bound.\n");
             } else
-				SZ_compress_args_float_NoCkRnge_4D_subblock(compressedBytes, oriData, realPrecision, outSize, valueRangeSize, medianValue, r4, r3, r2, r1, s4, s3, s2, s1, e4, e3, e2, e1);
-		}
-		else
-		{
+                SZ_compress_args_float_NoCkRnge_4D_subblock(compressedBytes, oriData, realPrecision, outSize,
+                                                            valueRangeSize, medianValue, r4, r3, r2, r1, s4, s3, s2, s1,
+                                                            e4, e3, e2, e1);
+        } else {
             printf("Error: doesn't support 5 dimensions for now.\n");
             status = SZ_DERR; //dimension error
         }
