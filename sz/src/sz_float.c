@@ -403,11 +403,11 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
 }
 
 struct timeval costStart; /*only used for recording the cost*/
-void cost_start() {
+void timer_start() {
     gettimeofday(&costStart, NULL);
 }
 
-void cost_end(char *msg) {
+void timer_end(char *msg) {
     double elapsed;
     struct timeval costEnd;
     gettimeofday(&costEnd, NULL);
@@ -440,10 +440,10 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
 //    size_t nbConstantBlocks = 0;
 //    size_t *constantBlocks = (size_t *) malloc(actualNBBlocks * sizeof(size_t));
 //    size_t *nonConstantBlocks = (size_t *) malloc(actualNBBlocks * sizeof(size_t));
-//    cost_start();
+//    timer_start();
 //    computeStateMedianRadius_float2(oriData, nbEle, absErrBound, blockSize, stateArray, medianArray, radiusArray,
 //                                    &nbConstantBlocks, constantBlocks, &nbNonConstantBlocks, nonConstantBlocks);
-//    cost_end("median_radius");
+//    timer_end("median_radius");
 //    assert(nbConstantBlocks + nbNonConstantBlocks == actualNBBlocks);
 
     size_t nbNonConstantBlocks = 0;
@@ -457,7 +457,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     unsigned char *tmp_q = (unsigned char *) malloc(blockSize * sizeof(float) * actualNBBlocks);
     int *outSizes = (int *) malloc(actualNBBlocks * sizeof(int));
 
-    cost_start();
+    timer_start();
 #pragma omp parallel for reduction(+:nbNonConstantBlocks)
     for (i = 0; i < nbBlocks; i++) {
         float radius;
@@ -473,9 +473,9 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
         }
     }
 
-    cost_end("parallel");
+    timer_end("parallel");
 
-    cost_start();
+    timer_start();
 
     if (remainCount != 0) {
         float radius;
@@ -487,11 +487,11 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
                                                                 leadNumberArray_int, medianArray[i], radius);
         }
     }
-    cost_end("parallel-remain");
+    timer_end("parallel-remain");
     size_t nbConstantBlocks = actualNBBlocks - nbNonConstantBlocks;
     printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f * (nbConstantBlocks * blockSize) / nbEle);
 
-    cost_start();
+    timer_start();
     (*outSize) = 0;
     size_t maxPreservedBufferSize =
             sizeof(float) * nbEle; //assume that the compressed data size would not exceed the original size
@@ -516,8 +516,8 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     *outSize = (3 + 1 + 1 + sizeof(size_t) + nbNonConstantBlocks + stateNBBytes +
                 sizeof(float) * nbConstantBlocks);
 
-    cost_end("prepare compressed data");
-    cost_start();
+    timer_end("prepare compressed data");
+    timer_start();
     size_t nonConstantBlockID=0;
     for (i = 0; i < actualNBBlocks; i++) {
         if (stateArray[i]) {
@@ -530,7 +530,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
             p += sizeof(float);
         }
     }
-    cost_end("write compressed data");
+    timer_end("write compressed data");
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, R);
 
     free(leadNumberArray_int);
