@@ -499,7 +499,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     unsigned char *leadNumberArray_int = (unsigned char *) malloc(blockSize * sizeof(int) * nbNonConstantBlocks);
     unsigned char *tmp_q = (unsigned char *) malloc(blockSize * sizeof(float) * nbNonConstantBlocks);
 
-#pragma omp parallel for num_threads(4)
+#pragma omp parallel for
     for (i = 0; i < nbNonConstantBlocks; i++) {
         int oSize = 0;
         SZ_fast_compress_args_unpredictable_one_block_float(op + nonConstantBlocks[i] * blockSize, blockSize,
@@ -517,7 +517,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     }
     *outSize += q - q0;
 
-#pragma omp parallel for num_threads(4)
+#pragma omp parallel for
     for (i = 0; i < nbConstantBlocks; i++) {
         floatToBytes(p + i * sizeof(float), medianArray[constantBlocks[i]]);
     }
