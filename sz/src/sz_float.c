@@ -501,7 +501,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
 
 #pragma omp parallel for num_threads(4)
     for (i = 0; i < nbNonConstantBlocks; i++) {
-//        printf("%d ",i);
+        printf(" Thread %d: %d\n", omp_get_thread_num(), i);
         int oSize = 0;
         SZ_fast_compress_args_unpredictable_one_block_float(op + nonConstantBlocks[i] * blockSize, blockSize,
                                                             absErrBound,

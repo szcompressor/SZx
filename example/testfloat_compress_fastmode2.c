@@ -40,13 +40,12 @@ int main(int argc, char * argv[])
     char oriFilePath[640], outputFilePath[645];
     char *cfgFile;
 //#ifdef _OPENMP
-    printf("omp thread= %d\n", omp_get_max_threads());
     omp_set_num_threads(omp_get_max_threads());
+    printf("omp thread = %d\n", omp_get_num_threads());
 #pragma omp parallel for
-        for(int n = 0; n < 10; n++)
-            printf(" Thread %d: %d\n", omp_get_thread_num(), n);
-
-        printf("Number of threads: %d\n", omp_get_num_threads());
+    for(int n = 0; n < 10; n++) {
+        printf(" Thread %d: %d\n", omp_get_thread_num(), n);
+    }
 //#endif
     if(argc < 4)
     {
