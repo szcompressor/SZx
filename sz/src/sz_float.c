@@ -521,7 +521,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
         if (stateArray[i]) {
             qarray[i] = q;
             q += outSizes[i];
-            r = outSizes[i];
+            *r = outSizes[i];
             r++;
         } else {
             parray[i] = p;
