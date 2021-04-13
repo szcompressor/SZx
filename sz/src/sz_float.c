@@ -446,7 +446,7 @@ unsigned char *
 SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, size_t *outSize, float absErrBound,
                                                                size_t nbEle, int blockSize) {
 #ifdef _OPENMP
-
+    printf("use openmp\n");
     float *op = oriData;
 
     *outSize = 0;
