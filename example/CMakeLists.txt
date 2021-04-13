@@ -23,7 +23,7 @@ add_executable (testfloat_decompress_fastmode1 testfloat_decompress_fastmode1.c)
 target_link_libraries (testfloat_decompress_fastmode1 SZ)
 
 add_executable (testfloat_compress_fastmode2 testfloat_compress_fastmode2.c)
-target_link_libraries (testfloat_compress_fastmode2 SZ)
+target_link_libraries (testfloat_compress_fastmode2 SZ OpenMP::OpenMP_CXX)
 
 add_executable (testfloat_decompress_fastmode2 testfloat_decompress_fastmode2.c)
 target_link_libraries (testfloat_decompress_fastmode2 SZ)
