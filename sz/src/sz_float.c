@@ -473,10 +473,6 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
         }
     }
 
-    timer_end("parallel");
-
-    timer_start();
-
     if (remainCount != 0) {
         float radius;
         computeStateMedianRadius_float2(op + i * blockSize, remainCount, absErrBound, stateArray + i, medianArray + i,
@@ -487,7 +483,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
                                                                 leadNumberArray_int, medianArray[i], radius);
         }
     }
-    timer_end("parallel-remain");
+    timer_end("parallel-1");
     size_t nbConstantBlocks = actualNBBlocks - nbNonConstantBlocks;
     printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f * (nbConstantBlocks * blockSize) / nbEle);
 
@@ -518,19 +514,33 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
 
     timer_end("prepare compressed data");
     timer_start();
-    size_t nonConstantBlockID=0;
+//    size_t nonConstantBlockID = 0;
+    unsigned char **qarray = (unsigned char **) malloc(actualNBBlocks * sizeof(unsigned char *));
+    unsigned char **parray = (unsigned char **) malloc(actualNBBlocks * sizeof(unsigned char *));
     for (i = 0; i < actualNBBlocks; i++) {
         if (stateArray[i]) {
-            memcpy(tmp_q+i * blockSize * sizeof(float),q,outSizes[i]);
+            qarray[i] = q;
             q += outSizes[i];
-            *outSize += outSizes[i];
-            r[nonConstantBlockID++] = outSizes[i];
+            r = outSizes[i];
+            r++;
         } else {
-            floatToBytes(p, medianArray[i]);
+            parray[i] = p;
             p += sizeof(float);
         }
     }
-    timer_end("write compressed data");
+    timer_end("sequential");
+
+#pragma omp parallel for
+    for (i = 0; i < actualNBBlocks; i++) {
+        if (stateArray[i]) {
+            memcpy(tmp_q + i * blockSize * sizeof(float), qarray[i], outSizes[i]);
+        } else {
+            floatToBytes(parray[i], medianArray[i]);
+        }
+    }
+    *outSize += q - q0;
+
+    timer_end("parallel-2");
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, R);
 
     free(leadNumberArray_int);
