@@ -30,9 +30,9 @@
 #include "CacheTable.h"
 #include "MultiLevelCacheTableWideInterval.h"
 #include "sz_stats.h"
-#ifdef _OPENMP
+//#ifdef _OPENMP
 #include "omp.h"
-#endif
+//#endif
 
 unsigned char *
 SZ_fast_compress_args_with_prediction_float(float *pred, float *data, size_t *outSize, float absErrBound, size_t r5,
@@ -445,7 +445,7 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
 unsigned char *
 SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, size_t *outSize, float absErrBound,
                                                                size_t nbEle, int blockSize) {
-#ifdef _OPENMP
+//#ifdef _OPENMP
     printf("use openmp\n");
     float *op = oriData;
 
@@ -544,6 +544,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     free(nonConstantBlocks);
     free(tmp_q);
     return outputBytes;
+    /*
 #else
     printf("no openmp\n");
     float *op = oriData;
@@ -626,6 +627,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
 
     return outputBytes;
 #endif
+     */
 }
 
 
