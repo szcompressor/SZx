@@ -421,7 +421,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
                                                                size_t nbEle, int blockSize) {
 #ifdef _OPENMP
     printf("use openmp\n");
-
+    timer_start();
     float *op = oriData;
 
     size_t i = 0;
@@ -457,8 +457,9 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     unsigned char *tmp_q = (unsigned char *) malloc(blockSize * sizeof(float) * actualNBBlocks);
     int *outSizes = (int *) malloc(actualNBBlocks * sizeof(int));
 
+    timer_end("sequential-1");
     timer_start();
-#pragma omp parallel for schedule(static,4)
+#pragma omp parallel for reduction(+:nbNonConstantBlocks) schedule(static,4)
     for (i = 0; i < nbBlocks; i++) {
         if (omp_get_thread_num()==0){
 //            printf("%d \n", i);
@@ -472,11 +473,10 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
                                                                 leadNumberArray_int +
                                                                 omp_get_thread_num() * blockSize * sizeof(int),
                                                                 medianArray[i], radius);
+            nbNonConstantBlocks += 1;
         }
     }
-    timer_end("parallel-1");
 
-    timer_start();
     if (remainCount != 0) {
         float radius;
         computeStateMedianRadius_float2(op + i * blockSize, remainCount, absErrBound, stateArray + i, medianArray + i,
@@ -487,19 +487,12 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
                                                                 leadNumberArray_int, medianArray[i], radius);
         }
     }
-    timer_end("remaining");
-
+    timer_end("parallel-1");
     timer_start();
-#pragma omp parallel for reduction (+:nbNonConstantBlocks)
-        for (i = 0; i < nbBlocks; i++) {
-        nbNonConstantBlocks+=stateArray[i];
-        }
-    timer_end("parallel-1-sum");
 
-        size_t nbConstantBlocks = actualNBBlocks - nbNonConstantBlocks;
+    size_t nbConstantBlocks = actualNBBlocks - nbNonConstantBlocks;
     printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f * (nbConstantBlocks * blockSize) / nbEle);
 
-    timer_start();
     (*outSize) = 0;
     size_t maxPreservedBufferSize =
             sizeof(float) * nbEle; //assume that the compressed data size would not exceed the original size
@@ -525,7 +518,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     *outSize = (3 + 1 + 1 + sizeof(size_t) + nbNonConstantBlocks + stateNBBytes +
                 sizeof(float) * nbConstantBlocks);
 
-    timer_end("prepare compressed data");
+    timer_end("sequential-2");
     timer_start();
 //    size_t nonConstantBlockID = 0;
     unsigned char **qarray = (unsigned char **) malloc(actualNBBlocks * sizeof(unsigned char *));
@@ -541,7 +534,8 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
             p += sizeof(float);
         }
     }
-    timer_end("sequential");
+    timer_end("sequential-3");
+    timer_start();
 
 #pragma omp parallel for schedule(static,4)
     for (i = 0; i < actualNBBlocks; i++) {
@@ -554,6 +548,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     *outSize += q - q0;
 
     timer_end("parallel-2");
+    timer_start();
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, R);
 
     free(leadNumberArray_int);
@@ -561,6 +556,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     free(medianArray);
     free(stateArray);
     free(outSizes);
+    timer_end("sequential-4");
     return outputBytes;
 #else
     printf("no openmp\n");
