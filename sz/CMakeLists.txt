@@ -71,7 +71,7 @@ if(OpenMP_C_FOUND)
 endif()
 
 target_compile_options(SZ
-	PRIVATE $<$<CONFIG:Debug>:-Wall -Wextra -Wpedantic -Wno-unused-parameter>
+	PRIVATE $<$<CONFIG:Debug>:-Wall -g -Wextra -Wpedantic -Wno-unused-parameter>
 	)
 
 if(BUILD_PASTRI)
