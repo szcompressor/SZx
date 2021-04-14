@@ -457,7 +457,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     unsigned char *tmp_q = (unsigned char *) malloc(blockSize * sizeof(float) * actualNBBlocks);
     int *outSizes = (int *) malloc(actualNBBlocks * sizeof(int));
 
-    timer_end("sequential-1");
+    timer_end("sequential-1 malloc");
     timer_start();
 #pragma omp parallel for reduction(+:nbNonConstantBlocks) schedule(static,4)
     for (i = 0; i < nbBlocks; i++) {
@@ -487,7 +487,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
                                                                 leadNumberArray_int, medianArray[i], radius);
         }
     }
-    timer_end("parallel-1");
+    timer_end("parallel-1 compress");
     timer_start();
 
     size_t nbConstantBlocks = actualNBBlocks - nbNonConstantBlocks;
@@ -518,7 +518,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     *outSize = (3 + 1 + 1 + sizeof(size_t) + nbNonConstantBlocks + stateNBBytes +
                 sizeof(float) * nbConstantBlocks);
 
-    timer_end("sequential-2");
+    timer_end("sequential-2 malloc");
     timer_start();
 //    size_t nonConstantBlockID = 0;
     unsigned char **qarray = (unsigned char **) malloc(actualNBBlocks * sizeof(unsigned char *));
@@ -534,7 +534,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
             p += sizeof(float);
         }
     }
-    timer_end("sequential-3");
+    timer_end("sequential-3 prefix sum");
     timer_start();
 
 #pragma omp parallel for schedule(static,4)
@@ -547,16 +547,17 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     }
     *outSize += q - q0;
 
-    timer_end("parallel-2");
+    timer_end("parallel-2 memcpy");
     timer_start();
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, R);
-
+    timer_end("sequential-4 int2byte");
+    timer_start();
     free(leadNumberArray_int);
     free(tmp_q);
     free(medianArray);
     free(stateArray);
     free(outSizes);
-    timer_end("sequential-4");
+    timer_end("sequential-5 free");
     return outputBytes;
 #else
     printf("no openmp\n");
