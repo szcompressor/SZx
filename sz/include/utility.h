@@ -28,6 +28,8 @@ extern double sz_totalCost;
 
 void sz_cost_start();
 void sz_cost_end();
+void sz_cost_end_msg(char *);
+
 
 int compare_struct(const void* obj1, const void* obj2);//sihuan added: the compare function in the qsort parameter for 2 structures
 void reorder_vars(SZ_VarSet* vset);//sihuan added: reorder the variables increasingly by their index
