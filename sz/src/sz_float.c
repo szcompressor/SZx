@@ -458,8 +458,11 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     int *outSizes = (int *) malloc(actualNBBlocks * sizeof(int));
 
     timer_start();
-#pragma omp parallel for reduction(+:nbNonConstantBlocks)
+#pragma omp parallel for reduction(+:nbNonConstantBlocks) schedule(static,4)
     for (i = 0; i < nbBlocks; i++) {
+        if (omp_get_thread_num()==0){
+//            printf("%d \n", i);
+        }
         float radius;
         computeStateMedianRadius_float2(op + i * blockSize, blockSize, absErrBound, stateArray + i, medianArray + i,
                                         &radius);
@@ -531,7 +534,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     }
     timer_end("sequential");
 
-#pragma omp parallel for
+#pragma omp parallel for schedule(static,4)
     for (i = 0; i < actualNBBlocks; i++) {
         if (stateArray[i]) {
             memcpy(qarray[i], tmp_q + i * blockSize * sizeof(float), outSizes[i]);
