@@ -507,6 +507,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     unsigned char *p = R + stateNBBytes; //p is the starting address of constant median values.
     unsigned char *q =
             p + sizeof(float) * nbConstantBlocks; //q is the starting address of the non-constant data sblocks
+//    printf("%lu %lu %lu %lu\n",r-outputBytes, R-outputBytes, p-outputBytes, q-outputBytes);
     unsigned char *q0 = q;
 //3: versions, 1: metadata: state, 1: metadata: blockSize, sizeof(size_t): nbConstantBlocks, ....
     *outSize = (3 + 1 + 1 + sizeof(size_t) + nbNonConstantBlocks + stateNBBytes +
@@ -533,7 +534,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
 #pragma omp parallel for
     for (i = 0; i < actualNBBlocks; i++) {
         if (stateArray[i]) {
-            memcpy(tmp_q + i * blockSize * sizeof(float), qarray[i], outSizes[i]);
+            memcpy(qarray[i], tmp_q + i * blockSize * sizeof(float), outSizes[i]);
         } else {
             floatToBytes(parray[i], medianArray[i]);
         }
