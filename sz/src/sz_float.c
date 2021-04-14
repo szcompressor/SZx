@@ -32,9 +32,7 @@
 #include "sz_stats.h"
 
 #ifdef _OPENMP
-
 #include "omp.h"
-
 #endif
 
 unsigned char *
