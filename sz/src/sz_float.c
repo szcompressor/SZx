@@ -459,7 +459,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
 
     timer_end("sequential-1 malloc");
     timer_start();
-#pragma omp parallel for reduction(+:nbNonConstantBlocks) schedule(dynamic,4)
+#pragma omp parallel for reduction(+:nbNonConstantBlocks) schedule(dynamic,100)
     for (i = 0; i < nbBlocks; i++) {
         if (omp_get_thread_num()==0){
 //            printf("%d \n", i);
