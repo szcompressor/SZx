@@ -12,7 +12,9 @@
 #include <stdlib.h>
 #include "sz.h"
 #include "rw.h"
-
+#ifdef _OPENMP
+#include "omp.h"
+#endif
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
 struct timeval costStart; /*only used for recording the cost*/
@@ -51,6 +53,10 @@ int main(int argc, char * argv[])
     sprintf(oriFilePath, "%s", argv[2]);
     int blockSize = atoi(argv[3]);
     float errBound = atof(argv[4]);
+
+    if (argc>=6){
+        omp_set_num_threads(atoi(argv[5]));
+    }
     printf("cfgFile=%s\n", cfgFile);
     int status = SZ_Init(cfgFile);
     if(status == SZ_NSCS)
