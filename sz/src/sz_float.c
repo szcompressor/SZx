@@ -480,6 +480,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     }
 
     size_t nbConstantBlocks = actualNBBlocks - nbNonConstantBlocks;
+    printf("actualNBBlocks=%d\n", actualNBBlocks);
     printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f * (nbConstantBlocks * blockSize) / nbEle);
 
     sizeToBytes(r, nbConstantBlocks);
@@ -494,18 +495,12 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
 //3: versions, 1: metadata: state, 1: metadata: blockSize, sizeof(size_t): nbConstantBlocks, ....
     *outSize = (3 + 1 + 1 + sizeof(size_t) + nbNonConstantBlocks + stateNBBytes +
                 sizeof(float) * nbConstantBlocks);
+    int *nbNonConstantBlockAccumlate = (int *) malloc(actualNBBlocks * sizeof(int));
 
     sz_cost_start();
-//    size_t nonConstantBlockID = 0;
-    unsigned char **qarray = (unsigned char **) malloc(actualNBBlocks * sizeof(unsigned char *));
-    unsigned char **parray = (unsigned char **) malloc(actualNBBlocks * sizeof(unsigned char *));
-//    int *x = (int *) malloc(actualNBBlocks * sizeof(int));
-//    memcpy(x, outSizes, actualNBBlocks*sizeof(int));
-    sz_cost_end_msg("");
 
-    printf("actualNBBlocks=%d\n", actualNBBlocks);
-    size_t z[100];
-#pragma omp parallel shared(actualNBBlocks,nbThreads,outSizesAccumlate,z)
+    size_t z0[100],z1[100];
+#pragma omp parallel shared(actualNBBlocks,nbThreads,outSizesAccumlate,z0,z1)
     {
         int tid = omp_get_thread_num();
         int work = (actualNBBlocks + nbThreads-1) / nbThreads;
@@ -514,57 +509,69 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
         if (hi > actualNBBlocks){
             hi = actualNBBlocks;
         }
-        printf("%d %d %d\n", tid, lo, hi);
         int b;
+        nbNonConstantBlockAccumlate[lo]=stateArray[lo];
         for (b = lo+1; b < hi; b++){
             outSizesAccumlate[b] = outSizesAccumlate[b] + outSizesAccumlate[b-1];
         }
-        z[tid] = outSizesAccumlate[hi-1];
-        size_t offset=0;
+        for (b = lo+1; b < hi; b++){
+            nbNonConstantBlockAccumlate[b]=stateArray[b]+nbNonConstantBlockAccumlate[b-1];
+        }
+        z0[tid] = outSizesAccumlate[hi-1];
+        z1[tid] = nbNonConstantBlockAccumlate[hi-1];
+        size_t offset0=0, offset1=0;
 #pragma omp barrier
         for (int j = 0; j < tid; j++) {
-            offset+=z[j];
+            offset0+=z0[j];
+            offset1+=z1[j];
         }
         for (b = lo; b < hi; b++){
-            outSizesAccumlate[b] = outSizesAccumlate[b] + offset;
+            outSizesAccumlate[b] = outSizesAccumlate[b] + offset0;
+            nbNonConstantBlockAccumlate[b] = nbNonConstantBlockAccumlate[b] + offset1;
         }
     }
 
     sz_cost_end_msg("parallel prefix sum");
-    sz_cost_start();
-    for (i = 0; i < actualNBBlocks; i++) {
-        if (stateArray[i]) {
-            *r = outSizes[i];
-            r++;
-        } else {
-            parray[i] = p;
-            p += sizeof(float);
-        }
-    }
-    sz_cost_end_msg("sequential-3 prefix sum");
+
     sz_cost_start();
 
 #pragma omp parallel for schedule(static,100)
     for (i = 0; i < actualNBBlocks; i++) {
         if (stateArray[i]) {
             memcpy(q+outSizesAccumlate[i]-outSizes[i], tmp_q + i * blockSize * sizeof(float), outSizes[i]);
+            r[nbNonConstantBlockAccumlate[i]-1]=outSizes[i];
         } else {
-            floatToBytes(parray[i], medianArray[i]);
+            floatToBytes(p+(i-nbNonConstantBlockAccumlate[i])*sizeof(float), medianArray[i]);
         }
     }
     *outSize += outSizesAccumlate[actualNBBlocks-1];
 
     sz_cost_end_msg("parallel-2 memcpy");
     sz_cost_start();
+
+//    for (i = 0; i < actualNBBlocks; i++) {
+//        if (stateArray[i]) {
+//            *r = outSizes[i];
+//            r++;
+//        } else {
+////            parray[i] = p;
+//            p += sizeof(float);
+//        }
+//    }
+//    sz_cost_end_msg("sequential-3 prefix sum");
+//    sz_cost_start();
+
+
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, R);
     sz_cost_end_msg("sequential-4 int2byte");
     sz_cost_start();
+    free(nbNonConstantBlockAccumlate);
+    free(outSizesAccumlate);
     free(leadNumberArray_int);
     free(tmp_q);
     free(medianArray);
     free(stateArray);
     free(outSizes);
-    free(outSizesAccumlate);
     sz_cost_end_msg("sequential-5 free");
     return outputBytes;
 #else
