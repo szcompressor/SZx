@@ -431,6 +431,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     unsigned char *tmp_q = (unsigned char *) malloc(blockSize * sizeof(float) * actualNBBlocks);
     int *outSizes = (int *) malloc(actualNBBlocks * sizeof(int));
     int *outSizesAccumlate = (int *) malloc(actualNBBlocks * sizeof(int));
+    int *nbNonConstantBlockAccumlate = (int *) malloc(actualNBBlocks * sizeof(int));
 
     (*outSize) = 0;
     size_t maxPreservedBufferSize =
@@ -495,7 +496,6 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
 //3: versions, 1: metadata: state, 1: metadata: blockSize, sizeof(size_t): nbConstantBlocks, ....
     *outSize = (3 + 1 + 1 + sizeof(size_t) + nbNonConstantBlocks + stateNBBytes +
                 sizeof(float) * nbConstantBlocks);
-    int *nbNonConstantBlockAccumlate = (int *) malloc(actualNBBlocks * sizeof(int));
 
     sz_cost_start();
 
@@ -548,19 +548,6 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
 
     sz_cost_end_msg("parallel-2 memcpy");
     sz_cost_start();
-
-//    for (i = 0; i < actualNBBlocks; i++) {
-//        if (stateArray[i]) {
-//            *r = outSizes[i];
-//            r++;
-//        } else {
-////            parray[i] = p;
-//            p += sizeof(float);
-//        }
-//    }
-//    sz_cost_end_msg("sequential-3 prefix sum");
-//    sz_cost_start();
-
 
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, R);
     sz_cost_end_msg("sequential-4 int2byte");
