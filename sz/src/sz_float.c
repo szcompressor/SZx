@@ -401,9 +401,8 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
 }
 
 unsigned char *
-SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, size_t *outSize, float absErrBound,
+SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *oriData, size_t *outSize, float absErrBound,
                                                                size_t nbEle, int blockSize) {
-#ifdef _OPENMP
     printf("use openmp\n");
     sz_cost_start();
     float *op = oriData;
@@ -561,8 +560,10 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     free(outSizes);
     sz_cost_end_msg("sequential-5 free");
     return outputBytes;
-#else
-    printf("no openmp\n");
+}
+unsigned char *
+SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, size_t *outSize, float absErrBound,
+    size_t nbEle, int blockSize) {
     float *op = oriData;
     float *op0 = oriData;
 
@@ -642,7 +643,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     free(leadNumberArray_int);
 
     return outputBytes;
-#endif
+
 }
 
 
@@ -3777,7 +3778,7 @@ void SZ_compress_args_float_NoCkRnge_2D_subblock(unsigned char *compressedBytes,
         printf("Error: Wrong setting of confparams_cpr->szMode in the double compression.\n");
     }
 
-    //TODO
+    //`TODO
 //	if(*outSize>dataLength*sizeof(float))
 //		SZ_compress_args_float_StoreOriData(oriData, dataLength, newByteData, outSize);
 

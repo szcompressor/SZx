@@ -43,8 +43,8 @@ int main(int argc, char * argv[])
     char zipFilePath[640], outputFilePath[645];
     if(argc < 2)
     {
-		printf("Usage: testfloat_decompress_fastmode3 [srcFilePath] [nbEle]\n");
-		printf("Example: testfloat_decompress_fastmode3 testfloat_8_8_128.dat.sz 8192\n");
+		printf("Usage: testfloat_decompress_fastmode4 [srcFilePath] [nbEle]\n");
+		printf("Example: testfloat_decompress_fastmode4 testfloat_8_8_128.dat.sz 8192\n");
 		exit(0);
 	}	
    
@@ -65,7 +65,11 @@ int main(int argc, char * argv[])
  
     cost_start();
     float *data = NULL;
+#ifdef _OPENMP
+    SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(&data, nbEle, bytes);
+#else
     SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(&data, nbEle, bytes);
+#endif
     cost_end();
     
     free(bytes); 

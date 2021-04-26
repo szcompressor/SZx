@@ -309,86 +309,88 @@ void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t
 	free(constantMedianArray);
 }
 
-void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** newData, size_t nbEle, unsigned char* cmpBytes)
-{
-#ifdef _OPENMP
+void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(float** newData, size_t nbEle, unsigned char* cmpBytes) {
 
-    *newData = (float*)malloc(sizeof(float)*nbEle);
-    sz_cost_start();
-    unsigned char* r = cmpBytes;
-    r+=4; //skip version information
-    int blockSize = r[0];  //get block size
-    r++;
-    size_t nbConstantBlocks = bytesToLong_bigEndian(r); //get number of constant blocks
-    r += sizeof(size_t);
+	*newData = (float *) malloc(sizeof(float) * nbEle);
+	sz_cost_start();
+	unsigned char *r = cmpBytes;
+	r += 4; //skip version information
+	int blockSize = r[0];  //get block size
+	r++;
+	size_t nbConstantBlocks = bytesToLong_bigEndian(r); //get number of constant blocks
+	r += sizeof(size_t);
 
-    size_t nbBlocks = nbEle/blockSize;
-    size_t remainCount = nbEle%blockSize;
-    size_t stateNBBytes = remainCount == 0 ? (nbBlocks%8==0?nbBlocks/8:nbBlocks/8+1) : ((nbBlocks+1)%8==0? (nbBlocks+1)/8:(nbBlocks+1)/8+1);
-    size_t actualNBBlocks = remainCount==0 ? nbBlocks : nbBlocks+1;
+	size_t nbBlocks = nbEle / blockSize;
+	size_t remainCount = nbEle % blockSize;
+	size_t stateNBBytes =
+			remainCount == 0 ? (nbBlocks % 8 == 0 ? nbBlocks / 8 : nbBlocks / 8 + 1) : ((nbBlocks + 1) % 8 == 0 ?
+																						(nbBlocks + 1) / 8 :
+																						(nbBlocks + 1) / 8 + 1);
+	size_t actualNBBlocks = remainCount == 0 ? nbBlocks : nbBlocks + 1;
 
-    size_t nbNonConstantBlocks = actualNBBlocks - nbConstantBlocks;
+	size_t nbNonConstantBlocks = actualNBBlocks - nbConstantBlocks;
 
-    unsigned char* R = r; //block-size information
+	unsigned char *R = r; //block-size information
 
-    r += nbNonConstantBlocks;
+	r += nbNonConstantBlocks;
 
-    unsigned char* stateArray = (unsigned char*)malloc(actualNBBlocks);
-    float* constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));
+	unsigned char *stateArray = (unsigned char *) malloc(actualNBBlocks);
+	float *constantMedianArray = (float *) malloc(nbConstantBlocks * sizeof(float));
 
-    convertByteArray2IntArray_fast_1b_args(actualNBBlocks, r, stateNBBytes, stateArray); //get the stateArray
+	convertByteArray2IntArray_fast_1b_args(actualNBBlocks, r, stateNBBytes, stateArray); //get the stateArray
 
-    unsigned char* p = r + stateNBBytes; //p is the starting address of constant median values.
+	unsigned char *p = r + stateNBBytes; //p is the starting address of constant median values.
 
-    size_t i = 0,  k = 0; //k is used to keep track of constant block index
-    for (i = 0; i < nbConstantBlocks; i++, k += 4) //get the median values for constant-value blocks
-        constantMedianArray[i] = bytesToFloat(p + k);
+	size_t i = 0, k = 0; //k is used to keep track of constant block index
+	for (i = 0; i < nbConstantBlocks; i++, k += 4) //get the median values for constant-value blocks
+		constantMedianArray[i] = bytesToFloat(p + k);
 
-    unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data blocks
-    float* op = *newData;
+	unsigned char *q = p + sizeof(float) * nbConstantBlocks; //q is the starting address of the non-constant data blocks
+	float *op = *newData;
 
-    unsigned char **qarray = (unsigned char **) malloc(actualNBBlocks * sizeof(unsigned char *));
-    float *parray = (float *) malloc(actualNBBlocks * sizeof(float));
-    size_t nonConstantBlockID = 0, constantBlockID = 0;
-    for (i = 0; i < actualNBBlocks; i++) {
-        if (stateArray[i]) {
-            qarray[i] = q;
-            q += R[nonConstantBlockID++];
-        } else {
-            parray[i] = constantMedianArray[constantBlockID++];
-        }
-    }
-    sz_cost_end_msg("sequential-1");
+	unsigned char **qarray = (unsigned char **) malloc(actualNBBlocks * sizeof(unsigned char *));
+	float *parray = (float *) malloc(actualNBBlocks * sizeof(float));
+	size_t nonConstantBlockID = 0, constantBlockID = 0;
+	for (i = 0; i < actualNBBlocks; i++) {
+		if (stateArray[i]) {
+			qarray[i] = q;
+			q += R[nonConstantBlockID++];
+		} else {
+			parray[i] = constantMedianArray[constantBlockID++];
+		}
+	}
+	sz_cost_end_msg("sequential-1");
 
-    sz_cost_start();
-#pragma omp parallel for schedule(dynamic,100)
-    for (i = 0; i < nbBlocks; i++) {
-        if (stateArray[i]) {//non-constant block
-            SZ_fast_decompress_args_unpredictable_one_block_float(op + i * blockSize, blockSize, qarray[i]);
-        } else {//constant block
-            float medianValue = constantMedianArray[k];
-            for (int j = 0; j < blockSize; j++)
-                op[i * blockSize + j] = parray[i];
-        }
-    }
-    sz_cost_end_msg("parallel-1");
+	sz_cost_start();
+#pragma omp parallel for schedule(dynamic, 100)
+	for (i = 0; i < nbBlocks; i++) {
+		if (stateArray[i]) {//non-constant block
+			SZ_fast_decompress_args_unpredictable_one_block_float(op + i * blockSize, blockSize, qarray[i]);
+		} else {//constant block
+			float medianValue = constantMedianArray[k];
+			for (int j = 0; j < blockSize; j++)
+				op[i * blockSize + j] = parray[i];
+		}
+	}
+	sz_cost_end_msg("parallel-1");
 
-    sz_cost_start();
-    if (remainCount) {
-        if (stateArray[i]) { //non-constant block
-            SZ_fast_decompress_args_unpredictable_one_block_float(op + i * blockSize, remainCount, qarray[i]);
-        } else {//constant block
-            for (int j = 0; j < remainCount; j++)
-                op[i * blockSize + j] = parray[i];
-        }
-    }
+	sz_cost_start();
+	if (remainCount) {
+		if (stateArray[i]) { //non-constant block
+			SZ_fast_decompress_args_unpredictable_one_block_float(op + i * blockSize, remainCount, qarray[i]);
+		} else {//constant block
+			for (int j = 0; j < remainCount; j++)
+				op[i * blockSize + j] = parray[i];
+		}
+	}
 
-    free(parray);
-    free(qarray);
-    free(stateArray);
-    free(constantMedianArray);
-    sz_cost_end_msg("sequence-2 free");
-#else
+	free(parray);
+	free(qarray);
+	free(stateArray);
+	free(constantMedianArray);
+	sz_cost_end_msg("sequence-2 free");
+}
+void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** newData, size_t nbEle, unsigned char* cmpBytes){
 	*newData = (float*)malloc(sizeof(float)*nbEle);
 	
 	unsigned char* r = cmpBytes;
@@ -460,7 +462,6 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
 	
 	free(stateArray);
 	free(constantMedianArray);
-#endif
 }
 
 void SZ_fast_decompress_args_unpredictable_float(float** newData, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, unsigned char* cmpBytes, 

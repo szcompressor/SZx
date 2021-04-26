@@ -44,8 +44,8 @@ int main(int argc, char * argv[])
     char *cfgFile;
     if(argc < 4)
     {
-		printf("Usage: testfloat_compress_fastmode3 [config_file] [srcFilePath] [block size] [err bound]\n");
-		printf("Example: testfloat_compress_fastmode3 sz.config testfloat_8_8_128.dat 64 1E-3\n");
+		printf("Usage: testfloat_compress_fastmode4 [config_file] [srcFilePath] [block size] [err bound]\n");
+		printf("Example: testfloat_compress_fastmode4 sz.config testfloat_8_8_128.dat 64 1E-3\n");
 		exit(0);
     }
 
@@ -54,6 +54,9 @@ int main(int argc, char * argv[])
     int blockSize = atoi(argv[3]);
     float errBound = atof(argv[4]);
 
+    if (argc>=6){
+        omp_set_num_threads(atoi(argv[5]));
+    }
     printf("cfgFile=%s\n", cfgFile);
     int status = SZ_Init(cfgFile);
     if(status == SZ_NSCS)
@@ -72,7 +75,12 @@ int main(int argc, char * argv[])
 
     size_t outSize;
     cost_start();
+#ifdef _OPENMP
+    unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(data, &outSize, errBound, nbEle, blockSize);
+#else
     unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, &outSize, errBound, nbEle, blockSize);
+#endif
+
     cost_end();
     printf("\ntimecost=%f, total fastmode2\n",totalCost);
     printf("compression size = %zu, CR = %f\n", outSize, 1.0f*nbEle*sizeof(float)/outSize);
