@@ -458,7 +458,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     sz_cost_end_msg("sequential-1 malloc");
     sz_cost_start();
 }
-#pragma omp for reduction(+:nbNonConstantBlocks) schedule(static,100)
+#pragma omp for reduction(+:nbNonConstantBlocks) schedule(static)
     for (i = 0; i < nbBlocks; i++) {
         float radius;
         computeStateMedianRadius_float2(op + i * blockSize, blockSize, absErrBound, stateArray + i, medianArray + i,
@@ -479,6 +479,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
 #pragma omp single
 {
     sz_cost_end_msg("parallel-1 compress");
+//    exit(0);
     if (remainCount != 0) {
         float radius;
         computeStateMedianRadius_float2(op + i * blockSize, remainCount, absErrBound, stateArray + i, medianArray + i,
@@ -543,7 +544,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     sz_cost_end_msg("parallel prefix sum");
     sz_cost_start();
 };
-#pragma omp for schedule(static,100)
+#pragma omp for schedule(static)
     for (i = 0; i < actualNBBlocks; i++) {
         if (stateArray[i]) {
             memcpy(q+outSizesAccumlate[i]-outSizes[i], tmp_q + i * blockSize * sizeof(float), outSizes[i]);
