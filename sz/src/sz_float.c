@@ -494,8 +494,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     }
 
     nbConstantBlocks = actualNBBlocks - nbNonConstantBlocks;
-    printf("actualNBBlocks=%d\n", actualNBBlocks);
-    printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f * (nbConstantBlocks * blockSize) / nbEle);
+
 
     sizeToBytes(r, nbConstantBlocks);
     r += sizeof(size_t); //r is the starting address of 'block-size array'
@@ -541,7 +540,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     }
 #pragma omp single
 {
-    sz_cost_end_msg("parallel prefix sum");
+    sz_cost_end_msg("parallel-2 prefix sum");
     sz_cost_start();
 };
 #pragma omp for schedule(static)
@@ -555,13 +554,13 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     }
 #pragma omp single
 {
-    sz_cost_end_msg("parallel-2 memcpy");
+    sz_cost_end_msg("parallel-3 memcpy");
     sz_cost_start();
 
     *outSize += outSizesAccumlate[actualNBBlocks-1];
 
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, R);
-    sz_cost_end_msg("sequential-4 int2byte");
+    sz_cost_end_msg("sequential-2 int2byte");
     sz_cost_start();
     free(nbNonConstantBlockAccumlate);
     free(outSizesAccumlate);
@@ -570,7 +569,9 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     free(medianArray);
     free(stateArray);
     free(outSizes);
-    sz_cost_end_msg("sequential-5 free");
+    sz_cost_end_msg("sequential-3 free");
+    printf("actualNBBlocks=%d\n", actualNBBlocks);
+    printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f * (nbConstantBlocks * blockSize) / nbEle);
 }
 }
     return outputBytes;
