@@ -345,7 +345,7 @@ void simd_max_min(float *x, int n, float *tmp_max, float *tmp_min) {
             *tmp_max = *tmp_max < max128[j] ? max128[j] : *tmp_max;
             *tmp_min = *tmp_min > min128[j] ? min128[j] : *tmp_min;
           }
-        }
+
         if ( i < n ) {
             max_min(ptr_x, n - i, tmp_max, tmp_min);
         }
