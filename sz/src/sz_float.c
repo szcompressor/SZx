@@ -317,26 +317,26 @@ void simd_max_min(float *x, int n, float *tmp_max, float *tmp_min) {
     *tmp_min = x[0];
 #ifdef  __AVX512F__
     //    printf("use avx512, n=%d \n", n);
-    int n32 = n & -32, i = 0;
-    if (n > 32) {
+    int n16 = n & -16, i = 0;
+    if (n > 16) {
         float *ptr_x = x;
         __m512 max1 = _mm512_loadu_ps(ptr_x);
-        __m512 max2 = _mm512_loadu_ps(ptr_x + 16);
+//        __m512 max2 = _mm512_loadu_ps(ptr_x + 16);
         __m512 min1 = max1;
-        __m512 min2 = max2;
+//        __m512 min2 = max2;
         __m512 tmp1;
-        __m512 tmp2;
-        for (; i < n32; i += 32) {
+//        __m512 tmp2;
+        for (; i < n16; i += 16) {
             tmp1 = _mm512_loadu_ps(ptr_x);
             max1 = _mm512_max_ps(tmp1, max1);
             min1 = _mm512_min_ps(tmp1, min1);
-            tmp2 = _mm512_loadu_ps(ptr_x+16);
-            max2 = _mm512_max_ps(tmp2, max2);
-            min2 = _mm512_min_ps(tmp2, min2);
-            ptr_x += 32;
+//            tmp2 = _mm512_loadu_ps(ptr_x+16);
+//            max2 = _mm512_max_ps(tmp2, max2);
+//            min2 = _mm512_min_ps(tmp2, min2);
+            ptr_x += 16;
         }
-        max1 = _mm512_max_ps(max1, max2);
-        min1 = _mm512_min_ps(min1, min2);
+//        max1 = _mm512_max_ps(max1, max2);
+//        min1 = _mm512_min_ps(min1, min2);
         // only 16 numbers - no need to optimize
         for (int j = 0; j < 16; j++) {
             *tmp_max = *tmp_max < max1[j] ? max1[j] : *tmp_max;
