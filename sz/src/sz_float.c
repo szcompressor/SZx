@@ -315,7 +315,34 @@ void max_min(float *x, int n, float *tmp_max, float *tmp_min) {
 void simd_max_min(float *x, int n, float *tmp_max, float *tmp_min) {
     *tmp_max = x[0];
     *tmp_min = x[0];
-#ifdef __AVX2__
+#ifdef  __AVX512F__
+    //    printf("use avx512, n=%d \n", n);
+    int n32 = n & -32, i = 0;
+    if (n > 32) {
+        float *ptr_x = x;
+        __m512 max1 = _mm512_loadu_ps(ptr_x);
+        __m512 max2 = _mm512_loadu_ps(ptr_x + 16);
+        __m512 min1 = max1;
+        __m512 min2 = max2;
+        for (; i < n32; i += 32) {
+            max1 = _mm512_max_ps(_mm512_loadu_ps(ptr_x), max1);
+            min1 = _mm512_min_ps(_mm512_loadu_ps(ptr_x), min1);
+            max2 = _mm512_max_ps(_mm512_loadu_ps(ptr_x + 16), max2);
+            min2 = _mm512_min_ps(_mm512_loadu_ps(ptr_x + 16), min2);
+            ptr_x += 32;
+        }
+        max1 = _mm512_max_ps(max1, max2);
+        min1 = _mm512_min_ps(min1, min2);
+        // only 16 numbers - no need to optimize
+        for (int j = 0; j < 16; j++) {
+            *tmp_max = *tmp_max < max1[j] ? max1[j] : *tmp_max;
+            *tmp_min = *tmp_min > min1[j] ? min1[j] : *tmp_min;
+        }
+        max_min(ptr_x, n - i, tmp_max, tmp_min);
+    } else {
+        max_min(x, n, tmp_max, tmp_min);
+    }
+#elif __AVX2__
 //        printf("use avx2, n=%d \n", n);
     //    fflush(stdout);
     int n16 = n & -16, i = 0;
@@ -341,48 +368,6 @@ void simd_max_min(float *x, int n, float *tmp_max, float *tmp_min) {
             *tmp_min = *tmp_min > min1[j] ? min1[j] : *tmp_min;
         }
         max_min(ptr_x, n - i, tmp_max, tmp_min);
-    } else {
-        max_min(x, n, tmp_max, tmp_min);
-    }
-#elif  __AVX512F__
-    //    printf("use avx512, n=%d \n", n);
-    //    fflush(stdout);
-    // avx512 - 16 fp32 in a lane
-    // unroll the loop by 4 times
-    int n64 = n & -64, i = 0;
-    if (n > 64) {
-        float *ptr_x = x;
-        __m512 max1 = _mm512_loadu_ps(ptr_x);
-        __m512 max2 = _mm512_loadu_ps(ptr_x + 16);
-        __m512 max3 = _mm512_loadu_ps(ptr_x + 32);
-        __m512 max4 = _mm512_loadu_ps(ptr_x + 48);
-        __m512 min1 = max1;
-        __m512 min2 = max2;
-        __m512 min3 = max3;
-        __m512 min4 = max4;
-        for (; i < n64; i += 64) {
-            max1 = _mm512_max_ps(_mm512_loadu_ps(ptr_x), max1);
-            min1 = _mm512_min_ps(_mm512_loadu_ps(ptr_x), min1);
-            max2 = _mm512_max_ps(_mm512_loadu_ps(ptr_x + 16), max2);
-            min2 = _mm512_min_ps(_mm512_loadu_ps(ptr_x + 16), min2);
-            max3 = _mm512_max_ps(_mm512_loadu_ps(ptr_x + 32), max3);
-            min3 = _mm512_min_ps(_mm512_loadu_ps(ptr_x + 32), min3);
-            max4 = _mm512_max_ps(_mm512_loadu_ps(ptr_x + 48), max4);
-            min4 = _mm512_min_ps(_mm512_loadu_ps(ptr_x + 48), min4);
-            ptr_x += 64;
-        }
-        max1 = _mm512_max_ps(max1, max3);
-        max2 = _mm512_max_ps(max2, max4);
-        max1 = _mm512_max_ps(max1, max2);
-        min1 = _mm512_min_ps(min1, min3);
-        min2 = _mm512_min_ps(min2, min4);
-        min1 = _mm512_min_ps(min1, min2);
-        // only 16 numbers - no need to optimize
-        for (int j = 0; j < 16; j++) {
-            *tmp_max = *tmp_max < max1[j] ? max1[j] : *tmp_max;
-            *tmp_min = *tmp_min > min1[j] ? min1[j] : *tmp_min;
-        }
-        max_min(x+i, n-i, tmp_max, tmp_min);
     } else {
         max_min(x, n, tmp_max, tmp_min);
     }
