@@ -324,11 +324,15 @@ void simd_max_min(float *x, int n, float *tmp_max, float *tmp_min) {
         __m512 max2 = _mm512_loadu_ps(ptr_x + 16);
         __m512 min1 = max1;
         __m512 min2 = max2;
+        __m512 tmp1;
+        __m512 tmp2;
         for (; i < n32; i += 32) {
-            max1 = _mm512_max_ps(_mm512_loadu_ps(ptr_x), max1);
-            min1 = _mm512_min_ps(_mm512_loadu_ps(ptr_x), min1);
-            max2 = _mm512_max_ps(_mm512_loadu_ps(ptr_x + 16), max2);
-            min2 = _mm512_min_ps(_mm512_loadu_ps(ptr_x + 16), min2);
+            tmp1 = _mm512_loadu_ps(ptr_x);
+            max1 = _mm512_max_ps(tmp1, max1);
+            min1 = _mm512_min_ps(tmp1, min1);
+            tmp2 = _mm512_loadu_ps(ptr_x+16);
+            max2 = _mm512_max_ps(tmp2, max2);
+            min2 = _mm512_min_ps(tmp2, min2);
             ptr_x += 32;
         }
         max1 = _mm512_max_ps(max1, max2);
