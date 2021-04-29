@@ -35,6 +35,10 @@
 #include "omp.h"
 #endif
 
+#if defined(__AVX__) || defined(__AVX2__)  || defined(__AVX512F__)
+#include <immintrin.h>
+#endif
+
 unsigned char *
 SZ_fast_compress_args_with_prediction_float(float *pred, float *data, size_t *outSize, float absErrBound, size_t r5,
                                             size_t r4, size_t r3, size_t r2, size_t r1, float medianValue,
@@ -53,7 +57,6 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
                                                                 unsigned char *outputBytes, int *outSize,
                                                                 unsigned char *leadNumberArray_int, float medianValue,
                                                                 float radius) {
-
     size_t totalSize = 0, i = 0;
 
     int reqLength;
@@ -85,9 +88,7 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
     int ignBytesLength = 32 - reqLength;
     if (ignBytesLength < 0)
         ignBytesLength = 0;
-
     register unsigned char leadingNum = 0;
-
     size_t residualMidBytes_size = 0;
     if (sysEndianType == LITTLE_ENDIAN_SYSTEM) {
         if (reqBytesLength == 2) {
@@ -223,7 +224,6 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
         }
 
         convertIntArray2ByteArray_fast_2b_args(leadNumberArray_int, nbEle, leadNumberArray);
-
         int k = 0;
 
         unsigned char reqLengthB = (unsigned char) reqLength;
@@ -300,17 +300,103 @@ size_t computeStateMedianRadius_float(float *oriData, size_t nbEle, float absErr
     return nbConstantBlocks;
 }
 
+
+void max_min(float *x, int n, float *tmp_max, float *tmp_min) {
+    for (size_t i = 0; i < n; i++) {
+        if (x[i] > *tmp_max) {
+            *tmp_max = x[i];
+        }
+        if (x[i] < *tmp_min) {
+            *tmp_min = x[i];
+        }
+    }
+}
+
+void simd_max_min(float *x, int n, float *tmp_max, float *tmp_min) {
+    *tmp_max = x[0];
+    *tmp_min = x[0];
+#ifdef __AVX2__
+//        printf("use avx2, n=%d \n", n);
+    //    fflush(stdout);
+    int n16 = n & -16, i = 0;
+    if (n > 16) {
+        float *ptr_x = x;
+        __m256 max1 = _mm256_loadu_ps(ptr_x);
+        __m256 max2 = _mm256_loadu_ps(ptr_x + 8);
+        __m256 min1 = max1;
+        __m256 min2 = max2;
+        for (; i < n16; i += 16) {
+            max1 = _mm256_max_ps(_mm256_loadu_ps(ptr_x), max1);
+            min1 = _mm256_min_ps(_mm256_loadu_ps(ptr_x), min1);
+            max2 = _mm256_max_ps(_mm256_loadu_ps(ptr_x + 8), max2);
+            min2 = _mm256_min_ps(_mm256_loadu_ps(ptr_x + 8), min2);
+            ptr_x += 16;
+        }
+//        printf("%d %d %d\n", n, n16, i);
+//        exit(0);
+        max1 = _mm256_max_ps(max1, max2);
+        min1 = _mm256_min_ps(min1, min2);
+        for (int j = 0; j < 8; j++) {
+            *tmp_max = *tmp_max < max1[j] ? max1[j] : *tmp_max;
+            *tmp_min = *tmp_min > min1[j] ? min1[j] : *tmp_min;
+        }
+        max_min(ptr_x, n - i, tmp_max, tmp_min);
+    } else {
+        max_min(x, n, tmp_max, tmp_min);
+    }
+#elif  __AVX512F__
+    //    printf("use avx512, n=%d \n", n);
+    //    fflush(stdout);
+    // avx512 - 16 fp32 in a lane
+    // unroll the loop by 4 times
+    int n64 = n & -64, i = 0;
+    if (n > 64) {
+        float *ptr_x = x;
+        __m512 max1 = _mm512_loadu_ps(ptr_x);
+        __m512 max2 = _mm512_loadu_ps(ptr_x + 16);
+        __m512 max3 = _mm512_loadu_ps(ptr_x + 32);
+        __m512 max4 = _mm512_loadu_ps(ptr_x + 48);
+        __m512 min1 = max1;
+        __m512 min2 = max2;
+        __m512 min3 = max3;
+        __m512 min4 = max4;
+        for (; i < n64; i += 64) {
+            max1 = _mm512_max_ps(_mm512_loadu_ps(ptr_x), max1);
+            min1 = _mm512_min_ps(_mm512_loadu_ps(ptr_x), min1);
+            max2 = _mm512_max_ps(_mm512_loadu_ps(ptr_x + 16), max2);
+            min2 = _mm512_min_ps(_mm512_loadu_ps(ptr_x + 16), min2);
+            max3 = _mm512_max_ps(_mm512_loadu_ps(ptr_x + 32), max3);
+            min3 = _mm512_min_ps(_mm512_loadu_ps(ptr_x + 32), min3);
+            max4 = _mm512_max_ps(_mm512_loadu_ps(ptr_x + 48), max4);
+            min4 = _mm512_min_ps(_mm512_loadu_ps(ptr_x + 48), min4);
+            ptr_x += 64;
+        }
+        max1 = _mm512_max_ps(max1, max3);
+        max2 = _mm512_max_ps(max2, max4);
+        max1 = _mm512_max_ps(max1, max2);
+        min1 = _mm512_min_ps(min1, min3);
+        min2 = _mm512_min_ps(min2, min4);
+        min1 = _mm512_min_ps(min1, min2);
+        // only 16 numbers - no need to optimize
+        for (int j = 0; j < 16; j++) {
+            *tmp_max = *tmp_max < max1[j] ? max1[j] : *tmp_max;
+            *tmp_min = *tmp_min > min1[j] ? min1[j] : *tmp_min;
+        }
+        max_min(x+i, n-i, tmp_max, tmp_min);
+    } else {
+        max_min(x, n, tmp_max, tmp_min);
+    }
+#else
+    max_min(x, n, tmp_max, tmp_min);
+#endif
+}
+
 void computeStateMedianRadius_float2(float *oriData, size_t nbEle, float absErrBound,
                                      unsigned char *state, float *median, float *radius) {
-    float min = oriData[0];
-    float max = oriData[0];
-    for (size_t i = 1; i < nbEle; i++) {
-        float v = oriData[i];
-        if (min > v)
-            min = v;
-        else if (max < v)
-            max = v;
-    }
+     float min = oriData[0];
+     float max = oriData[0];
+     simd_max_min(oriData, nbEle, &max, &min);
+
     float valueRange = max - min;
     *radius = valueRange / 2;
     *median = min + *radius;
@@ -443,7 +529,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     int nbThreads = 1;
     unsigned char *leadNumberArray_int;
     size_t z0[100],z1[100];
-    
+
     size_t nbConstantBlocks;
     unsigned char *R, *p, *q;
 
