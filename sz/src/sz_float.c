@@ -477,6 +477,12 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
 #ifdef _OPENMP
     printf("use openmp\n");
 
+#ifdef __AVX512F__
+    printf("use avx512\n");
+#elif __AVX2__
+    printf("use avx2\n");
+#else
+#endif
     sz_cost_start();
     float *op = oriData;
 
