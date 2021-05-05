@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <inttypes.h>
 #include "sz.h"
 #include "rw.h"
 
@@ -46,14 +47,15 @@ int main(int argc, char * argv[])
 		printf("Usage: testfloat_decompress_fastmode3 [srcFilePath] [nbEle]\n");
 		printf("Example: testfloat_decompress_fastmode3 testfloat_8_8_128.dat.sz 8192\n");
 		exit(0);
-	}	
-   
+	}
+
     sprintf(zipFilePath, "%s", argv[1]);
-    nbEle = atoi(argv[2]);
+//    nbEle = atoi(argv[2]);
+    nbEle = strtoimax(argv[2], NULL, 10);
 
     sprintf(outputFilePath, "%s.out", zipFilePath);
-    
-    size_t byteLength; 
+
+    size_t byteLength;
     int status;
     unsigned char *bytes = readByteData(zipFilePath, &byteLength, &status);
     if(status!=SZ_SCES)
@@ -61,15 +63,15 @@ int main(int argc, char * argv[])
         printf("Error: %s cannot be read!\n", zipFilePath);
         exit(0);
     }
-  
- 
+
+
     cost_start();
     float *data = NULL;
     SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(&data, nbEle, bytes);
     cost_end();
-    
-    free(bytes); 
-    printf("timecost=%f\n",totalCost); 
+
+    free(bytes);
+    printf("timecost=%f\n",totalCost);
     writeFloatData_inBytes(data, nbEle, outputFilePath, &status);
     if(status!=SZ_SCES)
     {
@@ -77,7 +79,7 @@ int main(int argc, char * argv[])
 	exit(0);
     }
     printf("done\n");
-    
+
     char oriFilePath[645];
     strncpy(oriFilePath, zipFilePath, (unsigned)strlen(zipFilePath)-3);
     oriFilePath[strlen(zipFilePath)-3] = '\0';
@@ -104,13 +106,13 @@ int main(int argc, char * argv[])
 
     double sum3 = 0, sum4 = 0;
     double sum = 0, prodSum = 0, relerr = 0;
-   
-    double maxpw_relerr = 0; 
+
+    double maxpw_relerr = 0;
     for (i = 0; i < nbEle; i++)
     {
         if (Max < ori_data[i]) Max = ori_data[i];
         if (Min > ori_data[i]) Min = ori_data[i];
-        
+
         float err = fabs(data[i] - ori_data[i]);
 	if(ori_data[i]!=0)
 	{
@@ -132,19 +134,19 @@ int main(int argc, char * argv[])
         prodSum += (ori_data[i]-mean1)*(data[i]-mean2);
         sum3 += (ori_data[i] - mean1)*(ori_data[i]-mean1);
         sum4 += (data[i] - mean2)*(data[i]-mean2);
-	sum += err*err;	
+	sum += err*err;
     }
     double std1 = sqrt(sum3/nbEle);
     double std2 = sqrt(sum4/nbEle);
     double ee = prodSum/nbEle;
     double acEff = ee/std1/std2;
- 
+
     double mse = sum/nbEle;
     double range = Max - Min;
     double psnr = 20*log10(range)-10*log10(mse);
     double nrmse = sqrt(mse)/range;
-     
-    double compressionRatio = 1.0*nbEle*sizeof(float)/byteLength;	
+
+    double compressionRatio = 1.0*nbEle*sizeof(float)/byteLength;
 
     printf ("Min=%.20G, Max=%.20G, range=%.20G\n", Min, Max, range);
     printf ("Max absolute error = %.10f\n", diffMax);
