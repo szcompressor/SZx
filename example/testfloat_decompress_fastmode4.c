@@ -13,6 +13,7 @@
 #include <string.h>
 #include <math.h>
 #include <inttypes.h>
+#include <omp.h>
 #include "sz.h"
 #include "rw.h"
 
@@ -52,6 +53,10 @@ int main(int argc, char * argv[])
     sprintf(zipFilePath, "%s", argv[1]);
 //    nbEle = atoi(argv[2]);
     nbEle = strtoimax(argv[2], NULL, 10);
+
+    if (argc>=4){
+        omp_set_num_threads(atoi(argv[3]));
+    }
 
     sprintf(outputFilePath, "%s.out", zipFilePath);
     

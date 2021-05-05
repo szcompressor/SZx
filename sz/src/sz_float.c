@@ -70,7 +70,7 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
     int resiBitsLength = reqLength % 8;
     int rightShiftBits = 0;
 
-    unsigned char leadNumberArray_size = nbEle % 4 == 0 ? nbEle / 4 : nbEle / 4 + 1;
+    size_t leadNumberArray_size = nbEle % 4 == 0 ? nbEle / 4 : nbEle / 4 + 1;
 
     register lfloat lfBuf_pre;
     register lfloat lfBuf_cur;
