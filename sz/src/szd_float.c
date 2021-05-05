@@ -362,7 +362,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 	sz_cost_end_msg("sequential-1");
 
 	sz_cost_start();
-#pragma omp parallel for schedule(dynamic, 100)
+#pragma omp parallel for schedule(static)
 	for (i = 0; i < nbBlocks; i++) {
 		if (stateArray[i]) {//non-constant block
 			SZ_fast_decompress_args_unpredictable_one_block_float(op + i * blockSize, blockSize, qarray[i]);
