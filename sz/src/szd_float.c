@@ -351,7 +351,10 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 	unsigned char **qarray = (unsigned char **) malloc(actualNBBlocks * sizeof(unsigned char *));
 	float *parray = (float *) malloc(actualNBBlocks * sizeof(float));
 	size_t nonConstantBlockID = 0, constantBlockID = 0;
-	for (i = 0; i < actualNBBlocks; i++) {
+    sz_cost_end_msg("sequential-1 malloc");
+
+    sz_cost_start();
+    for (i = 0; i < actualNBBlocks; i++) {
 		if (stateArray[i]) {
 			qarray[i] = q;
 			q += R[nonConstantBlockID++];
@@ -359,8 +362,8 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 			parray[i] = constantMedianArray[constantBlockID++];
 		}
 	}
-	sz_cost_end_msg("sequential-1");
 
+    sz_cost_end_msg("sequential-2 sum");
 	sz_cost_start();
 #pragma omp parallel for schedule(static)
 	for (i = 0; i < nbBlocks; i++) {
@@ -388,7 +391,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 	free(qarray);
 	free(stateArray);
 	free(constantMedianArray);
-	sz_cost_end_msg("sequence-2 free");
+	sz_cost_end_msg("sequence-3 free");
 }
 void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** newData, size_t nbEle, unsigned char* cmpBytes){
 	*newData = (float*)malloc(sizeof(float)*nbEle);
