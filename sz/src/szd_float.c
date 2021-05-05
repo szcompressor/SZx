@@ -337,7 +337,6 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 	unsigned char *stateArray = (unsigned char *) malloc(actualNBBlocks);
 	float *constantMedianArray = (float *) malloc(nbConstantBlocks * sizeof(float));
 
-	convertByteArray2IntArray_fast_1b_args(actualNBBlocks, r, stateNBBytes, stateArray); //get the stateArray
 
 	unsigned char *p = r + stateNBBytes; //p is the starting address of constant median values.
 
@@ -354,6 +353,10 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
     sz_cost_end_msg("sequential-1 malloc");
 
     sz_cost_start();
+    convertByteArray2IntArray_fast_1b_args(actualNBBlocks, r, stateNBBytes, stateArray); //get the stateArray
+    sz_cost_end_msg("sequential-2 byte to int");
+
+    sz_cost_start();
     for (i = 0; i < actualNBBlocks; i++) {
 		if (stateArray[i]) {
 			qarray[i] = q;
@@ -363,7 +366,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 		}
 	}
 
-    sz_cost_end_msg("sequential-2 sum");
+    sz_cost_end_msg("sequential-3 sum");
 	sz_cost_start();
 #pragma omp parallel for schedule(static)
 	for (i = 0; i < nbBlocks; i++) {
