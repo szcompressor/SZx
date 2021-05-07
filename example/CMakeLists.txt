@@ -40,6 +40,9 @@ target_link_libraries (testfloat_decompress_fastmode3 SZ)
 add_executable (testfloat_decompress_fastmode4 testfloat_decompress_fastmode4.c)
 target_link_libraries (testfloat_decompress_fastmode4 SZ)
 
+add_executable (sz_openmp sz_openmp.c)
+target_link_libraries (sz_openmp SZ)
+
 add_executable (sz sz.c)
 target_link_libraries (sz SZ)
 
