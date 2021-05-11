@@ -529,7 +529,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
 
     int nbThreads = 1;
     unsigned char *leadNumberArray_int;
-    size_t z0[100],z1[100];
+    size_t z0[200],z1[200];
 
     size_t nbConstantBlocks;
     unsigned char *R, *p, *q;
