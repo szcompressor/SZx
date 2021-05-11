@@ -541,6 +541,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
 {
     nbThreads = omp_get_num_threads();
     printf("nbThreads = %d\n", nbThreads);
+    assert(nbThreads<200);
     leadNumberArray_int = (unsigned char *) malloc(blockSize * sizeof(int) * nbThreads);
 
     sz_cost_end_msg("sequential-1 malloc");
