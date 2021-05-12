@@ -505,7 +505,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     size_t actualNBBlocks = remainCount == 0 ? nbBlocks : nbBlocks + 1;
     size_t stateNBBytes = (actualNBBlocks % 8 == 0 ? actualNBBlocks / 8 : actualNBBlocks / 8 + 1);
 
-    unsigned char *stateArray = (unsigned char *) malloc(nbBlocks);
+    unsigned char *stateArray = (unsigned char *) malloc(actualNBBlocks);
     float *medianArray = (float *) malloc(actualNBBlocks * sizeof(float));
 
     size_t nbNonConstantBlocks = 0;
