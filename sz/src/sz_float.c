@@ -73,9 +73,9 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 		reqBytesLength ++;		
 	}
 	
-	int ignBytesLength = 32 - reqLength;
-	if(ignBytesLength<0)
-		ignBytesLength = 0;
+//	int ignBytesLength = 32 - reqLength;
+//	if(ignBytesLength<0)
+//		ignBytesLength = 0;
 
 	register unsigned char leadingNum = 0;
 
@@ -345,7 +345,7 @@ unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData,
 	size_t stateNBBytes = remainCount == 0 ? (nbBlocks%8==0?nbBlocks/8:nbBlocks/8+1) : ((nbBlocks+1)%8==0? (nbBlocks+1)/8:(nbBlocks+1)/8+1);
 	size_t actualNBBlocks = remainCount==0 ? nbBlocks : nbBlocks+1;
 		
-	unsigned char* stateArray = (unsigned char*)malloc(nbBlocks);
+	unsigned char* stateArray = (unsigned char*)malloc(actualNBBlocks);
 	float* medianArray = (float*)malloc(actualNBBlocks*sizeof(float));
 	float* radiusArray = (float*)malloc(actualNBBlocks*sizeof(float));
 	
