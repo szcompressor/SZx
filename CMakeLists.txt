@@ -1,23 +1,30 @@
 cmake_minimum_required (VERSION 3.10.2)
+project (cuSZx)
+
+include(CheckLanguage)
+check_language(CUDA)
+if(CMAKE_CUDA_COMPILER)
+    enable_language(CUDA)
+endif()
 
 #disable in-source builds
 set (CMAKE_DISABLE_SOURCE_CHANGES ON)
 set (CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 #define the project
-project (sz 
-  VERSION 2.1.6.2
-  DESCRIPTION "SZ Error Bounded Lossy Compressor"
-  LANGUAGES C CXX
-  )
-enable_testing()
+#project (sz
+#  VERSION 2.1.6.2
+#  DESCRIPTION "SZ Error Bounded Lossy Compressor"
+#  LANGUAGES C CXX
+#  )
+#enable_testing()
 
 #correct was to set a default build type
 # https://blog.kitware.com/cmake-and-the-default-build-type/
 set(default_build_type "Release")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "No build type was set. Setting build type to ${default_build_type}.")
-  set(CMAKE_BUILD_TYPE ${default_build_type} CACHE 
+  set(CMAKE_BUILD_TYPE ${default_build_type} CACHE
     STRING "Choose the type to build" FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
     "MinSizeRel" "RelWithDebInfo")
@@ -34,6 +41,21 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+set (CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=-Wall")
+
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/sz/include)
+#include_directories (${CUDA_TOOLKIT_ROOT_DIR}/samples/common/inc)
+include_directories (/usr/local/cuda/samples/common/inc)
+
+if (NOT DEFINED CMAKE_CUDA_STANDARD)
+    set(CMAKE_CUDA_STANDARD 11)
+    set(CMAKE_CUDA_STANDARD_REQUIRED True)
+endif ()
+
 
 #generate tags for the project if tags exist
 option(BUILD_CTAGS "enable ctags generation target" OFF)
@@ -107,7 +129,7 @@ option(BUILD_DOCKER_CONTAINERS "build docker containers for testing" OFF)
 option(BUILD_FORTRAN "build the fortran interface" OFF)
 option(BUILD_STATS "record statistics for prediction" OFF)
 if(BUILD_DOCKER_CONTAINERS)
-  
+
   foreach(CONTAINER Centos Fedora Ubuntu Travis CentosPackaged)
     set(BuildSentinel ${CMAKE_BINARY_DIR}/${CONTAINER}-built)
     set(Dockerfile docker/Dockerfile-${CONTAINER})
