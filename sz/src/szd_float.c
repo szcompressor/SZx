@@ -369,7 +369,6 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 		if (stateArray[i]) {//non-constant block
 			SZ_fast_decompress_args_unpredictable_one_block_float(op + i * blockSize, blockSize, qarray[i]);
 		} else {//constant block
-			float medianValue = constantMedianArray[k];
 			for (int j = 0; j < blockSize; j++)
 				op[i * blockSize + j] = parray[i];
 		}
