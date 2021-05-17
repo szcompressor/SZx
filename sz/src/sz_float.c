@@ -578,7 +578,10 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
             SZ_fast_compress_args_unpredictable_one_block_float(op + i * blockSize, remainCount, absErrBound,
                                                                 tmp_q + i * blockSize * sizeof(float), outSizes + i,
                                                                 leadNumberArray_int, medianArray[i], radius);
+            outSizesAccumlate[i] = outSizes[i];
+            nbNonConstantBlocks += 1;
         }else{
+            outSizesAccumlate[i] = 0;
             outSizes[i]=0;
         }
     }
