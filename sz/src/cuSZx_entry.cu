@@ -29,23 +29,20 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     //checkCudaErrors(cudaMemcpy(d_meta, meta, msz, cudaMemcpyHostToDevice)); 
     checkCudaErrors(cudaMemset(d_meta, 0, msz));
     checkCudaErrors(cudaMalloc((void**)&d_midBytes, mbsz)); 
-    //checkCudaErrors(cudaMemset(d_midBytes, 0, mbsz));
+    checkCudaErrors(cudaMemset(d_midBytes, 0, mbsz));
     //cudaMemcpy(dresults, results, sizeof(unsigned char)*reSize*nbBlocks, cudaMemcpyHostToDevice); 
-    for (int i=0; i<nbBlocks; i++) 
-        printf ("test:%d\n", i);
 
     //timer_GPU.StartCounter();
-    //dim3 dimBlock(32, blockSize/32);
-    //dim3 dimGrid(512, 1);
-    //const int sMemsize = 10 * dimBlock.y * sizeof(double);
-    ////compress_float<<<dimGrid, dimBlock, sMemsize>>>(d_oriData, d_meta, d_midBytes, absErrBound, blockSize, nbBlocks, mSize);
-    //cudaError_t err = cudaGetLastError();        // Get error code
-    //printf("CUDA Error: %s\n", cudaGetErrorString(err));
-    //checkCudaErrors(cudaMemcpy(meta, d_meta, msz, cudaMemcpyDeviceToHost)); 
+    dim3 dimBlock(32, blockSize/32);
+    dim3 dimGrid(512, 1);
+    const int sMemsize = 10 * dimBlock.y * sizeof(double);
+    compress_float<<<dimGrid, dimBlock, sMemsize>>>(d_oriData, d_meta, d_midBytes, absErrBound, blockSize, nbBlocks, mSize);
+    cudaError_t err = cudaGetLastError();        // Get error code
+    printf("CUDA Error: %s\n", cudaGetErrorString(err));
+    checkCudaErrors(cudaMemcpy(meta, d_meta, msz, cudaMemcpyDeviceToHost)); 
 
-    //for (int i=0; i<nbBlocks; i++){ 
-    //    //if (meta[i*mSize]!=test[i]) 
-    //    //printf("state %d : %u\n", i, test[i]);
-    //    printf ("test:%d\n", nbBlocks);
-    //}
+    for (int i=0; i<nbBlocks; i++){ 
+        if (meta[i*mSize]!=0) 
+            printf("state %d : %u\n", i, test[i], meta[i*mSize]);
+    }
 }

@@ -9,6 +9,7 @@
 *.dSYM/
 Makefile
 build*/
+data/
 
 testfloat_compress
 testfloat_decompress
