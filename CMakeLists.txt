@@ -48,6 +48,8 @@ set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=-Wall")
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/sz/include)
+find_package(CUDA  REQUIRED)
+include_directories("${CUDA_INCLUDE_DIRS}")
 #include_directories (${CUDA_TOOLKIT_ROOT_DIR}/samples/common/inc)
 include_directories (/usr/local/cuda/samples/common/inc)
 

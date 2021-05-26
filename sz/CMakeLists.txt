@@ -57,10 +57,13 @@ add_library (SZ
   src/utility.c
   src/VarSet.c
   src/sz_stats.c
+  src/cuSZx_entry.cu
+  src/cuSZx_compress_float.cu
+  src/timingGPU.cu
 )
 
-target_include_directories(SZ 
-  PUBLIC 
+target_include_directories(SZ
+  PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/sz>
   )

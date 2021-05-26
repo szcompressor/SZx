@@ -327,7 +327,7 @@ size_t computeStateMedianRadius_float(float* oriData, size_t nbEle, float absErr
 	return nbConstantBlocks;
 }
 
-unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize)
+unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, unsigned char *test)
 {
 	float* op = oriData;
 
@@ -350,6 +350,7 @@ unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData,
 	float* radiusArray = (float*)malloc(actualNBBlocks*sizeof(float));
 	
 	size_t nbConstantBlocks = computeStateMedianRadius_float(oriData, nbEle, absErrBound, blockSize, stateArray, medianArray, radiusArray);
+    for (int x = 0; x<nbBlocks; x++) test[x] = stateArray[x];
 	
 	unsigned char* r = outputBytes; // + sizeof(size_t) + stateNBBytes; 
 	r[0] = SZ_VER_MAJOR;
