@@ -67,7 +67,8 @@ int main(int argc, char * argv[])
     }
     //float *revValue = (float *)malloc(sizeof(float));
     //*revValue = 1.0E36;
-    unsigned char *test_meta = (unsigned char*)malloc(nbEle/blockSize);
+    //unsigned char *test_meta = (unsigned char*)malloc(nbEle/blockSize);
+    int *test_meta = (int*)malloc(nbEle/blockSize*sizeof(int));
    
     size_t outSize; 
     cost_start();
