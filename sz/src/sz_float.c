@@ -42,7 +42,7 @@ unsigned char* SZ_fast_compress_args_with_prediction_float(float* pred, float *d
 	return output;
 }
 
-inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, size_t nbEle, float absErrBound, unsigned char* outputBytes, int *outSize, unsigned char* leadNumberArray_int, float medianValue, float radius)
+inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, size_t nbEle, float absErrBound, unsigned char* outputBytes, int *outSize, unsigned char* leadNumberArray_int, float medianValue, float radius, unsigned char* test, bool bi)
 {
 	size_t totalSize = 0, i = 0;
 	
@@ -52,6 +52,7 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 	
 	short radExpo = getExponent_float(radius);
 	computeReqLength_float(absErrBound, radExpo, &reqLength, &medianValue);			
+    //if (test!=NULL) *test = reqLength;
 
 	int reqBytesLength = reqLength/8;
 	int resiBitsLength = reqLength%8;
@@ -93,9 +94,7 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 				
 				lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
 		
-				if(lfBuf_pre.ivalue >> 8 == 0)
-					leadingNum = 3;
-				else if(lfBuf_pre.ivalue >> 16 == 0)
+				if(lfBuf_pre.ivalue >> 16 == 0)
 					leadingNum = 2;
 				else if(lfBuf_pre.ivalue >> 24 == 0)
 					leadingNum = 1;
@@ -105,12 +104,18 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 				if(leadingNum == 0)
 				{
 					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[2];
+                    if (test!=NULL) test[residualMidBytes_size] = lfBuf_cur.byte[2];
+                    //if (bi==true) printf("%i:%u:%u\n", i, leadingNum, lfBuf_cur.byte[2]);
 					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[3];
+					if (test!=NULL) test[residualMidBytes_size+1] = lfBuf_cur.byte[3];
+                    //if (bi==true) printf("%i:%u:%u\n", i, leadingNum, lfBuf_cur.byte[3]);
 					residualMidBytes_size += 2;
 				}
 				else if(leadingNum == 1)
 				{
 					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[2];
+                    if (test!=NULL) test[residualMidBytes_size] = lfBuf_cur.byte[2];
+                    //if (bi==true) printf("%i:%u:%u\n", i, leadingNum, lfBuf_cur.byte[2]);
 					residualMidBytes_size ++;
 				}
 				
@@ -136,23 +141,30 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 					leadingNum = 1;
 				
 				leadNumberArray_int[i] = leadingNum;
+                if (bi==true) printf("%i:%u:%i\n", i, leadingNum, lfBuf_pre.ivalue);
 
 				if(leadingNum == 0)
 				{
 					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[1];
+                    if (test!=NULL) test[residualMidBytes_size] = lfBuf_cur.byte[1];
 					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[2];
+                    if (test!=NULL) test[residualMidBytes_size+1] = lfBuf_cur.byte[2];
 					exactMidbyteArray[residualMidBytes_size+2] = lfBuf_cur.byte[3];
+                    if (test!=NULL) test[residualMidBytes_size+2] = lfBuf_cur.byte[3];
 					residualMidBytes_size += 3;
 				}
 				else if(leadingNum == 1)
 				{
 					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[1];
+                    if (test!=NULL) test[residualMidBytes_size] = lfBuf_cur.byte[1];
 					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[2];
+                    if (test!=NULL) test[residualMidBytes_size+1] = lfBuf_cur.byte[2];
 					residualMidBytes_size += 2;
 				}
 				else if(leadingNum == 2)
 				{
 					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[1];
+                    if (test!=NULL) test[residualMidBytes_size] = lfBuf_cur.byte[1];
 					residualMidBytes_size ++;
 				}
 				
@@ -170,18 +182,16 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 				
 				lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
 		
-				if(lfBuf_pre.ivalue >> 8 == 0)
-					leadingNum = 3;
-				else if(lfBuf_pre.ivalue >> 16 == 0)
-					leadingNum = 2;
-				else if(lfBuf_pre.ivalue >> 24 == 0)
+				if(lfBuf_pre.ivalue >> 24 == 0)
 					leadingNum = 1;
 				
 				leadNumberArray_int[i] = leadingNum;
+                if (bi==true) printf("%i:%u:%i\n", i, leadingNum, lfBuf_pre.ivalue);
 
 				if(leadingNum == 0)
 				{
 					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[3];
+                    if (test!=NULL) test[residualMidBytes_size] = lfBuf_cur.byte[3];
 					residualMidBytes_size ++;
 				}
 				
@@ -199,7 +209,9 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 				
 				lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
 		
-				if(lfBuf_pre.ivalue >> 8 == 0)
+				if(lfBuf_pre.ivalue == 0)
+					leadingNum = 4;
+                else if(lfBuf_pre.ivalue >> 8 == 0)
 					leadingNum = 3;
 				else if(lfBuf_pre.ivalue >> 16 == 0)
 					leadingNum = 2;
@@ -207,31 +219,42 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 					leadingNum = 1;
 				
 				leadNumberArray_int[i] = leadingNum;
+                if (bi==true) printf("%i:%u:%i\n", i, leadingNum, lfBuf_pre.ivalue);
 
 				if(leadingNum == 0)
 				{
 					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[0];
+                    if (test!=NULL) test[residualMidBytes_size] = lfBuf_cur.byte[0];
 					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[1];
+                    if (test!=NULL) test[residualMidBytes_size+1] = lfBuf_cur.byte[1];
 					exactMidbyteArray[residualMidBytes_size+2] = lfBuf_cur.byte[2];
+                    if (test!=NULL) test[residualMidBytes_size+2] = lfBuf_cur.byte[2];
 					exactMidbyteArray[residualMidBytes_size+3] = lfBuf_cur.byte[3];					
+                    if (test!=NULL) test[residualMidBytes_size+3] = lfBuf_cur.byte[3];
 					residualMidBytes_size += 4;
 				}
 				else if(leadingNum == 1)
 				{
 					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[0];
+                    if (test!=NULL) test[residualMidBytes_size] = lfBuf_cur.byte[0];
 					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[1];
-					exactMidbyteArray[residualMidBytes_size+2] = lfBuf_cur.byte[2];					
+                    if (test!=NULL) test[residualMidBytes_size+1] = lfBuf_cur.byte[1];
+					exactMidbyteArray[residualMidBytes_size+2] = lfBuf_cur.byte[2];
+                    if (test!=NULL) test[residualMidBytes_size+2] = lfBuf_cur.byte[2];
 					residualMidBytes_size += 3;
 				}
 				else if(leadingNum == 2)
 				{
 					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[0];
+                    if (test!=NULL) test[residualMidBytes_size] = lfBuf_cur.byte[0];
 					exactMidbyteArray[residualMidBytes_size+1] = lfBuf_cur.byte[1];
+                    if (test!=NULL) test[residualMidBytes_size+1] = lfBuf_cur.byte[1];
 					residualMidBytes_size += 2;
 				}
 				else //leadingNum == 3
 				{
 					exactMidbyteArray[residualMidBytes_size] = lfBuf_cur.byte[0];
+                    if (test!=NULL) test[residualMidBytes_size] = lfBuf_cur.byte[0];
 					residualMidBytes_size ++;			
 				}
 				
@@ -327,7 +350,7 @@ size_t computeStateMedianRadius_float(float* oriData, size_t nbEle, float absErr
 	return nbConstantBlocks;
 }
 
-unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, int *test)
+unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, unsigned char *test)
 {
 	float* op = oriData;
 
@@ -353,7 +376,7 @@ unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData,
     for (int x = 0; x<nbBlocks; x++){
         lfloat lbuf;
         lbuf.value = radiusArray[x];
-        test[x] = lbuf.ivalue;
+        //test[x] = lbuf.ivalue;
     } 
 	
 	unsigned char* r = outputBytes; // + sizeof(size_t) + stateNBBytes; 
@@ -370,14 +393,17 @@ unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData,
 	unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data sblocks
 	//3: versions, 1: metadata: state, 1: metadata: blockSize, sizeof(size_t): nbConstantBlocks, .... 
 	*outSize += (3 + 1 + 1 + sizeof(size_t) + stateNBBytes + sizeof(float)*nbConstantBlocks);
-	
+
+    bool bi = true;
 	//printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f*(nbConstantBlocks*blockSize)/nbEle);
 	for(i=0;i<nbBlocks;i++, op += blockSize)
 	{
 		if(stateArray[i])
 		{
-			SZ_fast_compress_args_unpredictable_one_block_float(op, blockSize, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i]);
+            if (bi==true) printf("test:%i\n",i);
+			SZ_fast_compress_args_unpredictable_one_block_float(op, blockSize, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i], &test[i*blockSize*sizeof(float)], bi);
 			q += oSize;
+            bi = false;
 			*outSize += oSize;
 		}
 		else
@@ -391,7 +417,7 @@ unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData,
 	{
 		if(stateArray[i])
 		{
-			SZ_fast_compress_args_unpredictable_one_block_float(op, remainCount, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i]);
+			SZ_fast_compress_args_unpredictable_one_block_float(op, remainCount, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i], NULL, false);
 			*outSize += oSize;
 		}
 		else
@@ -456,7 +482,7 @@ unsigned char* SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(fl
 	{
 		if(stateArray[i])
 		{
-			SZ_fast_compress_args_unpredictable_one_block_float(op, blockSize, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i]);
+			SZ_fast_compress_args_unpredictable_one_block_float(op, blockSize, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i], NULL, false);
 			q += oSize;
 			*outSize += oSize;
 			r[nonConstantBlockID++] = oSize;
@@ -472,7 +498,7 @@ unsigned char* SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(fl
 	{
 		if(stateArray[i])
 		{
-			SZ_fast_compress_args_unpredictable_one_block_float(op, remainCount, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i]);
+			SZ_fast_compress_args_unpredictable_one_block_float(op, remainCount, absErrBound, q, &oSize, leadNumberArray_int, medianArray[i], radiusArray[i], NULL, false);
 			*outSize += oSize;
 			r[nonConstantBlockID] = oSize;
 		}

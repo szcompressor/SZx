@@ -167,7 +167,11 @@ void gridReduction_cg(double *results)
 
 __device__ int _compute_reqLength(int redius, int absErrBound)
 {
-	return 9 + ((redius & 0x7F800000) >> 23 - 127) - ((absErrBound & 0x7F800000) >> 23 - 127) + 1;
+    int radExpo = (redius & 0x7F800000) >> 23;
+    radExpo -= 127;
+    int reqExpo = (absErrBound & 0x7F800000) >> 23;
+    reqExpo -= 127;
+    return 9+radExpo-reqExpo+1;
 }
 
 __device__ int _shfl_scan(int lznum, int *sums)
@@ -231,7 +235,7 @@ __device__ int _shfl_scan(int lznum, int *sums)
     return value;
 }
 
-__device__ int _compute_oneBlock(int base, int reqLength, float *value, int *ivalue, uchar4 *cvalue, int *sums, unsigned char *meta, unsigned char *midBytes)
+__device__ int _compute_oneBlock(int base, int reqLength, float *value, int *ivalue, uchar4 *cvalue, int *sums, unsigned char *meta, unsigned char *midBytes, bool bi)
 {
 	int reqBytesLength;
 	int rightShiftBits;
@@ -240,15 +244,19 @@ __device__ int _compute_oneBlock(int base, int reqLength, float *value, int *iva
 	if (reqLength%8 != 0)
 	{
 		reqBytesLength = reqLength/8+1;		
-		rightShiftBits = 8 - reqLength/8;
+		rightShiftBits = 8 - reqLength%8;
     }else{
 		reqBytesLength = reqLength/8;		
 		rightShiftBits = 0;
     }
 
-    int cur_ivalue = ivalue[threadIdx.y*blockDim.x+threadIdx.x] >> rightShiftBits;
+    //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cvalue[threadIdx.y*blockDim.x+threadIdx.x].w);
+    int cur_ivalue = (ivalue[threadIdx.y*blockDim.x+threadIdx.x] >> rightShiftBits) & ((1<<(32-rightShiftBits))-1);
+    ivalue[threadIdx.y*blockDim.x+threadIdx.x] = cur_ivalue;
+    __syncthreads();                  
+
     int pre_ivalue = 0;
-    if (threadIdx.x==0 && threadIdx.y==0) cur_ivalue = ivalue[threadIdx.y*blockDim.x+threadIdx.x-1] >> rightShiftBits;
+    if (threadIdx.x!=0 || threadIdx.y!=0) pre_ivalue = ivalue[threadIdx.y*blockDim.x+threadIdx.x-1];
     pre_ivalue = cur_ivalue ^ pre_ivalue;
     __syncthreads();                  
 
@@ -273,6 +281,8 @@ __device__ int _compute_oneBlock(int base, int reqLength, float *value, int *iva
         else if (pre_ivalue >> 16 == 0) leadingNum = 2;
         else if (pre_ivalue >> 24 == 0) leadingNum = 1;
     }
+    //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, leadingNum);
+    //midBytes[base+threadIdx.y*blockDim.x+threadIdx.x] = leadingNum; 
 
     int midByte_size = reqBytesLength - (int)leadingNum;
     int midByte_sum = _shfl_scan(midByte_size, sums);
@@ -280,38 +290,41 @@ __device__ int _compute_oneBlock(int base, int reqLength, float *value, int *iva
     if (reqBytesLength == 2)
     {
         if (midByte_size == 1){
-            midBytes[base+midByte_sum-1] = cur_cvalue.y; 
+            midBytes[base+midByte_sum-1] = cur_cvalue.z; 
+            if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.z);
         }else if (midByte_size == 2){
-            midBytes[base+midByte_sum-1] = cur_cvalue.y; 
-            midBytes[base+midByte_sum-2] = cur_cvalue.x; 
+            midBytes[base+midByte_sum-1] = cur_cvalue.w; 
+            if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.z);
+            midBytes[base+midByte_sum-2] = cur_cvalue.z;
+            if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.w);
         }
     }else if (reqBytesLength == 3)
     {
         if (midByte_size == 1){
-            midBytes[base+midByte_sum-1] = cur_cvalue.z; 
+            midBytes[base+midByte_sum-1] = cur_cvalue.y; 
         }else if (midByte_size == 2){
             midBytes[base+midByte_sum-1] = cur_cvalue.z; 
             midBytes[base+midByte_sum-2] = cur_cvalue.y; 
-        }else if (midByte_size == 3){
-            midBytes[base+midByte_sum-1] = cur_cvalue.z; 
-            midBytes[base+midByte_sum-2] = cur_cvalue.y; 
-            midBytes[base+midByte_sum-3] = cur_cvalue.x; 
-        }
-    }else if (reqBytesLength == 1)
-    {
-        if (midByte_size == 1)
-            midBytes[base+midByte_sum-1] = cur_cvalue.x; 
-    }else if (reqBytesLength == 4)
-    {
-        if (midByte_size == 1){
-            midBytes[base+midByte_sum-1] = cur_cvalue.w; 
-        }else if (midByte_size == 2){
-            midBytes[base+midByte_sum-1] = cur_cvalue.w; 
-            midBytes[base+midByte_sum-2] = cur_cvalue.z; 
         }else if (midByte_size == 3){
             midBytes[base+midByte_sum-1] = cur_cvalue.w; 
             midBytes[base+midByte_sum-2] = cur_cvalue.z; 
             midBytes[base+midByte_sum-3] = cur_cvalue.y; 
+        }
+    }else if (reqBytesLength == 1)
+    {
+        if (midByte_size == 1)
+            midBytes[base+midByte_sum-1] = cur_cvalue.w; 
+    }else if (reqBytesLength == 4)
+    {
+        if (midByte_size == 1){
+            midBytes[base+midByte_sum-1] = cur_cvalue.x; 
+        }else if (midByte_size == 2){
+            midBytes[base+midByte_sum-1] = cur_cvalue.y; 
+            midBytes[base+midByte_sum-2] = cur_cvalue.x; 
+        }else if (midByte_size == 3){
+            midBytes[base+midByte_sum-1] = cur_cvalue.z; 
+            midBytes[base+midByte_sum-2] = cur_cvalue.y; 
+            midBytes[base+midByte_sum-3] = cur_cvalue.x; 
         }else if (midByte_size == 4){
             midBytes[base+midByte_sum-1] = cur_cvalue.w; 
             midBytes[base+midByte_sum-2] = cur_cvalue.z; 
@@ -337,6 +350,8 @@ __global__ void compress_float(float *oriData, unsigned char *meta, unsigned cha
     int* sums = &ivalue[bs];
 
 
+    bool bi = false;
+    if (bid==73) bi=true;
     for (int b=bid; b<nb; b+=gridDim.x){
         data = oriData[b*bs+tidy*warpSize+tidx];
         float Min = data;
@@ -367,7 +382,8 @@ __global__ void compress_float(float *oriData, unsigned char *meta, unsigned cha
             }
             
             if (tidx==0){
-                value[0] = (Max - Min)/2;
+                radius = (Max - Min)/2;
+                value[0] = radius;
                 value[1] = Min + radius;
                 value[2] = absErrBound;
             }
@@ -378,14 +394,17 @@ __global__ void compress_float(float *oriData, unsigned char *meta, unsigned cha
         medianValue = value[1];
         state = radius <= absErrBound ? 0 : 1;
         if (tidx==0) meta[b*mSize] = cvalue[0].x;
-        if (tidx==0) test[b] = ivalue[0];
+        //if (tidx==0) test[b] = ivalue[0];
         __syncthreads();                  
 
         if (state==1){
             int reqLength = _compute_reqLength(ivalue[0], ivalue[2]);
+            if (tidx==0) test[b] = reqLength;
+            __syncthreads();                  
             value[tidy*blockDim.x+tidx] = data - medianValue;
             __syncthreads();                  
-            _compute_oneBlock(b*bs*sizeof(float), reqLength, value, ivalue, cvalue, sums, meta, midBytes);
+            _compute_oneBlock(b*bs*sizeof(float), reqLength, value, ivalue, cvalue, sums, meta, midBytes, bi);
+            bi = false;
         }
 
     }

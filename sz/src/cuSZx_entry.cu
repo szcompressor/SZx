@@ -2,8 +2,14 @@
 #include "timingGPU.h"
 
 TimingGPU timer_GPU;
+void bin(unsigned n)
+{
+    unsigned i;
+    for (i = 1 << 31; i > 0; i = i / 2)
+        (n & i) ? printf("1") : printf("0");
+}
 
-unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, int *test)
+unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, unsigned char *test)
 {
 
 	float* d_oriData;
@@ -44,12 +50,19 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     cudaError_t err = cudaGetLastError();        // Get error code
     printf("CUDA Error: %s\n", cudaGetErrorString(err));
     checkCudaErrors(cudaMemcpy(meta, d_meta, msz, cudaMemcpyDeviceToHost)); 
+    checkCudaErrors(cudaMemcpy(midBytes, d_midBytes, mbsz, cudaMemcpyDeviceToHost)); 
     checkCudaErrors(cudaMemcpy(dtest, d_test, nbBlocks * sizeof(int), cudaMemcpyDeviceToHost)); 
 
-    for (int i=0; i<nbBlocks; i++){ 
-        //if (meta[i*mSize]!=test[i]) 
-        //    printf("state %d : %u\n", i, test[i], meta[i*mSize]);
-        if (dtest[i]!=0) 
-            printf("state %d : %i\n", i, test[i], dtest[i]);
+    //for (int i=0; i<nbBlocks; i++){ 
+    //    if (dtest[i]!=test[i]){
+    //        bin(dtest[i]);
+    //        printf("state %d : %i, %i\n", i, test[i], dtest[i]);
+    //    } 
+    //}
+    for (int i=0; i<sizeof(float) * nbEle; i++){ 
+        if (midBytes[i]!=test[i]){
+            bin(midBytes[i]);
+            printf("state %d : %u, %u\n", i, test[i], midBytes[i]);
+        } 
     }
 }
