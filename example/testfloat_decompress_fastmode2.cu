@@ -14,6 +14,7 @@
 #include <math.h>
 #include "sz.h"
 #include "rw.h"
+#include "cuSZx_entry.h"
 
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
@@ -66,6 +67,7 @@ int main(int argc, char * argv[])
     cost_start();
     float *data = NULL;
     SZ_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
+    cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
     cost_end();
     
     free(bytes); 

@@ -142,3 +142,8 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     checkCudaErrors(cudaFree(d_test));
     return outBytes;
 }
+
+void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes)
+{
+
+}
