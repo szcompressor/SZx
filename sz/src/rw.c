@@ -786,6 +786,7 @@ void writeByteData(unsigned char *bytes, size_t byteLength, char *tgtFilePath, i
     }
     
     fwrite(bytes, 1, byteLength, pFile); //write outSize bytes
+    printf("test:%s\n", tgtFilePath);
     fclose(pFile);
     *status = SZ_SCES;
 }

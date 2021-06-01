@@ -263,6 +263,10 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 		}
 	
 		convertIntArray2ByteArray_fast_2b_args(leadNumberArray_int, nbEle, leadNumberArray);
+        if (bi==true){
+            for (int x=0; x<leadNumberArray_size; x++)
+                printf("%i:%u:%u\n", x, leadingNum, leadNumberArray[x]);
+        } 
 		
 		int k = 0;
 		
