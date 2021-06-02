@@ -41,7 +41,7 @@ void cost_end()
 int main(int argc, char * argv[])
 {
     size_t nbEle, totalNbEle;
-    char zipFilePath[640], outputFilePath[645];
+    char zipFilePath[640], cuZipFilePath[640], outputFilePath[645];
     if(argc < 2)
     {
 		printf("Usage: testfloat_decompress_fastmode2 [srcFilePath] [nbEle]\n");
@@ -51,12 +51,14 @@ int main(int argc, char * argv[])
    
     sprintf(zipFilePath, "%s", argv[1]);
     nbEle = atoi(argv[2]);
+    sprintf(cuZipFilePath, "%s", argv[3]);
 
     sprintf(outputFilePath, "%s.out", zipFilePath);
     
     size_t byteLength; 
     int status;
     unsigned char *bytes = readByteData(zipFilePath, &byteLength, &status);
+    unsigned char *cuBytes = readByteData(cuZipFilePath, &byteLength, &status);
     if(status!=SZ_SCES)
     {
         printf("Error: %s cannot be read!\n", zipFilePath);
@@ -67,7 +69,7 @@ int main(int argc, char * argv[])
     cost_start();
     float *data = NULL;
     SZ_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
-    cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
+    cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, cuBytes);
     cost_end();
     
     free(bytes); 

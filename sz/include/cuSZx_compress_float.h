@@ -14,6 +14,7 @@ void reduction(double sum1, double sum2,
         double minDiff, double maxDiff, double sumDiff, double sumOfDiffSquare, 
         double minErr, double maxErr, double sumErr, double sumErrSqr);
 
+__device__ int shfl_scan(int lznum, int *sums);
 __global__ void compress_float(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, float absErrBound, int bs, size_t nb, size_t mSize, int *test); 
 
 #endif /* ----- #ifndef CUSZX_COMPRESS_FLOAT_H  ----- */

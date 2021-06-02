@@ -145,5 +145,109 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
 
 void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes)
 {
+	*newData = (float*)malloc(sizeof(float)*nbEle);
+	
+	unsigned char* r = cmpBytes;
+	r += 4;
+	int blockSize = r[0];  //get block size
+	r++;
+	size_t nbConstantBlocks = bytesToLong_bigEndian(r); //get number of constant blocks
+	r += sizeof(size_t);
+		
+	size_t nbBlocks = nbEle/blockSize;
+	size_t ncBlocks = nbBlocks - nbConstantBlocks; //get number of constant blocks
+	size_t stateNBBytes = nbBlocks%8==0 ? nbBlocks/8 : nbBlocks/8+1;
+    size_t ncLeading = blockSize/4;
+    size_t mSize = sizeof(float)+1+ncLeading; //Number of bytes for each data block's metadata.
+	unsigned char* stateArray = (unsigned char*)malloc(nbBlocks);
+	float* constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));			
+	int* offsets = (int*)malloc((ncBlocks+1)*sizeof(int));			
+    offsets[0] = 0;
+		
+	convertByteArray2IntArray_fast_1b_args(nbBlocks, r, stateNBBytes, stateArray); //get the stateArray
+    for (int i=0;i<nbBlocks;i++){
+        if (stateArray[i]!=0){
+            printf("state %d : %u\n", i, stateArray[i]);
+            break;
+        }
+    }
+	
+	//unsigned char* p = r + stateNBBytes; //p is the starting address of constant median values.
+	r += stateNBBytes;
+	size_t i = 0, j = 0, k = 0; //k is used to keep track of constant block index
+    memcpy((*newData)+nbBlocks*blockSize, r, (nbEle%blockSize)*sizeof(float));
+    r += (nbEle%blockSize)*sizeof(float);
+	for(i = 0;i < nbConstantBlocks;i++, j+=4) //get the median values for constant-value blocks
+		constantMedianArray[i] = bytesToFloat(r+j);
+    r += nbConstantBlocks*sizeof(float);
+    int accum = 0;
+    for(i = 0;i < ncBlocks;i++){
+        accum += (int)bytesToShort(r);
+        r += sizeof(short);
+        accum += mSize;
+        offsets[i+1] = accum;
+    } 
+
+    int* d_offsets;
+    checkCudaErrors(cudaMalloc((void**)&d_offsets, (ncBlocks+1)*sizeof(int))); 
+    checkCudaErrors(cudaMemcpy(d_offsets, offsets, (ncBlocks+1)*sizeof(int), cudaMemcpyHostToDevice)); 
+    size_t ncSize = offsets[ncBlocks]%4==0 ? offsets[ncBlocks] : offsets[ncBlocks]+(4-offsets[ncBlocks]%4);
+    unsigned char* d_ncBytes;
+    checkCudaErrors(cudaMalloc((void**)&d_ncBytes, ncSize)); 
+    checkCudaErrors(cudaMemset(d_ncBytes, 0, ncSize));
+    checkCudaErrors(cudaMemcpy(d_ncBytes, r, offsets[ncBlocks], cudaMemcpyHostToDevice)); 
+    float* d_data;
+    checkCudaErrors(cudaMalloc((void**)&d_data, ncBlocks*sizeof(float))); 
+    checkCudaErrors(cudaMemset(d_data, 0, ncBlocks*sizeof(float)));
+    int* d_test;
+    checkCudaErrors(cudaMalloc((void**)&d_test, nbBlocks * sizeof(int))); 
+    checkCudaErrors(cudaMemset(d_test, 0, nbBlocks * sizeof(int)));
+
+
+    dim3 dimBlock(32, blockSize/32);
+    dim3 dimGrid(512, 1);
+    const int sMemsize = blockSize * sizeof(float) + dimBlock.y * sizeof(int);
+    decompress_float<<<dimGrid, dimBlock, sMemsize>>>(d_offsets, d_ncBytes, d_data, blockSize, ncBlocks, mSize, d_test);
+    cudaError_t err = cudaGetLastError();        // Get error code
+    printf("CUDA Error: %s\n", cudaGetErrorString(err));
+
+	//unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data blocks
+	//float* op = *newData;
+	//
+	//for(i=0;i<nbBlocks;i++, op += blockSize)
+	//{
+	//	unsigned char state = stateArray[i];
+	//	if(state) //non-constant block
+	//	{
+	//		int cmpSize = SZ_fast_decompress_args_unpredictable_one_block_float(op, blockSize, q);
+	//		q += cmpSize;		
+	//	}
+	//	else //constant block
+	//	{
+	//		float medianValue = constantMedianArray[k];			
+	//		for(j=0;j<blockSize;j++)
+	//			op[j] = medianValue;
+	//		p += sizeof(float);
+	//		k ++;
+	//	}
+	//}
+
+	//if(remainCount)
+	//{
+	//	unsigned char state = stateArray[i];
+	//	if(state) //non-constant block
+	//	{
+	//		SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q);	
+	//	}
+	//	else //constant block
+	//	{
+	//		float medianValue = constantMedianArray[k];				
+	//		for(j=0;j<remainCount;j++)
+	//			op[j] = medianValue;
+	//	}		
+	//}
+	//
+	//free(stateArray);
+	//free(constantMedianArray);
 
 }
