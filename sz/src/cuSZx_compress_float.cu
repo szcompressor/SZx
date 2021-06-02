@@ -88,7 +88,7 @@ __device__ int _compute_reqLength(int redius, int absErrBound)
     return 9+radExpo-reqExpo+1;
 }
 
-__device__ int shfl_scan(int lznum, int *sums)
+__device__ int _shfl_scan(int lznum, int *sums)
 {
     // Below is the basic structure of using a shfl instruction
     // for a scan.
@@ -199,7 +199,7 @@ __device__ void _compute_oneBlock(int bbase, int mbase, int obase, int reqLength
     //midBytes[bbase+threadIdx.y*blockDim.x+threadIdx.x] = leadingNum; 
 
     int midByte_size = reqBytesLength - leadingNum;
-    int midByte_sum = shfl_scan(midByte_size, sums);
+    int midByte_sum = _shfl_scan(midByte_size, sums);
     uchar4 cur_cvalue = cvalue[threadIdx.y*blockDim.x+threadIdx.x];
     if (reqBytesLength == 2)
     {

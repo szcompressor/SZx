@@ -161,8 +161,10 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
     size_t mSize = sizeof(float)+1+ncLeading; //Number of bytes for each data block's metadata.
 	unsigned char* stateArray = (unsigned char*)malloc(nbBlocks);
 	float* constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));			
-	int* offsets = (int*)malloc((ncBlocks+1)*sizeof(int));			
-    offsets[0] = 0;
+	//int* offsets = (int*)malloc((ncBlocks+1)*sizeof(int));			
+    //offsets[0] = 0;
+	unsigned char* data = (unsigned char*)malloc(ncBlocks*blockSize*sizeof(float));
+    memset(data, 0, ncBlocks*blockSize*sizeof(float));
 		
 	convertByteArray2IntArray_fast_1b_args(nbBlocks, r, stateNBBytes, stateArray); //get the stateArray
     for (int i=0;i<nbBlocks;i++){
@@ -180,25 +182,32 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 	for(i = 0;i < nbConstantBlocks;i++, j+=4) //get the median values for constant-value blocks
 		constantMedianArray[i] = bytesToFloat(r+j);
     r += nbConstantBlocks*sizeof(float);
-    int accum = 0;
+    unsigned char* p = r + ncBlocks * sizeof(short);
+    float* datatest = (float*)data;
     for(i = 0;i < ncBlocks;i++){
-        accum += (int)bytesToShort(r);
+        int leng = (int)bytesToShort(r)+mSize;
         r += sizeof(short);
-        accum += mSize;
-        offsets[i+1] = accum;
+        if (leng > blockSize*sizeof(float))
+        {
+            printf("Warning: compressed block is larger than the original block!\n");
+            exit(0);
+        }
+        memcpy(data+i*blockSize*sizeof(float), p, leng);
+        if (i<2)printf("htest:%u\n", p[4]);
+        p += leng;
     } 
 
-    int* d_offsets;
-    checkCudaErrors(cudaMalloc((void**)&d_offsets, (ncBlocks+1)*sizeof(int))); 
-    checkCudaErrors(cudaMemcpy(d_offsets, offsets, (ncBlocks+1)*sizeof(int), cudaMemcpyHostToDevice)); 
-    size_t ncSize = offsets[ncBlocks]%4==0 ? offsets[ncBlocks] : offsets[ncBlocks]+(4-offsets[ncBlocks]%4);
-    unsigned char* d_ncBytes;
-    checkCudaErrors(cudaMalloc((void**)&d_ncBytes, ncSize)); 
-    checkCudaErrors(cudaMemset(d_ncBytes, 0, ncSize));
-    checkCudaErrors(cudaMemcpy(d_ncBytes, r, offsets[ncBlocks], cudaMemcpyHostToDevice)); 
-    float* d_data;
-    checkCudaErrors(cudaMalloc((void**)&d_data, ncBlocks*sizeof(float))); 
-    checkCudaErrors(cudaMemset(d_data, 0, ncBlocks*sizeof(float)));
+    //int* d_offsets;
+    //checkCudaErrors(cudaMalloc((void**)&d_offsets, (ncBlocks+1)*sizeof(int))); 
+    //checkCudaErrors(cudaMemcpy(d_offsets, offsets, (ncBlocks+1)*sizeof(int), cudaMemcpyHostToDevice)); 
+    //size_t ncSize = offsets[ncBlocks]%4==0 ? offsets[ncBlocks] : offsets[ncBlocks]+(4-offsets[ncBlocks]%4);
+    //unsigned char* d_ncBytes;
+    //checkCudaErrors(cudaMalloc((void**)&d_ncBytes, ncSize)); 
+    //checkCudaErrors(cudaMemset(d_ncBytes, 0, ncSize));
+    //checkCudaErrors(cudaMemcpy(d_ncBytes, r, offsets[ncBlocks], cudaMemcpyHostToDevice)); 
+    unsigned char* d_data;
+    checkCudaErrors(cudaMalloc((void**)&d_data, ncBlocks*blockSize*sizeof(float))); 
+    checkCudaErrors(cudaMemcpy(d_data, data, ncBlocks*blockSize*sizeof(float), cudaMemcpyHostToDevice)); 
     int* d_test;
     checkCudaErrors(cudaMalloc((void**)&d_test, nbBlocks * sizeof(int))); 
     checkCudaErrors(cudaMemset(d_test, 0, nbBlocks * sizeof(int)));
@@ -207,7 +216,8 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
     dim3 dimBlock(32, blockSize/32);
     dim3 dimGrid(512, 1);
     const int sMemsize = blockSize * sizeof(float) + dimBlock.y * sizeof(int);
-    decompress_float<<<dimGrid, dimBlock, sMemsize>>>(d_offsets, d_ncBytes, d_data, blockSize, ncBlocks, mSize, d_test);
+    printf("sb\n");
+    decompress_float<<<dimGrid, dimBlock, sMemsize>>>(d_data, blockSize, ncBlocks, mSize, d_test);
     cudaError_t err = cudaGetLastError();        // Get error code
     printf("CUDA Error: %s\n", cudaGetErrorString(err));
 

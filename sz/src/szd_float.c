@@ -28,7 +28,7 @@ void SZ_fast_decompress_args_with_prediction_float(float** newData, float* pred,
 		(*newData)[i] += pred[i];
 }
 
-int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t blockSize, unsigned char* cmpBytes)
+int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t blockSize, unsigned char* cmpBytes, bool bi)
 {
 	int cmpSize = 0;
 	size_t nbEle = blockSize;
@@ -38,6 +38,7 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 	
 	size_t k = 0;
 	int reqLength = (int)cmpBytes[k];
+    //if (bi==1) printf("hss:%i\n", reqLength);
 	k++;
 	medianValue = bytesToFloat(&(cmpBytes[k]));
 	k+=sizeof(float);
@@ -82,6 +83,7 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 				j = (i >> 2); //i/4
 				k = (i & 0x03) << 1; //(i%4)*2
 				leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
+                if (bi==1) printf("hss%d:%u\n",i,leadingNum);
 				
 				if(leadingNum == 1)
 				{	
@@ -127,6 +129,7 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 				j = (i >> 2); //i/4
 				k = (i & 0x03) << 1; //(i%4)*2
 				leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
+                if (bi==1) printf("hss%d:%u\n",i,leadingNum);
 	
 				if(leadingNum == 1)
 				{	
@@ -270,13 +273,17 @@ void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t
 	unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data blocks
 	float* op = *newData;
 	
+    bool bi=1;
+    int count = 0;
 	for(i=0;i<nbBlocks;i++, op += blockSize)
 	{
 		unsigned char state = stateArray[i];
 		if(state) //non-constant block
 		{
-			int cmpSize = SZ_fast_decompress_args_unpredictable_one_block_float(op, blockSize, q);
+            count++;
+			int cmpSize = SZ_fast_decompress_args_unpredictable_one_block_float(op, blockSize, q, bi);
 			q += cmpSize;		
+            if (count==1) bi =0;
 		}
 		else //constant block
 		{
@@ -293,7 +300,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t
 		unsigned char state = stateArray[i];
 		if(state) //non-constant block
 		{
-			SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q);	
+			SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q, 0);	
 		}
 		else //constant block
 		{
@@ -347,7 +354,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
 		unsigned char state = stateArray[i];
 		if(state) //non-constant block
 		{
-			int cmpSize = SZ_fast_decompress_args_unpredictable_one_block_float(op, blockSize, q);
+			int cmpSize = SZ_fast_decompress_args_unpredictable_one_block_float(op, blockSize, q, 0);
 			q += cmpSize;
 		}
 		else //constant block
@@ -365,7 +372,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
 		unsigned char state = stateArray[i];
 		if(state) //non-constant block
 		{
-			SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q);	
+			SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q, 0);	
 		}
 		else //constant block
 		{
