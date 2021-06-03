@@ -474,18 +474,21 @@ size_t cmpSize)
 	
 	register float medianValue;
 	size_t leadNumArray_size;
-	
+
+    unsigned char *r = cmpBytes;
+    r += 4; //skip version information
+
 	size_t k = 0;
-	int reqLength = (int)cmpBytes[k];
+	int reqLength = (int)r[k];
 	k++;
-	medianValue = bytesToFloat(&(cmpBytes[k]));
+	medianValue = bytesToFloat(&(r[k]));
 	k+=sizeof(float);
-	leadNumArray_size = bytesToSize(&(cmpBytes[k]));
+	leadNumArray_size = bytesToSize(&(r[k]));
 	k+=sizeof(size_t);
 	
-	unsigned char* leadNumArray = &(cmpBytes[k]);
+	unsigned char* leadNumArray = &(r[k]);
 	k += leadNumArray_size;
-	unsigned char* residualMidBytes = &(cmpBytes[k]);	
+	unsigned char* residualMidBytes = &(r[k]);
 	unsigned char* q = residualMidBytes;
 		
 	size_t i = 0, j = 0;

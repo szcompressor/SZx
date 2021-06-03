@@ -771,6 +771,11 @@ SZ_fast_compress_args_unpredictable_float(float *data, size_t *outSize, float ab
 
     unsigned char *outputBytes = (unsigned char *) malloc(maxPreservedBufferSize);
     memset(outputBytes, 0, maxPreservedBufferSize);
+    unsigned char *r = outputBytes; // + sizeof(size_t) + stateNBBytes;
+    r[0] = SZ_VER_MAJOR;
+    r[1] = SZ_VER_MINOR;
+    r[2] = SZ_VER_SUPERFAST;
+    r[3] = 0; //support random access decompression
 
 //	sz_cost_start();
     size_t i;
@@ -789,7 +794,7 @@ SZ_fast_compress_args_unpredictable_float(float *data, size_t *outSize, float ab
     register lfloat lfBuf_cur;
     lfBuf_pre.ivalue = 0;
 
-    unsigned char *leadNumberArray = outputBytes + 1 + sizeof(float) + sizeof(size_t);
+    unsigned char *leadNumberArray = outputBytes + 4 + 1 + sizeof(float) + sizeof(size_t);
 
     unsigned char *exactMidbyteArray = leadNumberArray + leadNumberArray_size;
 
@@ -900,7 +905,7 @@ SZ_fast_compress_args_unpredictable_float(float *data, size_t *outSize, float ab
 
         convertIntArray2ByteArray_fast_2b_args(leadNumberArray_int, dataLength, leadNumberArray);
 
-        int k = 0;
+        int k = 4;
 
         unsigned char reqLengthB = (unsigned char) reqLength;
         outputBytes[k] = reqLengthB;
@@ -909,7 +914,7 @@ SZ_fast_compress_args_unpredictable_float(float *data, size_t *outSize, float ab
         k += sizeof(float);
         sizeToBytes(&(outputBytes[k]), leadNumberArray_size);
 
-        totalSize = 1 + sizeof(float) + sizeof(size_t) + leadNumberArray_size + residualMidBytes_size;
+        totalSize = 4 + 1 + sizeof(float) + sizeof(size_t) + leadNumberArray_size + residualMidBytes_size;
     } else {
 
     }
