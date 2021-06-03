@@ -85,9 +85,6 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
         reqBytesLength++;
     }
 
-    int ignBytesLength = 32 - reqLength;
-    if (ignBytesLength < 0)
-        ignBytesLength = 0;
     register unsigned char leadingNum = 0;
     size_t residualMidBytes_size = 0;
     if (sysEndianType == LITTLE_ENDIAN_SYSTEM) {
@@ -802,10 +799,6 @@ SZ_fast_compress_args_unpredictable_float(float *data, size_t *outSize, float ab
         rightShiftBits = 8 - resiBitsLength;
         reqBytesLength++;
     }
-
-    int ignBytesLength = 32 - reqLength;
-    if (ignBytesLength < 0)
-        ignBytesLength = 0;
 
     register unsigned char leadingNum = 0;
 
