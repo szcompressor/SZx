@@ -222,15 +222,15 @@ float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_
 			realPrecision = valueRange*relBoundRatio;			
 		}
 
-		if(confparams_cpr->randomAccess)
+//		if(confparams_cpr->randomAccess)
 #ifdef _OPENMP
             bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(data, outSize, realPrecision, length,
                                                                                    500);
 #else
             bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, outSize, realPrecision, length, 500);
 #endif
-		else
-        bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, 96);
+//		else
+//        bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, 96);
         return bytes;
     }
     //sz_cost_start();
@@ -343,14 +343,14 @@ void* SZ_fast_decompress(int fastMode, int dataType, unsigned char *bytes, size_
         else //SZ_WITH_BLOCK_FAST_CMPR
         {
             size_t nbEle = computeDataLength(r5, r4, r3, r2, r1);
-            if(fastMode == SZ_RANDOMACCESS_FAST_CMPR)
+//            if(fastMode == SZ_RANDOMACCESS_FAST_CMPR)
 #ifdef _OPENMP
                 SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(&newFloatData, nbEle, bytes);
 #else
                 SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(&newFloatData, nbEle, bytes);
 #endif
-            else
-                SZ_fast_decompress_args_unpredictable_blocked_float(&newFloatData, nbEle, bytes);
+//            else
+//                SZ_fast_decompress_args_unpredictable_blocked_float(&newFloatData, nbEle, bytes);
         }
         return newFloatData;
     }
@@ -613,11 +613,11 @@ void *SZ_decompress(int dataType, unsigned char *bytes, size_t byteLength, size_
 
         if(confparams_dec->szMode == SZ_BEST_SPEED)
         {
-            if(randomAccess)
-            {
-                newFloatData = SZ_fast_decompress(SZ_RANDOMACCESS_FAST_CMPR, SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
-            }
-            else
+//            if(randomAccess)
+//            {
+//                newFloatData = SZ_fast_decompress(SZ_RANDOMACCESS_FAST_CMPR, SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
+//            }
+//            else
             {
                 if(r2 == 0)
                     newFloatData = SZ_fast_decompress(SZ_NO_BLOCK_FAST_CMPR, SZ_FLOAT, bytes, byteLength, 0, 0, 0, 0, r1);

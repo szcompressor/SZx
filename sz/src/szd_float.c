@@ -243,71 +243,71 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 }
 
 
-void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes)
-{
-	*newData = (float*)malloc(sizeof(float)*nbEle);
-	
-	unsigned char* r = cmpBytes;
-	r += 4;
-	int blockSize = r[0];  //get block size
-	r++;
-	size_t nbConstantBlocks = bytesToLong_bigEndian(r); //get number of constant blocks
-	r += sizeof(size_t);
-		
-	size_t nbBlocks = nbEle/blockSize;
-	size_t remainCount = nbEle%blockSize;
-	size_t stateNBBytes = remainCount == 0 ? (nbBlocks%8==0?nbBlocks/8:nbBlocks/8+1) : ((nbBlocks+1)%8==0? (nbBlocks+1)/8:(nbBlocks+1)/8+1);
-	size_t actualNBBlocks = remainCount==0 ? nbBlocks : nbBlocks+1;
-	unsigned char* stateArray = (unsigned char*)malloc(actualNBBlocks);
-	float* constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));			
-		
-	convertByteArray2IntArray_fast_1b_args(actualNBBlocks, r, stateNBBytes, stateArray); //get the stateArray
-	
-	unsigned char* p = r + stateNBBytes; //p is the starting address of constant median values.
-	
-	size_t i = 0, j = 0, k = 0; //k is used to keep track of constant block index
-	for(i = 0;i < nbConstantBlocks;i++, j+=4) //get the median values for constant-value blocks
-		constantMedianArray[i] = bytesToFloat(p+j);
-
-	unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data blocks
-	float* op = *newData;
-	
-	for(i=0;i<nbBlocks;i++, op += blockSize)
-	{
-		unsigned char state = stateArray[i];
-		if(state) //non-constant block
-		{
-			int cmpSize = SZ_fast_decompress_args_unpredictable_one_block_float(op, blockSize, q);
-			q += cmpSize;		
-		}
-		else //constant block
-		{
-			float medianValue = constantMedianArray[k];			
-			for(j=0;j<blockSize;j++)
-				op[j] = medianValue;
-			p += sizeof(float);
-			k ++;
-		}
-	}
-
-	if(remainCount)
-	{
-		unsigned char state = stateArray[i];
-		if(state) //non-constant block
-		{
-			SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q);	
-		}
-		else //constant block
-		{
-			float medianValue = constantMedianArray[k];				
-			for(j=0;j<remainCount;j++)
-				op[j] = medianValue;
-		}		
-	}
-	
-	free(stateArray);
-	free(constantMedianArray);
-}
+//void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes)
+//{
+//	*newData = (float*)malloc(sizeof(float)*nbEle);
+//
+//	unsigned char* r = cmpBytes;
+//	r += 4;
+//	int blockSize = r[0];  //get block size
+//	r++;
+//	size_t nbConstantBlocks = bytesToLong_bigEndian(r); //get number of constant blocks
+//	r += sizeof(size_t);
+//
+//	size_t nbBlocks = nbEle/blockSize;
+//	size_t remainCount = nbEle%blockSize;
+//	size_t stateNBBytes = remainCount == 0 ? (nbBlocks%8==0?nbBlocks/8:nbBlocks/8+1) : ((nbBlocks+1)%8==0? (nbBlocks+1)/8:(nbBlocks+1)/8+1);
+//	size_t actualNBBlocks = remainCount==0 ? nbBlocks : nbBlocks+1;
+//	unsigned char* stateArray = (unsigned char*)malloc(actualNBBlocks);
+//	float* constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));
+//
+//	convertByteArray2IntArray_fast_1b_args(actualNBBlocks, r, stateNBBytes, stateArray); //get the stateArray
+//
+//	unsigned char* p = r + stateNBBytes; //p is the starting address of constant median values.
+//
+//	size_t i = 0, j = 0, k = 0; //k is used to keep track of constant block index
+//	for(i = 0;i < nbConstantBlocks;i++, j+=4) //get the median values for constant-value blocks
+//		constantMedianArray[i] = bytesToFloat(p+j);
+//
+//	unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data blocks
+//	float* op = *newData;
+//
+//	for(i=0;i<nbBlocks;i++, op += blockSize)
+//	{
+//		unsigned char state = stateArray[i];
+//		if(state) //non-constant block
+//		{
+//			int cmpSize = SZ_fast_decompress_args_unpredictable_one_block_float(op, blockSize, q);
+//			q += cmpSize;
+//		}
+//		else //constant block
+//		{
+//			float medianValue = constantMedianArray[k];
+//			for(j=0;j<blockSize;j++)
+//				op[j] = medianValue;
+//			p += sizeof(float);
+//			k ++;
+//		}
+//	}
+//
+//	if(remainCount)
+//	{
+//		unsigned char state = stateArray[i];
+//		if(state) //non-constant block
+//		{
+//			SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q);
+//		}
+//		else //constant block
+//		{
+//			float medianValue = constantMedianArray[k];
+//			for(j=0;j<remainCount;j++)
+//				op[j] = medianValue;
+//		}
+//	}
+//
+//	free(stateArray);
+//	free(constantMedianArray);
+//}
 
 void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(float** newData, size_t nbEle, unsigned char* cmpBytes) {
 
