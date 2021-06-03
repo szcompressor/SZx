@@ -205,7 +205,7 @@ inline size_t convertIntArray2ByteArray_fast_2b_args(unsigned char* timeStepType
 	else
 		byteLength = timeStepTypeLength*2/8+1;
 	size_t n = 0;
-	if(n%4==0)
+	if(timeStepTypeLength%4==0)
 	{
 		for(i = 0;i<byteLength;i++)
 		{
@@ -227,7 +227,7 @@ inline size_t convertIntArray2ByteArray_fast_2b_args(unsigned char* timeStepType
 	}
 	else
 	{
-		int mod4 = n%4;
+		int mod4 = timeStepTypeLength%4;
 		size_t byteLength_ = byteLength - mod4;
 		for(i = 0;i<byteLength_;i++)
 		{
