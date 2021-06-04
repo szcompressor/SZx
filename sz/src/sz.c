@@ -238,7 +238,7 @@ float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_
     float* oriData = (float*)data;
     float min = oriData[0];
     float max = oriData[0];
-    for(i=0;i<length;i=i+20)
+    for(i=0;i<length;i++)
     {
         float v = oriData[i];
         if(min>v)
