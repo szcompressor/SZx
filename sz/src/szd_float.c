@@ -466,7 +466,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
 	free(constantMedianArray);
 }
 
-void SZ_fast_decompress_args_unpredictable_float(float** newData, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, unsigned char* cmpBytes, 
+void SZ_fast_decompress_args_unpredictable_float(float** newData, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, unsigned char* cmpBytes,
 size_t cmpSize)
 {
 	size_t nbEle = computeDataLength(r5, r4, r3, r2, r1);
@@ -513,120 +513,138 @@ size_t cmpSize)
 	}
 	
 	//sz_cost_start();
-	if(sysEndianType==LITTLE_ENDIAN_SYSTEM)
-	{
-		if(reqBytesLength == 3)
-		{
-			for(i=0;i < nbEle;i++)
-			{
-				lfBuf_cur.value = 0;
-				
-				j = (i >> 2); //i/4
-				k = (i & 0x03) << 1; //(i%4)*2
-				leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
-				
-				if(leadingNum == 1)
-				{	
-					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
-					lfBuf_cur.byte[1] = q[0];
-					lfBuf_cur.byte[2] = q[1];				
-					q += 2;
-				}
-				else if(leadingNum == 2)
-				{
-					lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
-					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
-					lfBuf_cur.byte[1] = q[0];									
-					q += 1;
-				}
-				else if(leadingNum == 3)
-				{
-					lfBuf_cur.byte[1] = lfBuf_pre.byte[1];
-					lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
-					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];				
-				}
-				else //==0
-				{
-					lfBuf_cur.byte[1] = q[0];
-					lfBuf_cur.byte[2] = q[1];					
-					lfBuf_cur.byte[3] = q[2];					
-					q += 3;
-				}
+	if(sysEndianType==LITTLE_ENDIAN_SYSTEM) {
+        if (reqBytesLength == 3) {
+            for (i = 0; i < nbEle; i++) {
+                lfBuf_cur.value = 0;
 
-				lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
-				(*newData)[i] = lfBuf_cur.value + medianValue;
-				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
-				
-				lfBuf_pre = lfBuf_cur;
-			}
-		}
-		else if(reqBytesLength == 2)
-		{
-			for(i=0;i < nbEle;i++)
-			{
-				lfBuf_cur.value = 0;
-				
-				j = (i >> 2); //i/4
-				k = (i & 0x03) << 1; //(i%4)*2
-				leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
-	
-				if(leadingNum == 1)
-				{	
-					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
-					lfBuf_cur.byte[2] = q[0];			
-					q += 1;	
-				}
-				else if(leadingNum >= 2)
-				{
-					lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
-					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];									
-				}
-				else //==0
-				{
-					lfBuf_cur.byte[2] = q[0];					
-					lfBuf_cur.byte[3] = q[1];					
-					q += 2;
-				}
-				
-				lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
-				(*newData)[i] = lfBuf_cur.value + medianValue;
-				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
-				
-				lfBuf_pre = lfBuf_cur;
-			}					
-		}
-		else if(reqBytesLength == 1)
-		{
-			for(i=0;i < nbEle;i++)
-			{
-				lfBuf_cur.value = 0;
-				
-				j = (i >> 2); //i/4
-				k = (i & 0x03) << 1; //(i%4)*2
-				leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
-				
-				if(leadingNum != 0) //>=1
-				{	
-					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];				
-				}
-				else //==0
-				{
-					lfBuf_cur.byte[3] = q[0];				
-					q += 1;	
-				}
-				
-				lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
-				(*newData)[i] = lfBuf_cur.value + medianValue;
-				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
-				
-				lfBuf_pre = lfBuf_cur;
-			}				
-		}
-	}
-	else
-	{
-		
-	}
+                j = (i >> 2); //i/4
+                k = (i & 0x03) << 1; //(i%4)*2
+                leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
+
+                if (leadingNum == 1) {
+                    lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
+                    lfBuf_cur.byte[1] = q[0];
+                    lfBuf_cur.byte[2] = q[1];
+                    q += 2;
+                } else if (leadingNum == 2) {
+                    lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
+                    lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
+                    lfBuf_cur.byte[1] = q[0];
+                    q += 1;
+                } else if (leadingNum == 3) {
+                    lfBuf_cur.byte[1] = lfBuf_pre.byte[1];
+                    lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
+                    lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
+                } else //==0
+                {
+                    lfBuf_cur.byte[1] = q[0];
+                    lfBuf_cur.byte[2] = q[1];
+                    lfBuf_cur.byte[3] = q[2];
+                    q += 3;
+                }
+
+                lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
+                (*newData)[i] = lfBuf_cur.value + medianValue;
+                lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
+
+                lfBuf_pre = lfBuf_cur;
+            }
+        } else if (reqBytesLength == 2) {
+            for (i = 0; i < nbEle; i++) {
+                lfBuf_cur.value = 0;
+
+                j = (i >> 2); //i/4
+                k = (i & 0x03) << 1; //(i%4)*2
+                leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
+
+                if (leadingNum == 1) {
+                    lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
+                    lfBuf_cur.byte[2] = q[0];
+                    q += 1;
+                } else if (leadingNum >= 2) {
+                    lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
+                    lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
+                } else //==0
+                {
+                    lfBuf_cur.byte[2] = q[0];
+                    lfBuf_cur.byte[3] = q[1];
+                    q += 2;
+                }
+
+                lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
+                (*newData)[i] = lfBuf_cur.value + medianValue;
+                lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
+
+                lfBuf_pre = lfBuf_cur;
+
+            }
+        } else if (reqBytesLength == 1) {
+            for (i = 0; i < nbEle; i++) {
+                lfBuf_cur.value = 0;
+
+                j = (i >> 2); //i/4
+                k = (i & 0x03) << 1; //(i%4)*2
+                leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
+
+                if (leadingNum != 0) //>=1
+                {
+                    lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
+                } else //==0
+                {
+                    lfBuf_cur.byte[3] = q[0];
+                    q += 1;
+                }
+
+                lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
+                (*newData)[i] = lfBuf_cur.value + medianValue;
+                lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
+
+                lfBuf_pre = lfBuf_cur;
+            }
+        } else {
+            for (i = 0; i < nbEle; i++) {
+                lfBuf_cur.value = 0;
+
+                j = (i >> 2); //i/4
+                k = (i & 0x03) << 1; //(i%4)*2
+                leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
+
+                if (leadingNum == 1) {
+                    lfBuf_cur.byte[0] = q[0];
+                    lfBuf_cur.byte[1] = q[1];
+                    lfBuf_cur.byte[2] = q[2];
+                    lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
+                    q += 3;
+                } else if (leadingNum == 2) {
+                    lfBuf_cur.byte[0] = q[0];
+                    lfBuf_cur.byte[1] = q[1];
+                    lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
+                    lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
+                    q += 2;
+                } else if (leadingNum == 3) {
+                    lfBuf_cur.byte[0] = q[0];
+                    lfBuf_cur.byte[1] = lfBuf_pre.byte[1];
+                    lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
+                    lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
+                    q += 1;
+                } else //==0
+                {
+                    lfBuf_cur.byte[0] = q[0];
+                    lfBuf_cur.byte[1] = q[1];
+                    lfBuf_cur.byte[2] = q[2];
+                    lfBuf_cur.byte[3] = q[3];
+                    q += 4;
+                }
+
+                lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
+                (*newData)[i] = lfBuf_cur.value + medianValue;
+                lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
+
+                lfBuf_pre = lfBuf_cur;
+            }
+        }
+    }
 	
 	//sz_cost_end();
 	//printf("totalCost = %f\n", sz_totalCost);
