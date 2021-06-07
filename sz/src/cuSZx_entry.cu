@@ -220,7 +220,20 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
     decompress_float<<<dimGrid, dimBlock, sMemsize>>>(d_data, blockSize, ncBlocks, mSize, d_test);
     cudaError_t err = cudaGetLastError();        // Get error code
     printf("CUDA Error: %s\n", cudaGetErrorString(err));
+    checkCudaErrors(cudaMemcpy(data, d_data, ncBlocks*blockSize*sizeof(float), cudaMemcpyDeviceToHost)); 
 
+    int nb=0, nc=0;
+    for (i=0;i<nbBlocks;i++){
+        if (stateArray[i]==0){
+            float Median = constantMedianArray[nb++];
+            for (j=0;j<blockSize;j++)
+                *((*newData)+i*blockSize+j) = Median;
+        }else{
+            for (j=0;j<blockSize;j++)
+                *((*newData)+i*blockSize+j) = data[nc*blockSize+j];
+            nc++;
+        }
+    }
 	//unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data blocks
 	//float* op = *newData;
 	//

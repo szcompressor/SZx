@@ -286,7 +286,6 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
                 pos |= tid<<24;
             }
         }
-        __syncthreads();                  
         c4value[tid] = tmp;
         __syncthreads();                  
 
@@ -318,91 +317,8 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
         __syncthreads();                  
         c4value[tid] = tmp;
         ivalue[tid] = ivalue[tid] << rightShiftBits;
-        __syncthreads();                  
 
-        newData = value[tid] + medianValue;
-        if (b<1) printf("sss%d:%d,%d,%f\n",reqBytesLength,tidx,tidy,newData);
-
-        //if (tidx<2 && tidy==0)
-        //    ivalue[tidx] = offsets[b+tidx];
-        //__syncthreads();                  
-        //obase = ivalue[0];
-        //osize = (ivalue[1]-ivalue[0])%4==0 ? (ivalue[1]-ivalue[0])/4 : (ivalue[1]-ivalue[0])/4+1;
-        //int* uc4bytes = (int*)(ncBytes+obase); 
-        //__syncthreads();                  
-        //if (b==0&&tidx==0&&tidy==0) printf("test:%d\n", osize);
-        //for (int t=tid; t<osize; t+=blockDim.y*blockDim.x){
-        //    int tmp = uc4bytes[t];
-        //    ivalue[t] = tmp;
-        //    if (b==0) printf("sss:%u\n", t);
-        //}
-        //__syncthreads();                  
-        //medianValue = value[0];
-        //if (b==0&&tidx==0&&tidy==0)
-        //    printf("median:%f\n", medianValue);
-
-
-        
-        //data = oriData[b*bs+tidy*warpSize+tidx];
-        //float Min = data;
-        //float Max = data;
-
-        //for (int offset = warpSize/2; offset > 0; offset /= 2) 
-        //{
-        //    Min = min(Min, __shfl_xor_sync(FULL_MASK, Min, offset));
-        //    Max = max(Max, __shfl_xor_sync(FULL_MASK, Max, offset));
-        //}
-        //if (tidx==0){
-        //    value[tidy] = Min;
-        //    value[blockDim.y+tidy] = Max;
-        //}
-        //__syncthreads();                  
-
-        //if (tidy==0){
-        //    if (tidx < blockDim.y){
-        //        Min = value[tidx];
-        //        Max = value[blockDim.y+tidx];
-        //    }
-
-        //    mask = __ballot_sync(FULL_MASK, tidx < blockDim.y);
-        //    for (int offset = blockDim.y/2; offset > 0; offset /= 2) 
-        //    {
-        //        Min = min(Min, __shfl_xor_sync(mask, Min, offset));
-        //        Max = max(Max, __shfl_xor_sync(mask, Max, offset));
-        //    }
-        //    
-        //    if (tidx==0){
-        //        radius = (Max - Min)/2;
-        //        value[0] = radius;
-        //        value[1] = Min + radius;
-        //        value[2] = absErrBound;
-        //    }
-        //}
-        //__syncthreads();                  
-
-        //radius = value[0];
-        //medianValue = value[1];
-        //state = radius <= absErrBound ? 0 : 1;
-        //if (tidx==0){
-        //    meta[b] = state;
-        //    meta[nb+b*mSize] = cvalue[1].x;
-        //    meta[nb+b*mSize+1] = cvalue[1].y;
-        //    meta[nb+b*mSize+2] = cvalue[1].z;
-        //    meta[nb+b*mSize+3] = cvalue[1].w;
-        //} 
-        ////if (tidx==0) test[b] = ivalue[0];
-        //__syncthreads();                  
-
-        //if (state==1){
-        //    //int reqLength = _compute_reqLength(ivalue[0], ivalue[2]);
-        //    //if (tidx==0) test[b] = reqLength;
-        //    //__syncthreads();                  
-        //    //value[tidy*blockDim.x+tidx] = data - medianValue;
-        //    //__syncthreads();                  
-        //    //_decompress_oneBlock(b*bs*sizeof(float), nb+b*mSize+4, b, reqLength, value, ivalue, cvalue, sums, meta, offsets, midBytes, bi);
-        //    bi = false;
-        //}
-
+        fbytes[b*bs+tid] = value[tid] + medianValue;
+        //if (b<1) printf("sss%d:%d,%d,%f\n",reqBytesLength,tidx,tidy,newData);
     }
-
 }
