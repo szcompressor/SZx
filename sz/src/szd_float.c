@@ -83,7 +83,6 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 				j = (i >> 2); //i/4
 				k = (i & 0x03) << 1; //(i%4)*2
 				leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
-                if (bi==1) printf("hss%d:%u\n",i,leadingNum);
 				
 				if(leadingNum == 1)
 				{	
@@ -115,6 +114,7 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
 				newData[i] = lfBuf_cur.value + medianValue;
+                if (bi==1) printf("hss%d:%f\n",i,newData[i]);
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
 				
 				lfBuf_pre = lfBuf_cur;
@@ -129,7 +129,6 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 				j = (i >> 2); //i/4
 				k = (i & 0x03) << 1; //(i%4)*2
 				leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
-                if (bi==1) printf("hss%d:%u\n",i,leadingNum);
 	
 				if(leadingNum == 1)
 				{	
@@ -151,6 +150,7 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 				
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
 				newData[i] = lfBuf_cur.value + medianValue;
+                if (bi==1) printf("hss%d:%f\n",i,newData[i]);
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
 				
 				lfBuf_pre = lfBuf_cur;
@@ -178,6 +178,7 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 				
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
 				newData[i] = lfBuf_cur.value + medianValue;
+                if (bi==1) printf("hss%d:%f\n",i,newData[i]);
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
 				
 				lfBuf_pre = lfBuf_cur;
@@ -228,6 +229,7 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
 				newData[i] = lfBuf_cur.value + medianValue;
+                if (bi==1) printf("hss%d:%f\n",i,newData[i]);
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
 				
 				lfBuf_pre = lfBuf_cur;			

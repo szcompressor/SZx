@@ -67,108 +67,108 @@ __device__ int _deshfl_scan(int lznum, int *sums)
     return value;
 }
 
-__device__ int _decompress_oneBlock(int bbase, int mbase, int obase, int reqLength, float *value, int *ivalue, uchar4 *cvalue, int *sums, unsigned char *meta, short *offsets, unsigned char *midBytes, bool bi)
+__device__ int _compareByte(int pre, int cur, int reqBytesLength)
 {
-	//int reqBytesLength;
-	//int rightShiftBits;
+        //if ((cur&0xff)>63)
+        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,cur&0xff);
+        //if ((cur&0xff00)>63)
+        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,cur&0xff00);
+        //if ((cur&0xff0000)>63)
+        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,cur&0xff0000);
+        //if ((cur&0xff000000)>63)
+        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,cur&0xff000000);
+    if (reqBytesLength == 2)
+    {
+        if ((pre&0x0000ff00) > (cur&0x0000ff00)){
+            cur &= 0x000000ff;
+            cur |= (pre & 0x0000ff00);
+        }
+        if ((pre&0x000000ff) > (cur&0x000000ff)){
+            cur &= 0x0000ff00;
+            cur |= (pre & 0x000000ff);
+        }
+    }else if (reqBytesLength == 3)
+    {
+        if ((pre&0x00ff0000) > (cur&0x00ff0000)){
+            cur &= 0x0000ffff;
+            cur |= (pre & 0x00ff0000);
+        }
+        if ((pre&0x0000ff00) > (cur&0x0000ff00)){
+            cur &= 0x00ff00ff;
+            cur |= (pre & 0x0000ff00);
+        }
+        if ((pre&0x000000ff) > (cur&0x000000ff)){
+            cur &= 0x00ffff00;
+            cur |= (pre & 0x000000ff);
+        }
+    }else if (reqBytesLength == 1)
+    {
+        if (pre > cur)
+            cur = pre;
+    }else if (reqBytesLength == 4)
+    {
+        if ((pre&0xff000000) > (cur&0xff000000)){
+            cur &= 0x00ffffff;
+            cur |= (pre & 0xff000000);
+        }
+        if ((pre&0x00ff0000) > (cur&0x00ff0000)){
+            cur &= 0xff00ffff;
+            cur |= (pre & 0x00ff0000);
+        }
+        if ((pre&0x0000ff00) > (cur&0x0000ff00)){
+            cur &= 0xffff00ff;
+            cur |= (pre & 0x0000ff00);
+        }
+        if ((pre&0x000000ff) > (cur&0x000000ff)){
+            cur &= 0xffffff00;
+            cur |= (pre & 0x000000ff);
+        }
+    }
+    return cur;
+}
 
+__device__ int _retrieve_leading(int pos, int reqBytesLength, int* sums)
+{
+        //if ((pos&0xff)>63)
+        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,pos&0x000000ff);
+        //if ((pos&0xff00)>63)
+        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,pos&0x0000ff00);
+        //if ((pos&0x00ff0000)>63)
+        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,pos&0x00ff0000);
+        //if ((pos&0xff000000)>63)
+        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,pos&0xff000000);
+#pragma unroll
+    for (int i = 1; i <= warpSize; i *= 2) {
+        unsigned int mask = 0xffffffff;
+        int n = __shfl_up_sync(mask, pos, i);
+        if (threadIdx.x >= i)
+            pos = _compareByte(n, pos, reqBytesLength);
+    }
 
-	//if (reqLength%8 != 0)
-	//{
-	//	reqBytesLength = reqLength/8+1;		
-	//	rightShiftBits = 8 - reqLength%8;
-    //}else{
-	//	reqBytesLength = reqLength/8;		
-	//	rightShiftBits = 0;
-    //}
+    if (threadIdx.x == warpSize - 1)
+        sums[threadIdx.y] = pos;
+    __syncthreads();
 
-    ////if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cvalue[threadIdx.y*blockDim.x+threadIdx.x].w);
-    //int cur_ivalue = (ivalue[threadIdx.y*blockDim.x+threadIdx.x] >> rightShiftBits) & ((1<<(32-rightShiftBits))-1);
-    //ivalue[threadIdx.y*blockDim.x+threadIdx.x] = cur_ivalue;
-    //__syncthreads();                  
+    if (threadIdx.y == 0 && threadIdx.x < blockDim.y) {
+        int warp_pos = sums[threadIdx.x];
 
-    //int pre_ivalue = 0;
-    //if (threadIdx.x!=0 || threadIdx.y!=0) pre_ivalue = ivalue[threadIdx.y*blockDim.x+threadIdx.x-1];
-    //pre_ivalue = cur_ivalue ^ pre_ivalue;
-    //__syncthreads();                  
+        int mask = (1 << blockDim.y) - 1;
+        for (int i = 1; i <= blockDim.y; i *= 2) {
+            int n = __shfl_up_sync(mask, warp_pos, i);
+            if (threadIdx.x >= i)
+                warp_pos = _compareByte(n, warp_pos, reqBytesLength);
+        }
 
-    //int leadingNum = 0;
-    //if (reqBytesLength == 2)
-    //{
-    //    if (pre_ivalue >> 16 == 0) leadingNum = 2;
-    //    else if (pre_ivalue >> 24 == 0) leadingNum = 1;
-    //}else if (reqBytesLength == 3)
-    //{
-    //    if (pre_ivalue >> 8 == 0) leadingNum = 3;
-    //    else if (pre_ivalue >> 16 == 0) leadingNum = 2;
-    //    else if (pre_ivalue >> 24 == 0) leadingNum = 1;
-    //}else if (reqBytesLength == 1)
-    //{
-    //    if (pre_ivalue >> 24 == 0) leadingNum = 1;
+        sums[threadIdx.x] = warp_pos;
+    }
+    __syncthreads();
 
-    //}else if (reqBytesLength == 4)
-    //{
-    //    if (pre_ivalue == 0) leadingNum = 4;
-    //    else if (pre_ivalue >> 8 == 0) leadingNum = 3;
-    //    else if (pre_ivalue >> 16 == 0) leadingNum = 2;
-    //    else if (pre_ivalue >> 24 == 0) leadingNum = 1;
-    //}
-    ////if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, leadingNum);
-    ////midBytes[bbase+threadIdx.y*blockDim.x+threadIdx.x] = leadingNum; 
+    if (threadIdx.y > 0) {
+        int block_pos = sums[threadIdx.y - 1];
+        pos = _compareByte(block_pos, pos, reqBytesLength);
+    }
 
-    //int midByte_size = reqBytesLength - leadingNum;
-    //int midByte_sum = _shfl_scan(midByte_size, sums);
-    //uchar4 cur_cvalue = cvalue[threadIdx.y*blockDim.x+threadIdx.x];
-    //if (reqBytesLength == 2)
-    //{
-    //    if (midByte_size == 1){
-    //        midBytes[bbase+midByte_sum-1] = cur_cvalue.z; 
-    //        //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.z);
-    //    }else if (midByte_size == 2){
-    //        midBytes[bbase+midByte_sum-1] = cur_cvalue.w; 
-    //        //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.z);
-    //        midBytes[bbase+midByte_sum-2] = cur_cvalue.z;
-    //        //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.w);
-    //    }
-    //}else if (reqBytesLength == 3)
-    //{
-    //    if (midByte_size == 1){
-    //        midBytes[bbase+midByte_sum-1] = cur_cvalue.y; 
-    //    }else if (midByte_size == 2){
-    //        midBytes[bbase+midByte_sum-1] = cur_cvalue.z; 
-    //        midBytes[bbase+midByte_sum-2] = cur_cvalue.y; 
-    //    }else if (midByte_size == 3){
-    //        midBytes[bbase+midByte_sum-1] = cur_cvalue.w; 
-    //        midBytes[bbase+midByte_sum-2] = cur_cvalue.z; 
-    //        midBytes[bbase+midByte_sum-3] = cur_cvalue.y; 
-    //    }
-    //}else if (reqBytesLength == 1)
-    //{
-    //    if (midByte_size == 1)
-    //        midBytes[bbase+midByte_sum-1] = cur_cvalue.w; 
-    //}else if (reqBytesLength == 4)
-    //{
-    //    if (midByte_size == 1){
-    //        midBytes[bbase+midByte_sum-1] = cur_cvalue.x; 
-    //    }else if (midByte_size == 2){
-    //        midBytes[bbase+midByte_sum-1] = cur_cvalue.y; 
-    //        midBytes[bbase+midByte_sum-2] = cur_cvalue.x; 
-    //    }else if (midByte_size == 3){
-    //        midBytes[bbase+midByte_sum-1] = cur_cvalue.z; 
-    //        midBytes[bbase+midByte_sum-2] = cur_cvalue.y; 
-    //        midBytes[bbase+midByte_sum-3] = cur_cvalue.x; 
-    //    }else if (midByte_size == 4){
-    //        midBytes[bbase+midByte_sum-1] = cur_cvalue.w; 
-    //        midBytes[bbase+midByte_sum-2] = cur_cvalue.z; 
-    //        midBytes[bbase+midByte_sum-3] = cur_cvalue.y; 
-    //        midBytes[bbase+midByte_sum-4] = cur_cvalue.x; 
-    //    }
-    //}
-
-    //if (threadIdx.x==0 && threadIdx.y==0) meta[mbase] = (unsigned char)reqLength;
-    //if (threadIdx.x==blockDim.x-1 && threadIdx.y==blockDim.y-1) offsets[obase] = (short)midByte_sum;
-    //_IntArray2ByteArray(leadingNum, mbase+1, meta, bi);
-
+    return pos;
 }
 
 __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t mSize, int *test) 
@@ -178,7 +178,7 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
     int tid = tidy*warpSize+tidx;
     int bid = blockIdx.x;
 
-    float radius, medianValue;
+    float newData, medianValue;
     unsigned mask;
     unsigned char leadingNum;
     extern __shared__ float shared[];
@@ -212,7 +212,6 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
         }
         leadingNum = cvalue[5+(tid>>2)];
         leadingNum = (leadingNum >> (6-((tid&0x03)<<1))) & 0x03;
-        if (b<1) printf("sss%d:%d,%d,%u\n",reqBytesLength,tidx,tidy,leadingNum);
         int midByte_size = reqBytesLength - leadingNum;
         int midByte_sum = _deshfl_scan(midByte_size, sums);
 
@@ -221,51 +220,109 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
         tmp.y = 0;
         tmp.z = 0;
         tmp.w = 0;
+        int pos = 0;
         if (reqBytesLength == 2)
         {
             if (midByte_size == 1){
                 tmp.z = cvalue[mSize+midByte_sum-1]; 
+                pos |= tid<<8;
                 //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.z);
             }else if (midByte_size == 2){
                 tmp.w = cvalue[mSize+midByte_sum-1]; 
                 //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.z);
                 tmp.z = cvalue[mSize+midByte_sum-2];
+                pos |= tid;
+                pos |= tid<<8;
                 //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.w);
             }
         }else if (reqBytesLength == 3)
         {
             if (midByte_size == 1){
                 tmp.y = cvalue[mSize+midByte_sum-1]; 
+                pos |= tid<<16;
             }else if (midByte_size == 2){
                 tmp.z = cvalue[mSize+midByte_sum-1]; 
                 tmp.y = cvalue[mSize+midByte_sum-2]; 
+                pos |= tid<<8;
+                pos |= tid<<16;
             }else if (midByte_size == 3){
                 tmp.w = cvalue[mSize+midByte_sum-1]; 
                 tmp.z = cvalue[mSize+midByte_sum-2]; 
                 tmp.y = cvalue[mSize+midByte_sum-3]; 
+                pos |= tid;
+                pos |= tid<<8;
+                pos |= tid<<16;
             }
         }else if (reqBytesLength == 1)
         {
             if (midByte_size == 1)
                 tmp.w = cvalue[mSize+midByte_sum-1]; 
+                pos |= tid;
         }else if (reqBytesLength == 4)
         {
             if (midByte_size == 1){
                 tmp.x = cvalue[mSize+midByte_sum-1]; 
+                pos |= tid<<24;
             }else if (midByte_size == 2){
                 tmp.y = cvalue[mSize+midByte_sum-1]; 
                 tmp.x = cvalue[mSize+midByte_sum-2]; 
+                pos |= tid<<16;
+                pos |= tid<<24;
             }else if (midByte_size == 3){
                 tmp.z = cvalue[mSize+midByte_sum-1]; 
                 tmp.y = cvalue[mSize+midByte_sum-2]; 
                 tmp.x = cvalue[mSize+midByte_sum-3]; 
+                pos |= tid<<8;
+                pos |= tid<<16;
+                pos |= tid<<24;
             }else if (midByte_size == 4){
                 tmp.w = cvalue[mSize+midByte_sum-1]; 
                 tmp.z = cvalue[mSize+midByte_sum-2]; 
                 tmp.y = cvalue[mSize+midByte_sum-3]; 
                 tmp.x = cvalue[mSize+midByte_sum-4]; 
+                pos |= tid;
+                pos |= tid<<8;
+                pos |= tid<<16;
+                pos |= tid<<24;
             }
         }
+        __syncthreads();                  
+        c4value[tid] = tmp;
+        __syncthreads();                  
+
+        pos = _retrieve_leading(pos, reqBytesLength, sums);
+        //if ((pos&0xff)>63)
+        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,tidx,tidy,pos&0xff);
+        //if ((pos&0xff00)>63)
+        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,tidx,tidy,pos&0xff00);
+        //if ((pos&0xff0000)>63)
+        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,tidx,tidy,pos&0xff0000);
+        //if ((pos&0xff000000)>63)
+        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,tidx,tidy,pos&0xff000000);
+
+        if (leadingNum == 2){
+            tmp.w = c4value[pos&0xff].w; 
+            tmp.z = c4value[(pos>>8)&0xff].z;
+        }else if (leadingNum == 3){
+            tmp.w = c4value[pos&0xff].w; 
+            tmp.z = c4value[(pos>>8)&0xff].z;
+            tmp.y = c4value[(pos>>16)&0xff].y; 
+        }else if (leadingNum == 1){
+            tmp.w = c4value[pos&0xff].w; 
+        }else if (leadingNum == 4){
+            tmp.w = c4value[pos&0xff].w; 
+            tmp.z = c4value[(pos>>8)&0xff].z;
+            tmp.y = c4value[(pos>>16)&0xff].y; 
+            tmp.x = c4value[pos>>24].x; 
+        }
+        __syncthreads();                  
+        c4value[tid] = tmp;
+        ivalue[tid] = ivalue[tid] << rightShiftBits;
+        __syncthreads();                  
+
+        newData = value[tid] + medianValue;
+        if (b<1) printf("sss%d:%d,%d,%f\n",reqBytesLength,tidx,tidy,newData);
+
         //if (tidx<2 && tidy==0)
         //    ivalue[tidx] = offsets[b+tidx];
         //__syncthreads();                  
