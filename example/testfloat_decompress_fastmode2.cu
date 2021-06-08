@@ -68,8 +68,9 @@ int main(int argc, char * argv[])
  
     cost_start();
     float *data = NULL;
-    SZ_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
-    cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, cuBytes);
+    float *d_data = NULL;
+    float* m = SZ_fast_decompress_args_unpredictable_blocked_float(&d_data, nbEle, bytes);
+    cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, cuBytes, m);
     cost_end();
     
     free(bytes); 
@@ -102,6 +103,8 @@ int main(int argc, char * argv[])
     {
         sum1 += ori_data[i];
 		sum2 += data[i];
+        //if (data[i]>1) printf("Error%i: %f cannot be read!\n",i, data[i]);
+        //if (data[i]!=d_data[i]) printf("Error%i: %f :%f cannot be read!\n",i, data[i], d_data[i]);
     }
     double mean1 = sum1/nbEle;
     double mean2 = sum2/nbEle;
@@ -116,6 +119,7 @@ int main(int argc, char * argv[])
         if (Min > ori_data[i]) Min = ori_data[i];
         
         float err = fabs(data[i] - ori_data[i]);
+        if (err>0.0001) printf("test:%.10f, %.10f, %.10f\n",data[i], ori_data[i], d_data[i]);
 	if(ori_data[i]!=0)
 	{
 		if(fabs(ori_data[i])>1)

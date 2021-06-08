@@ -195,13 +195,13 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
 
 
     bool bi = false;
-    if (bid==73) bi=true;
     for (int b=bid; b<nc; b+=gridDim.x){
+        bi = false;
+        if (b==26192) bi=true;
         c4value[tid] = uc4bytes[b*bs+tid];
         __syncthreads();                  
         medianValue = value[0];
         reqLength = (int)cvalue[4];
-        //if (b<2&&tidx==0&&tidy==0) printf("sss%d:%d\n",b, reqLength);
         if (reqLength%8 != 0)
         {
             reqBytesLength = reqLength/8+1;		
@@ -214,6 +214,7 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
         leadingNum = (leadingNum >> (6-((tid&0x03)<<1))) & 0x03;
         int midByte_size = reqBytesLength - leadingNum;
         int midByte_sum = _deshfl_scan(midByte_size, sums);
+        //if (bi==true) printf("sss%d:%d\n",reqBytesLength, midByte_size);
 
         uchar4 tmp;
         tmp.x = 0;
@@ -226,29 +227,32 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
             if (midByte_size == 1){
                 tmp.z = cvalue[mSize+midByte_sum-1]; 
                 pos |= tid<<8;
-                //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.z);
             }else if (midByte_size == 2){
                 tmp.w = cvalue[mSize+midByte_sum-1]; 
-                //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.z);
                 tmp.z = cvalue[mSize+midByte_sum-2];
                 pos |= tid;
                 pos |= tid<<8;
-                //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.w);
             }
         }else if (reqBytesLength == 3)
         {
             if (midByte_size == 1){
                 tmp.y = cvalue[mSize+midByte_sum-1]; 
                 pos |= tid<<16;
+                //if (bi==true) printf("%i:%i:%i:%u\n", 0, threadIdx.x, threadIdx.y, tmp.y);
             }else if (midByte_size == 2){
                 tmp.z = cvalue[mSize+midByte_sum-1]; 
                 tmp.y = cvalue[mSize+midByte_sum-2]; 
+                //if (bi==true) printf("%i:%i:%i:%u\n", 0, threadIdx.x, threadIdx.y, tmp.z);
+                //if (bi==true) printf("%i:%i:%i:%u\n", 1, threadIdx.x, threadIdx.y, tmp.y);
                 pos |= tid<<8;
                 pos |= tid<<16;
             }else if (midByte_size == 3){
                 tmp.w = cvalue[mSize+midByte_sum-1]; 
                 tmp.z = cvalue[mSize+midByte_sum-2]; 
                 tmp.y = cvalue[mSize+midByte_sum-3]; 
+                //if (bi==true) printf("%i:%i:%i:%u\n", 0, threadIdx.x, threadIdx.y, tmp.w);
+                //if (bi==true) printf("%i:%i:%i:%u\n", 1, threadIdx.x, threadIdx.y, tmp.z);
+                //if (bi==true) printf("%i:%i:%i:%u\n", 2, threadIdx.x, threadIdx.y, tmp.y);
                 pos |= tid;
                 pos |= tid<<8;
                 pos |= tid<<16;
@@ -286,8 +290,8 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
                 pos |= tid<<24;
             }
         }
-        c4value[tid] = tmp;
         __syncthreads();                  
+        c4value[tid] = tmp;
 
         pos = _retrieve_leading(pos, reqBytesLength, sums);
         //if ((pos&0xff)>63)
@@ -302,23 +306,30 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
         if (leadingNum == 2){
             tmp.w = c4value[pos&0xff].w; 
             tmp.z = c4value[(pos>>8)&0xff].z;
+            //if (bi==true) printf("%i:%i:%i:%u\n", 0, threadIdx.x, threadIdx.y, pos&0xff);
+            //if (bi==true) printf("%i:%i:%i:%u\n", 1, threadIdx.x, threadIdx.y, (pos>>8)&0xff);
         }else if (leadingNum == 3){
             tmp.w = c4value[pos&0xff].w; 
             tmp.z = c4value[(pos>>8)&0xff].z;
             tmp.y = c4value[(pos>>16)&0xff].y; 
+            //if (bi==true) printf("%i:%i:%i:%u\n", 0, threadIdx.x, threadIdx.y, c4value[pos&0xff].w);
+            //if (bi==true) printf("%i:%i:%i:%u\n", 1, threadIdx.x, threadIdx.y, c4value[(pos>>8)&0xff].z);
+            //if (bi==true) printf("%i:%i:%i:%u\n", 2, threadIdx.x, threadIdx.y, c4value[(pos>>16)&0xff].y);
         }else if (leadingNum == 1){
             tmp.w = c4value[pos&0xff].w; 
+            //if (bi==true) printf("%i:%i:%i:%u\n", 0, threadIdx.x, threadIdx.y, pos&0xff);
         }else if (leadingNum == 4){
             tmp.w = c4value[pos&0xff].w; 
             tmp.z = c4value[(pos>>8)&0xff].z;
             tmp.y = c4value[(pos>>16)&0xff].y; 
             tmp.x = c4value[pos>>24].x; 
         }
-        __syncthreads();                  
         c4value[tid] = tmp;
+        __syncthreads();                  
         ivalue[tid] = ivalue[tid] << rightShiftBits;
 
         fbytes[b*bs+tid] = value[tid] + medianValue;
+        //if (b==26192) printf("median%d:%f\n", tid, medianValue);
         //if (b<1) printf("sss%d:%d,%d,%f\n",reqBytesLength,tidx,tidy,newData);
     }
 }
