@@ -44,17 +44,12 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
     memcpy(r, oriData+nbBlocks*blockSize, (nbEle%blockSize)*sizeof(float));
     r += (nbEle%blockSize)*sizeof(float);
     unsigned char* c = r;
-    float *fc = (float*)r;
     unsigned char* o = c+nbConstantBlocks*sizeof(float);
     unsigned char* nc = o+(nbBlocks-nbConstantBlocks)*sizeof(short);
-    int x = 0;
     for (int i=0; i<nbBlocks; i++){
         
         if (meta[i]==0){
             memcpy(c, meta+(nbBlocks+i*mSize), sizeof(float));
-            //if (bytesToFloat(c)>1) printf("median %d : %f\n", i, bytesToFloat(meta+(nbBlocks+i*mSize)));
-            //if (fc[x]>0) printf("median %d : %f\n", i, fc[x]);
-            x++;
             c += sizeof(float);
         }else{
             shortToBytes(o, offsets[i]);
@@ -152,7 +147,6 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 {
 	*newData = (float*)malloc(sizeof(float)*nbEle);
     memset(*newData, 0, sizeof(float)*nbEle);
-    float *ndata = *newData;
 	
 	unsigned char* r = cmpBytes;
 	r += 4;
@@ -169,8 +163,6 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
     size_t mSize = sizeof(float)+1+ncLeading; //Number of bytes for each data block's metadata.
 	unsigned char* stateArray = (unsigned char*)malloc(nbBlocks);
 	float* constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));			
-	//int* offsets = (int*)malloc((ncBlocks+1)*sizeof(int));			
-    //offsets[0] = 0;
 	unsigned char* data = (unsigned char*)malloc(ncBlocks*blockSize*sizeof(float));
     memset(data, 0, ncBlocks*blockSize*sizeof(float));
 		
@@ -191,10 +183,6 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 		constantMedianArray[i] = fr[i];
         if (constantMedianArray[i]>1) printf("median %d : %f\n", i, bytesToFloat(r+j));
     }
-    //for (i=0;i<nbConstantBlocks;i++){
-    //    float Median = constantMedianArray[i];
-    //    if (Median>1) printf("data%i:%f\n",i, Median);
-    //}
     r += nbConstantBlocks*sizeof(float);
     unsigned char* p = r + ncBlocks * sizeof(short);
     float* datatest = (float*)data;
@@ -211,14 +199,6 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
         p += leng;
     } 
 
-    //int* d_offsets;
-    //checkCudaErrors(cudaMalloc((void**)&d_offsets, (ncBlocks+1)*sizeof(int))); 
-    //checkCudaErrors(cudaMemcpy(d_offsets, offsets, (ncBlocks+1)*sizeof(int), cudaMemcpyHostToDevice)); 
-    //size_t ncSize = offsets[ncBlocks]%4==0 ? offsets[ncBlocks] : offsets[ncBlocks]+(4-offsets[ncBlocks]%4);
-    //unsigned char* d_ncBytes;
-    //checkCudaErrors(cudaMalloc((void**)&d_ncBytes, ncSize)); 
-    //checkCudaErrors(cudaMemset(d_ncBytes, 0, ncSize));
-    //checkCudaErrors(cudaMemcpy(d_ncBytes, r, offsets[ncBlocks], cudaMemcpyHostToDevice)); 
     unsigned char* d_data;
     checkCudaErrors(cudaMalloc((void**)&d_data, ncBlocks*blockSize*sizeof(float))); 
     checkCudaErrors(cudaMemcpy(d_data, data, ncBlocks*blockSize*sizeof(float), cudaMemcpyHostToDevice)); 
@@ -244,63 +224,23 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
             //float Median = m[nb];
             if (Median>1) printf("data%i:%f\n",i, Median);
             for (j=0;j<blockSize;j++){
-                //ndata[i*blockSize+j] = Median;
                 *((*newData)+i*blockSize+j) = Median;
-                if (ndata[i*blockSize+j]>1) printf("data%i:%i:%f\n",i,nc, Median);
                 test++;
             }
             nb++;
         }else{
             for (j=0;j<blockSize;j++){
-                //ndata[i*blockSize+j] = fdata[nc*blockSize+j];
                 *((*newData)+i*blockSize+j) = fdata[nc*blockSize+j];
-                //if (ndata[i*blockSize+j]>1) printf("data%i:%i:%f\n",i,nc, fdata[nc*blockSize+j]);
                 test++;
             }
             nc++;
         }
     }
-    if (nb==nbConstantBlocks) printf("damn%d:%d\n",test, nbEle);
-    //for (i=0;i<nbEle;i++){
-    //    if (ndata[i]>1) printf("outliner%i:%f\n", i, ndata[i]);
-    //}
-	//unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data blocks
-	//float* op = *newData;
-	//
-	//for(i=0;i<nbBlocks;i++, op += blockSize)
-	//{
-	//	unsigned char state = stateArray[i];
-	//	if(state) //non-constant block
-	//	{
-	//		int cmpSize = SZ_fast_decompress_args_unpredictable_one_block_float(op, blockSize, q);
-	//		q += cmpSize;		
-	//	}
-	//	else //constant block
-	//	{
-	//		float medianValue = constantMedianArray[k];			
-	//		for(j=0;j<blockSize;j++)
-	//			op[j] = medianValue;
-	//		p += sizeof(float);
-	//		k ++;
-	//	}
-	//}
 
-	//if(remainCount)
-	//{
-	//	unsigned char state = stateArray[i];
-	//	if(state) //non-constant block
-	//	{
-	//		SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q);	
-	//	}
-	//	else //constant block
-	//	{
-	//		float medianValue = constantMedianArray[k];				
-	//		for(j=0;j<remainCount;j++)
-	//			op[j] = medianValue;
-	//	}		
-	//}
-	//
-	//free(stateArray);
-	//free(constantMedianArray);
+	free(stateArray);
+	free(constantMedianArray);
+	free(data);
+    checkCudaErrors(cudaFree(d_data));
+    checkCudaErrors(cudaFree(d_test));
 
 }

@@ -103,8 +103,6 @@ int main(int argc, char * argv[])
     {
         sum1 += ori_data[i];
 		sum2 += data[i];
-        //if (data[i]>1) printf("Error%i: %f cannot be read!\n",i, data[i]);
-        //if (data[i]!=d_data[i]) printf("Error%i: %f :%f cannot be read!\n",i, data[i], d_data[i]);
     }
     double mean1 = sum1/nbEle;
     double mean2 = sum2/nbEle;

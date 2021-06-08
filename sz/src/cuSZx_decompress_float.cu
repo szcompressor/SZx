@@ -69,14 +69,6 @@ __device__ int _deshfl_scan(int lznum, int *sums)
 
 __device__ int _compareByte(int pre, int cur, int reqBytesLength)
 {
-        //if ((cur&0xff)>63)
-        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,cur&0xff);
-        //if ((cur&0xff00)>63)
-        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,cur&0xff00);
-        //if ((cur&0xff0000)>63)
-        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,cur&0xff0000);
-        //if ((cur&0xff000000)>63)
-        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,cur&0xff000000);
     if (reqBytesLength == 2)
     {
         if ((pre&0x0000ff00) > (cur&0x0000ff00)){
@@ -129,14 +121,6 @@ __device__ int _compareByte(int pre, int cur, int reqBytesLength)
 
 __device__ int _retrieve_leading(int pos, int reqBytesLength, int* sums)
 {
-        //if ((pos&0xff)>63)
-        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,pos&0x000000ff);
-        //if ((pos&0xff00)>63)
-        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,pos&0x0000ff00);
-        //if ((pos&0x00ff0000)>63)
-        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,pos&0x00ff0000);
-        //if ((pos&0xff000000)>63)
-        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,threadIdx.x,threadIdx.y,pos&0xff000000);
 #pragma unroll
     for (int i = 1; i <= warpSize; i *= 2) {
         unsigned int mask = 0xffffffff;
@@ -178,8 +162,7 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
     int tid = tidy*warpSize+tidx;
     int bid = blockIdx.x;
 
-    float newData, medianValue;
-    unsigned mask;
+    float medianValue;
     unsigned char leadingNum;
     extern __shared__ float shared[];
     float* value = shared;
@@ -188,7 +171,6 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
     unsigned char* cvalue = (unsigned char*)shared;
     int* sums = &ivalue[bs];
     int reqLength;
-    uchar4* uc4bytes = (uchar4*)data;
     float* fbytes = (float*)data;
 	int reqBytesLength;
 	int rightShiftBits;
@@ -198,7 +180,7 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
     for (int b=bid; b<nc; b+=gridDim.x){
         bi = false;
         if (b==26192) bi=true;
-        c4value[tid] = uc4bytes[b*bs+tid];
+        value[tid] = fbytes[b*bs+tid];
         __syncthreads();                  
         medianValue = value[0];
         reqLength = (int)cvalue[4];
@@ -294,14 +276,6 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
         c4value[tid] = tmp;
 
         pos = _retrieve_leading(pos, reqBytesLength, sums);
-        //if ((pos&0xff)>63)
-        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,tidx,tidy,pos&0xff);
-        //if ((pos&0xff00)>63)
-        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,tidx,tidy,pos&0xff00);
-        //if ((pos&0xff0000)>63)
-        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,tidx,tidy,pos&0xff0000);
-        //if ((pos&0xff000000)>63)
-        //    printf("sss%d:%d,%d,%u\n",reqBytesLength,tidx,tidy,pos&0xff000000);
 
         if (leadingNum == 2){
             tmp.w = c4value[pos&0xff].w; 
@@ -329,7 +303,5 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
         ivalue[tid] = ivalue[tid] << rightShiftBits;
 
         fbytes[b*bs+tid] = value[tid] + medianValue;
-        //if (b==26192) printf("median%d:%f\n", tid, medianValue);
-        //if (b<1) printf("sss%d:%d,%d,%f\n",reqBytesLength,tidx,tidy,newData);
     }
 }
