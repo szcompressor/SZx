@@ -45,7 +45,7 @@ int main(int argc, char * argv[])
     if(argc < 4)
     {
 		printf("Usage: testfloat_compress_fastmode4 [config_file] [srcFilePath] [block size] [err bound]\n");
-		printf("Example: testfloat_compress_fastmode4 sz.config testfloat_8_8_128.dat 64 1E-3\n");
+		printf("Example: testfloat_compress_fastmode4 sz.config testfloat_8_8_128.dat 500 1E-3\n");
 		exit(0);
     }
 
