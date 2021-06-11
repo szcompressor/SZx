@@ -236,6 +236,23 @@ unsigned long sz_lossless_decompress65536bytes(int losslessCompressor, unsigned 
 	return outSize;
 }
 
+unsigned long sz_lossless_decompress16bytes(int losslessCompressor, unsigned char* compressBytes, unsigned long cmpSize, unsigned char** oriData)
+{
+	unsigned long outSize = 0;
+	switch(losslessCompressor)
+	{
+	case ZSTD_COMPRESSOR:
+		*oriData = (unsigned char*)malloc(16);
+		memset(*oriData, 0, 16);
+		ZSTD_decompress(*oriData, 16, compressBytes, cmpSize);	
+		outSize = 16;
+		break;
+	default:
+		printf("Error: Unrecognized lossless compressor\n");
+	}
+	return outSize;
+}
+
 void* detransposeData(void* data, int dataType, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 {
 	size_t len = computeDataLength(r5, r4, r3, r2, r1);

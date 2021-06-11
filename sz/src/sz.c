@@ -285,7 +285,6 @@ float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_
         }
     }
 
-
     return bytes;
 
 }
@@ -398,7 +397,7 @@ double relBoundRatio, double pwrBoundRatio, size_t r5, size_t r4, size_t r3, siz
     {
         unsigned char *newByteData = NULL;
 
-        if(confparams_cpr->szMode == SZ_BEST_SPEED)
+        if(confparams_cpr->szMode == SZ_BEST_SPEED || confparams_cpr->szMode == SZ_BEST_SPEED2)
         {
             int dim = computeDimension(r5, r4, r3, r2, r1);
             if(dim==1)
@@ -409,6 +408,15 @@ double relBoundRatio, double pwrBoundRatio, size_t r5, size_t r4, size_t r3, siz
             {
                 newByteData =  SZ_fast_compress_args(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, data, outSize, errBoundMode, absErrBound, relBoundRatio, pwrBoundRatio, r5, r4, r3, r2, r1);
             }
+            
+            if(confparams_cpr->szMode == SZ_BEST_SPEED2)
+            {
+				unsigned char* bytes2 = NULL;
+				size_t outSize2 = sz_lossless_compress(ZSTD_COMPRESSOR, 3, newByteData, *outSize, &bytes2);
+				*outSize = outSize2;
+				free(newByteData);
+				newByteData = bytes2;
+			}
         }
         else
         {
@@ -585,6 +593,8 @@ void *SZ_decompress(int dataType, unsigned char *bytes, size_t byteLength, size_
 
     //determine the mode
     int randomAccess = 0;
+    unsigned char* bytes2 = NULL;
+    size_t byteLength2 = byteLength;
     int isZstdOrZlib = is_lossless_compressed_data(bytes, byteLength);
     if(isZstdOrZlib==-1)
     {
@@ -593,13 +603,30 @@ void *SZ_decompress(int dataType, unsigned char *bytes, size_t byteLength, size_
             confparams_dec->szMode = SZ_BEST_SPEED;
             if(bytes[3]==1)
                 randomAccess = 1;
+            bytes2 = bytes;    
         }
         else
-            confparams_dec->szMode = SZ_GOOD_SPEED;
+			confparams_dec->szMode = SZ_GOOD_SPEED;
     }
     else
-        confparams_dec->szMode = SZ_BEST_COMPRESSION;
-
+    {
+		unsigned char* decData = NULL;
+		unsigned long t = sz_lossless_decompress16bytes(ZSTD_COMPRESSOR, bytes, byteLength, &decData);
+		if(decData[2]==SZ_VER_SUPERFAST)
+		{
+			confparams_dec->szMode = SZ_BEST_SPEED2;
+			if(bytes[3]==1)
+				randomAccess = 1;
+			size_t nbEle = computeDataLength(r5, r4, r3, r2, r1);	
+			int typeSize = dataType==SZ_FLOAT? sizeof(float):sizeof(double);
+			byteLength2 = sz_lossless_decompress(ZSTD_COMPRESSOR, bytes, byteLength, &bytes2, nbEle*typeSize);
+		}		
+		else
+		{
+			confparams_dec->szMode = SZ_BEST_COMPRESSION;
+		}
+		free(decData);	
+	}
     int x = 1;
     char *y = (char*)&x;
     if(*y==1)
@@ -611,7 +638,7 @@ void *SZ_decompress(int dataType, unsigned char *bytes, size_t byteLength, size_
     {
         float *newFloatData = NULL;
 
-        if(confparams_dec->szMode == SZ_BEST_SPEED)
+        if(confparams_dec->szMode == SZ_BEST_SPEED || confparams_dec->szMode == SZ_BEST_SPEED2 )
         {
 //            if(randomAccess)
 //            {
@@ -620,15 +647,19 @@ void *SZ_decompress(int dataType, unsigned char *bytes, size_t byteLength, size_
 //            else
             {
                 if(r2 == 0)
-                    newFloatData = SZ_fast_decompress(SZ_NO_BLOCK_FAST_CMPR, SZ_FLOAT, bytes, byteLength, 0, 0, 0, 0, r1);
+                    newFloatData = SZ_fast_decompress(SZ_NO_BLOCK_FAST_CMPR, SZ_FLOAT, bytes2, byteLength2, 0, 0, 0, 0, r1);
                 else
-                    newFloatData = SZ_fast_decompress(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
+                    newFloatData = SZ_fast_decompress(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, bytes2, byteLength2, r5, r4, r3, r2, r1);
             }
+            if(confparams_dec->szMode == SZ_BEST_SPEED2)
+				free(bytes2);
 
         }
         else
-            SZ_decompress_args_float(&newFloatData, r5, r4, r3, r2, r1, bytes, byteLength, 0, NULL);
-
+        {
+		   SZ_decompress_args_float(&newFloatData, r5, r4, r3, r2, r1, bytes, byteLength, 0, NULL);
+		}
+		
         return newFloatData;
     }
     else if(dataType == SZ_DOUBLE)
