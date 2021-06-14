@@ -67,7 +67,7 @@ target_include_directories(SZ
 
 target_link_libraries (SZ PUBLIC ${ZLIB_dep} ${ZSTD_dep} m)
 if(OpenMP_C_FOUND)
-    target_link_libraries(SZ PUBLIC OpenMP::OpenMP_C)
+    target_link_libraries(SZ PUBLIC OpenMP::OpenMP_C OpenMP::OpenMP_CXX)
 endif()
 
 target_compile_options(SZ

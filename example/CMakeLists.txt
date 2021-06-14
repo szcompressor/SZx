@@ -37,6 +37,9 @@ target_link_libraries (testfloat_compress_fastmode4 SZ)
 add_executable (testfloat_compress_fastmode5 testfloat_compress_fastmode5.c)
 target_link_libraries (testfloat_compress_fastmode5 SZ)
 
+add_executable (testfloat_compress_fastmode6 testfloat_compress_fastmode6.cpp)
+target_link_libraries (testfloat_compress_fastmode6 SZ)
+
 add_executable (testfloat_decompress_fastmode3 testfloat_decompress_fastmode3.c)
 target_link_libraries (testfloat_decompress_fastmode3 SZ)
 
