@@ -54,8 +54,8 @@ int main(int argc, char *argv[]) {
     float reb = atof(argv[4]);
     float abs = atof(argv[5]);
 
-    if (argc >= 6) {
-        omp_set_num_threads(atoi(argv[5]));
+    if (argc >= 7) {
+        omp_set_num_threads(atoi(argv[6]));
     }
     printf("cfgFile=%s\n", cfgFile);
     int status = SZ_Init(cfgFile);
@@ -88,9 +88,8 @@ int main(int argc, char *argv[]) {
     size_t outSize;
     cost_start();
 #ifdef _OPENMP
-    unsigned char *bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(data, &outSize,
-                                                                                                 errBound, nbEle,
-                                                                                                 blockSize);
+    unsigned char *bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(
+            data, &outSize, errBound, nbEle, blockSize);
 #else
     unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, &outSize, errBound, nbEle, blockSize);
 #endif
