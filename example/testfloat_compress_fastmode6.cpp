@@ -73,12 +73,13 @@ int main(int argc, char *argv[]) {
     float buf[allocBufSize];
     float stack[nbEle];
     std::ifstream is(oriFilePath);
+    size_t snapshot = 0;
     do {
         is.read((char *) &buf[0], sizeof(float) * allocBufSize);
         size_t bufSize = is.gcount() / sizeof(float);
 
         for (size_t l = 0; l < bufSize; l += nbEle) {
-            printf("\n\n************* snapshot %04lu ***********\n", l / nbEle);
+            printf("\n\n************* snapshot %04lu ***********\n", snapshot++);
             float *data = buf + l;
             float max = data[0], min = data[0];
             for (size_t i = 0; i < nbEle; i++) {
