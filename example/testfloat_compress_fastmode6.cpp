@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     sprintf(outputFilePath, "%s.sz.out.stack", oriFilePath);
 
     size_t nbEle = 449 * 449 * 235;
-    size_t allocBufSize = nbEle * 10;
+    size_t allocBufSize = nbEle * 300;
     float buf[allocBufSize];
     float stack[nbEle];
     std::ifstream is(oriFilePath);
