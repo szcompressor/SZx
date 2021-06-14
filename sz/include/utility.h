@@ -45,6 +45,7 @@ unsigned long sz_lossless_decompress(int losslessCompressor, unsigned char* comp
 unsigned long sz_lossless_decompress65536bytes(int losslessCompressor, unsigned char* compressBytes, unsigned long cmpSize, unsigned char** oriData);
 void* detransposeData(void* data, int dataType, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 void* transposeData(void* data, int dataType, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
+unsigned long sz_lossless_decompress16bytes(int losslessCompressor, unsigned char* compressBytes, unsigned long cmpSize, unsigned char** oriData);
 
 
 
