@@ -144,7 +144,7 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     return outBytes;
 }
 
-void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes, float* m)
+void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes)
 {
 	*newData = (float*)malloc(sizeof(float)*nbEle);
     memset(*newData, 0, sizeof(float)*nbEle);
@@ -177,7 +177,7 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 	
 	r += stateNBBytes;
 	size_t i = 0, j = 0, k = 0; //k is used to keep track of constant block index
-    //memcpy((*newData)+nbBlocks*blockSize, r, (nbEle%blockSize)*sizeof(float));
+    memcpy((*newData)+nbBlocks*blockSize, r, (nbEle%blockSize)*sizeof(float));
     r += (nbEle%blockSize)*sizeof(float);
 	float* fr = (float*)r; //fr is the starting address of constant median values.
 	for(i = 0;i < nbConstantBlocks;i++, j+=4){ //get the median values for constant-value blocks
@@ -224,7 +224,6 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
     for (i=0;i<nbBlocks;i++){
         if (stateArray[i]==0){
             float Median = constantMedianArray[nb];
-            //float Median = m[nb];
             if (Median>1) printf("data%i:%f\n",i, Median);
             for (j=0;j<blockSize;j++){
                 *((*newData)+i*blockSize+j) = Median;
