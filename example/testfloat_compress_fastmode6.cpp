@@ -72,6 +72,8 @@ int main(int argc, char *argv[]) {
     size_t allocBufSize = nbEle * 300;
     float buf[allocBufSize];
     float stack[nbEle];
+    std::fill_n(stack, nbEle, 0);
+
     std::ifstream is(oriFilePath);
     size_t snapshot = 0;
     do {
