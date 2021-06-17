@@ -34,35 +34,7 @@ void gridReduction_cg(double *results)
     }
 }
 
-
-
-//inline short getExponent_float(float value)
-//{
-//	//int ivalue = floatToBigEndianInt(value);
-//
-//	lfloat lbuf;
-//	lbuf.value = value;
-//	int ivalue = lbuf.ivalue;
-//	
-//	int expValue = (ivalue & 0x7F800000) >> 23;
-//	expValue -= 127;
-//	return (short)expValue;
-//}
-//
-//inline void computeReqLength_float(double realPrecision, short radExpo, int* reqLength, float* medianValue)
-//{
-//	short reqExpo = getPrecisionReqLength_double(realPrecision);
-//	*reqLength = 9+radExpo - reqExpo+1; //radExpo-reqExpo == reqMantiLength
-//	if(*reqLength<9)
-//		*reqLength = 9;
-//	if(*reqLength>32)
-//	{	
-//		*reqLength = 32;
-//		*medianValue = 0;
-//	}			
-//}
-
-__device__ void _IntArray2ByteArray(int leadingNum, int mbase, unsigned char* meta, bool bi)
+__device__ void _IntArray2ByteArray(int leadingNum, int mbase, unsigned char* meta)
 {
     leadingNum = leadingNum << (3-threadIdx.x%4)*2;
     for (int i = 1; i < 4; i *= 2) {
@@ -70,10 +42,8 @@ __device__ void _IntArray2ByteArray(int leadingNum, int mbase, unsigned char* me
         leadingNum |= __shfl_down_sync(mask, leadingNum, i);
     }
 
-    if (threadIdx.x%4==0){
+    if (threadIdx.x%4==0)
         meta[mbase+threadIdx.y*8+threadIdx.x/4] = (unsigned char)leadingNum;
-        //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, meta[mbase+threadIdx.y*8+threadIdx.x/4]);
-    } 
     __syncthreads();
 
 
@@ -149,7 +119,7 @@ __device__ int _shfl_scan(int lznum, int *sums)
     return value;
 }
 
-__device__ void _compute_oneBlock(int bbase, int mbase, int obase, int reqLength, float *value, int *ivalue, uchar4 *cvalue, int *sums, unsigned char *meta, short *offsets, unsigned char *midBytes, bool bi)
+__device__ void _compute_oneBlock(int bbase, int mbase, int obase, int reqLength, float *value, int *ivalue, uchar4 *cvalue, int *sums, unsigned char *meta, short *offsets, unsigned char *midBytes)
 {
 	int reqBytesLength;
 	int rightShiftBits;
@@ -164,7 +134,6 @@ __device__ void _compute_oneBlock(int bbase, int mbase, int obase, int reqLength
 		rightShiftBits = 0;
     }
 
-    //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cvalue[threadIdx.y*blockDim.x+threadIdx.x].w);
     int cur_ivalue = (ivalue[threadIdx.y*blockDim.x+threadIdx.x] >> rightShiftBits) & ((1<<(32-rightShiftBits))-1);
     ivalue[threadIdx.y*blockDim.x+threadIdx.x] = cur_ivalue;
     __syncthreads();                  
@@ -195,7 +164,6 @@ __device__ void _compute_oneBlock(int bbase, int mbase, int obase, int reqLength
         else if (pre_ivalue >> 16 == 0) leadingNum = 2;
         else if (pre_ivalue >> 24 == 0) leadingNum = 1;
     }
-    //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, leadingNum);
     //midBytes[bbase+threadIdx.y*blockDim.x+threadIdx.x] = leadingNum; 
 
     int midByte_size = reqBytesLength - leadingNum;
@@ -205,12 +173,9 @@ __device__ void _compute_oneBlock(int bbase, int mbase, int obase, int reqLength
     {
         if (midByte_size == 1){
             midBytes[bbase+midByte_sum-1] = cur_cvalue.z; 
-            //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.z);
         }else if (midByte_size == 2){
             midBytes[bbase+midByte_sum-1] = cur_cvalue.w; 
-            //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.z);
             midBytes[bbase+midByte_sum-2] = cur_cvalue.z;
-            //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, cur_cvalue.w);
         }
     }else if (reqBytesLength == 3)
     {
@@ -249,11 +214,11 @@ __device__ void _compute_oneBlock(int bbase, int mbase, int obase, int reqLength
 
     if (threadIdx.x==0 && threadIdx.y==0) meta[mbase] = (unsigned char)reqLength;
     if (threadIdx.x==blockDim.x-1 && threadIdx.y==blockDim.y-1) offsets[obase] = (short)midByte_sum;
-    _IntArray2ByteArray(leadingNum, mbase+1, meta, bi);
+    _IntArray2ByteArray(leadingNum, mbase+1, meta);
 
 }
 
-__global__ void compress_float(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, float absErrBound, int bs, size_t nb, size_t mSize, int *test) 
+__global__ void compress_float(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, float absErrBound, int bs, size_t nb, size_t mSize) 
 {
     int tidx = threadIdx.x;
     int tidy = threadIdx.y;
@@ -269,8 +234,6 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
     int* sums = &ivalue[bs];
 
 
-    bool bi = false;
-    if (bid==73) bi=true;
     for (int b=bid; b<nb; b+=gridDim.x){
         data = oriData[b*bs+tidy*warpSize+tidx];
         float Min = data;
@@ -319,17 +282,14 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
             meta[nb+b*mSize+2] = cvalue[1].z;
             meta[nb+b*mSize+3] = cvalue[1].w;
         } 
-        //if (tidx==0) test[b] = ivalue[0];
         __syncthreads();                  
 
         if (state==1){
             int reqLength = _compute_reqLength(ivalue[0], ivalue[2]);
-            if (tidx==0) test[b] = reqLength;
             __syncthreads();                  
             value[tidy*blockDim.x+tidx] = data - medianValue;
             __syncthreads();                  
-            _compute_oneBlock(b*bs*sizeof(float), nb+b*mSize+4, b, reqLength, value, ivalue, cvalue, sums, meta, offsets, midBytes, bi);
-            bi = false;
+            _compute_oneBlock(b*bs*sizeof(float), nb+b*mSize+4, b, reqLength, value, ivalue, cvalue, sums, meta, offsets, midBytes);
         }
 
     }

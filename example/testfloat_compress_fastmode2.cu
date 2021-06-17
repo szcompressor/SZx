@@ -75,8 +75,8 @@ int main(int argc, char * argv[])
    
     size_t outSize, cuOutSize; 
     cost_start();
-    unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, &outSize, errBound, nbEle, blockSize, test_meta);
-    unsigned char* cuBytes = cuSZx_fast_compress_args_unpredictable_blocked_float(data, &cuOutSize, errBound, nbEle, blockSize, test_meta);
+    unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, &outSize, errBound, nbEle, blockSize);
+    unsigned char* cuBytes = cuSZx_fast_compress_args_unpredictable_blocked_float(data, &cuOutSize, errBound, nbEle, blockSize);
     //unsigned char* bytes =  SZ_fast_compress_args(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errBound, 0.001, 0, 0, 0, 0, 0, nbEle);
     cost_end();
     printf("timecost=%f, %d\n",totalCost, bytes[0]); 
