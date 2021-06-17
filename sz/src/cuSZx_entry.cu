@@ -101,13 +101,14 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     checkCudaErrors(cudaMalloc((void**)&d_test, nbBlocks * sizeof(int))); 
     checkCudaErrors(cudaMemset(d_test, 0, nbBlocks * sizeof(int)));
 
-    //timer_GPU.StartCounter();
+    timer_GPU.StartCounter();
     dim3 dimBlock(32, blockSize/32);
     dim3 dimGrid(512, 1);
     const int sMemsize = blockSize * sizeof(float) + dimBlock.y * sizeof(int);
     compress_float<<<dimGrid, dimBlock, sMemsize>>>(d_oriData, d_meta, d_offsets, d_midBytes, absErrBound, blockSize, nbBlocks, mSize, d_test);
     cudaError_t err = cudaGetLastError();        // Get error code
     printf("CUDA Error: %s\n", cudaGetErrorString(err));
+    printf("GPU compression timing: %f ms\n", timer_GPU.GetCounter());
     checkCudaErrors(cudaMemcpy(meta, d_meta, msz, cudaMemcpyDeviceToHost)); 
     checkCudaErrors(cudaMemcpy(offsets, d_offsets, nbBlocks*sizeof(short), cudaMemcpyDeviceToHost)); 
     checkCudaErrors(cudaMemcpy(midBytes, d_midBytes, mbsz, cudaMemcpyDeviceToHost)); 
@@ -207,12 +208,14 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
     checkCudaErrors(cudaMemset(d_test, 0, nbBlocks * sizeof(int)));
 
 
+    timer_GPU.StartCounter();
     dim3 dimBlock(32, blockSize/32);
     dim3 dimGrid(512, 1);
     const int sMemsize = blockSize * sizeof(float) + dimBlock.y * sizeof(int);
     decompress_float<<<dimGrid, dimBlock, sMemsize>>>(d_data, blockSize, ncBlocks, mSize, d_test);
     cudaError_t err = cudaGetLastError();        // Get error code
     printf("CUDA Error: %s\n", cudaGetErrorString(err));
+    printf("GPU decompression timing: %f ms\n", timer_GPU.GetCounter());
     checkCudaErrors(cudaMemcpy(data, d_data, ncBlocks*blockSize*sizeof(float), cudaMemcpyDeviceToHost)); 
     float* fdata = (float*)data;
 

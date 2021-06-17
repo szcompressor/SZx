@@ -10,6 +10,7 @@
 #include <stdlib.h> 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "szd_float.h"
 #include "TightDataPointStorageF.h"
 #include "sz.h"
@@ -255,7 +256,8 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 float* SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes)
 {
 	*newData = (float*)malloc(sizeof(float)*nbEle);
-	
+    
+    clock_t t;	
 	unsigned char* r = cmpBytes;
 	r += 4;
 	int blockSize = r[0];  //get block size
@@ -270,6 +272,7 @@ float* SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size
 	unsigned char* stateArray = (unsigned char*)malloc(actualNBBlocks);
 	float* constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));			
 		
+    t = clock();
 	convertByteArray2IntArray_fast_1b_args(actualNBBlocks, r, stateNBBytes, stateArray); //get the stateArray
 	
 	unsigned char* p = r + stateNBBytes; //p is the starting address of constant median values.
@@ -298,27 +301,31 @@ float* SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size
 		else //constant block
 		{
 			float medianValue = constantMedianArray[k];			
-			//for(j=0;j<blockSize;j++)
-			//	op[j] = medianValue;
+			for(j=0;j<blockSize;j++)
+				op[j] = medianValue;
 			p += sizeof(float);
 			k ++;
 		}
 	}
 
-	//if(remainCount)
-	//{
-	//	unsigned char state = stateArray[i];
-	//	if(state) //non-constant block
-	//	{
-	//		SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q, 0);	
-	//	}
-	//	else //constant block
-	//	{
-	//		float medianValue = constantMedianArray[k];				
-	//		for(j=0;j<remainCount;j++)
-	//			op[j] = medianValue;
-	//	}		
-	//}
+	if(remainCount)
+	{
+		unsigned char state = stateArray[i];
+		if(state) //non-constant block
+		{
+			SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q, 0);	
+		}
+		else //constant block
+		{
+			float medianValue = constantMedianArray[k];				
+			for(j=0;j<remainCount;j++)
+				op[j] = medianValue;
+		}		
+	}
+
+    t = clock() - t;
+    double time_taken = ((double)t)/CLOCKS_PER_SEC;
+    printf("derivative ssim took %f seconds to execute \n", time_taken);
 	
 	free(stateArray);
 	//free(constantMedianArray);

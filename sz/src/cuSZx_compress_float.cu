@@ -72,7 +72,7 @@ __device__ void _IntArray2ByteArray(int leadingNum, int mbase, unsigned char* me
 
     if (threadIdx.x%4==0){
         meta[mbase+threadIdx.y*8+threadIdx.x/4] = (unsigned char)leadingNum;
-        if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, meta[mbase+threadIdx.y*8+threadIdx.x/4]);
+        //if (bi==true) printf("%i:%i:%i:%u\n", blockIdx.x, threadIdx.x, threadIdx.y, meta[mbase+threadIdx.y*8+threadIdx.x/4]);
     } 
     __syncthreads();
 

@@ -14,6 +14,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <time.h>
 #include "sz.h"
 #include "CompressElement.h"
 #include "DynamicByteArray.h"
@@ -357,7 +358,8 @@ size_t computeStateMedianRadius_float(float* oriData, size_t nbEle, float absErr
 unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, unsigned char *test)
 {
 	float* op = oriData;
-
+            
+    clock_t t;	
 	*outSize = 0;
 	size_t maxPreservedBufferSize = sizeof(float)*nbEle; //assume that the compressed data size would not exceed the original size
 	unsigned char* outputBytes = (unsigned char*)malloc(maxPreservedBufferSize);
@@ -376,6 +378,7 @@ unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData,
 	float* medianArray = (float*)malloc(actualNBBlocks*sizeof(float));
 	float* radiusArray = (float*)malloc(actualNBBlocks*sizeof(float));
 	
+    t = clock();
 	size_t nbConstantBlocks = computeStateMedianRadius_float(oriData, nbEle, absErrBound, blockSize, stateArray, medianArray, radiusArray);
     for (int x = 0; x<nbBlocks; x++){
         lfloat lbuf;
@@ -432,6 +435,10 @@ unsigned char* SZ_fast_compress_args_unpredictable_blocked_float(float *oriData,
 	}	
 	
 	convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, r);
+
+    t = clock() - t;
+    double time_taken = ((double)t)/CLOCKS_PER_SEC;
+    printf("CPU compression took %f seconds to execute \n", time_taken);
 
 	free(leadNumberArray_int);
 
