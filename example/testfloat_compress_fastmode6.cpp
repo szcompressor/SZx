@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
     }
     printf("cfgFile=%s\n", cfgFile);
 
-    sprintf(outputFilePath, "%s.sz.out.stack", oriFilePath);
+    sprintf(outputFilePath, "aramco-reb%s-aeb%s.b%s.stack.out", argv[4], argv[5], argv[3]);
 
     size_t nbEle = 449 * 449 * 235;
     size_t allocBufSize = nbEle * 300;
