@@ -64,7 +64,7 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
     return out_size;
 }
 
-unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, unsigned char *test)
+unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize)
 {
 
 	float* d_oriData;
@@ -84,12 +84,10 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     unsigned char *meta = (unsigned char*)malloc(msz);
     short *offsets = (short*)malloc(nbBlocks*sizeof(short));
     unsigned char *midBytes = (unsigned char*)malloc(mbsz);
-    int *dtest = (int*)malloc(nbBlocks * sizeof(int));
 
 	unsigned char* d_meta;
 	unsigned char* d_midBytes;
 	short* d_offsets;
-    int *d_test;
     checkCudaErrors(cudaMalloc((void**)&d_meta, msz)); 
     //checkCudaErrors(cudaMemcpy(d_meta, meta, msz, cudaMemcpyHostToDevice)); 
     checkCudaErrors(cudaMemset(d_meta, 0, msz));
@@ -97,53 +95,35 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     checkCudaErrors(cudaMemset(d_offsets, 0, nbBlocks*sizeof(short)));
     checkCudaErrors(cudaMalloc((void**)&d_midBytes, mbsz)); 
     checkCudaErrors(cudaMemset(d_midBytes, 0, mbsz));
-    //cudaMemcpy(dresults, results, sizeof(unsigned char)*reSize*nbBlocks, cudaMemcpyHostToDevice); 
-    checkCudaErrors(cudaMalloc((void**)&d_test, nbBlocks * sizeof(int))); 
-    checkCudaErrors(cudaMemset(d_test, 0, nbBlocks * sizeof(int)));
 
-    //timer_GPU.StartCounter();
+    timer_GPU.StartCounter();
     dim3 dimBlock(32, blockSize/32);
     dim3 dimGrid(512, 1);
     const int sMemsize = blockSize * sizeof(float) + dimBlock.y * sizeof(int);
-    compress_float<<<dimGrid, dimBlock, sMemsize>>>(d_oriData, d_meta, d_offsets, d_midBytes, absErrBound, blockSize, nbBlocks, mSize, d_test);
+    compress_float<<<dimGrid, dimBlock, sMemsize>>>(d_oriData, d_meta, d_offsets, d_midBytes, absErrBound, blockSize, nbBlocks, mSize);
     cudaError_t err = cudaGetLastError();        // Get error code
     printf("CUDA Error: %s\n", cudaGetErrorString(err));
+    printf("GPU compression timing: %f ms\n", timer_GPU.GetCounter());
     checkCudaErrors(cudaMemcpy(meta, d_meta, msz, cudaMemcpyDeviceToHost)); 
     checkCudaErrors(cudaMemcpy(offsets, d_offsets, nbBlocks*sizeof(short), cudaMemcpyDeviceToHost)); 
     checkCudaErrors(cudaMemcpy(midBytes, d_midBytes, mbsz, cudaMemcpyDeviceToHost)); 
-    checkCudaErrors(cudaMemcpy(dtest, d_test, nbBlocks * sizeof(int), cudaMemcpyDeviceToHost)); 
 
     size_t maxPreservedBufferSize = sizeof(float)*nbEle;
     unsigned char* outBytes = (unsigned char*)malloc(maxPreservedBufferSize);
     memset(outBytes, 0, maxPreservedBufferSize);
 
     *outSize = _post_proc(oriData, meta, offsets, midBytes, outBytes, nbEle, blockSize);
-    printf("size %u\n", outBytes[4]);
 
-    //for (int i=0; i<nbBlocks; i++){ 
-    //    if (dtest[i]!=test[i]){
-    //        bin(dtest[i]);
-    //        printf("state %d : %i, %i\n", i, test[i], dtest[i]);
-    //    } 
-    //}
-    for (int i=0; i<sizeof(float) * nbEle; i++){ 
-        if (midBytes[i]!=test[i]){
-            bin(midBytes[i]);
-            printf("state %d : %u, %u\n", i, test[i], midBytes[i]);
-        } 
-    }
     free(meta);
     free(offsets);
     free(midBytes);
-    free(dtest);
     checkCudaErrors(cudaFree(d_meta));
     checkCudaErrors(cudaFree(d_offsets));
     checkCudaErrors(cudaFree(d_midBytes));
-    checkCudaErrors(cudaFree(d_test));
     return outBytes;
 }
 
-void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes, float* m)
+void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes)
 {
 	*newData = (float*)malloc(sizeof(float)*nbEle);
     memset(*newData, 0, sizeof(float)*nbEle);
@@ -176,7 +156,7 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 	
 	r += stateNBBytes;
 	size_t i = 0, j = 0, k = 0; //k is used to keep track of constant block index
-    //memcpy((*newData)+nbBlocks*blockSize, r, (nbEle%blockSize)*sizeof(float));
+    memcpy((*newData)+nbBlocks*blockSize, r, (nbEle%blockSize)*sizeof(float));
     r += (nbEle%blockSize)*sizeof(float);
 	float* fr = (float*)r; //fr is the starting address of constant median values.
 	for(i = 0;i < nbConstantBlocks;i++, j+=4){ //get the median values for constant-value blocks
@@ -207,12 +187,14 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
     checkCudaErrors(cudaMemset(d_test, 0, nbBlocks * sizeof(int)));
 
 
+    timer_GPU.StartCounter();
     dim3 dimBlock(32, blockSize/32);
     dim3 dimGrid(512, 1);
     const int sMemsize = blockSize * sizeof(float) + dimBlock.y * sizeof(int);
     decompress_float<<<dimGrid, dimBlock, sMemsize>>>(d_data, blockSize, ncBlocks, mSize, d_test);
     cudaError_t err = cudaGetLastError();        // Get error code
     printf("CUDA Error: %s\n", cudaGetErrorString(err));
+    printf("GPU decompression timing: %f ms\n", timer_GPU.GetCounter());
     checkCudaErrors(cudaMemcpy(data, d_data, ncBlocks*blockSize*sizeof(float), cudaMemcpyDeviceToHost)); 
     float* fdata = (float*)data;
 
@@ -221,7 +203,6 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
     for (i=0;i<nbBlocks;i++){
         if (stateArray[i]==0){
             float Median = constantMedianArray[nb];
-            //float Median = m[nb];
             if (Median>1) printf("data%i:%f\n",i, Median);
             for (j=0;j<blockSize;j++){
                 *((*newData)+i*blockSize+j) = Median;

@@ -69,8 +69,8 @@ int main(int argc, char * argv[])
     cost_start();
     float *data = NULL;
     float *d_data = NULL;
-    float* m = SZ_fast_decompress_args_unpredictable_blocked_float(&d_data, nbEle, bytes);
-    cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, cuBytes, m);
+    SZ_fast_decompress_args_unpredictable_blocked_float(&d_data, nbEle, bytes);
+    cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, cuBytes);
     cost_end();
     
     free(bytes); 
