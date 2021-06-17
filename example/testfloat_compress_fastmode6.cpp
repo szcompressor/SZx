@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     if (argc >= 11) {
         omp_set_num_threads(atoi(argv[10]));
     }
-    printf("input=%s\noutput=%s\nr1=%lu r2=%lu r3=%lu\n block=%d reb=%.8f abs=%.8f\n",
+    printf("input=%s\noutput=%s\nr1=%lu r2=%lu r3=%lu\nblock=%d reb=%.8e abs=%.8e\n",
            oriFile, outputFile, r1, r2, r3, blockSize, reb, abs);
 
     size_t nbEle = r1 * r2 * r3;
