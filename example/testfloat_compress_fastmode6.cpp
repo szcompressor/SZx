@@ -47,26 +47,24 @@ void writefile(const char *file, Type *data, size_t num_elements) {
 }
 
 int main(int argc, char *argv[]) {
-    char oriFilePath[640], outputFilePath[645];
-    char *cfgFile;
+    char *oriFile, *outputFile, *cfgFile;
     if (argc < 4) {
-        printf("Usage: testfloat_compress_fastmode6 [config_file] [srcFilePath] [block size] [reb] [abs]\n");
-        printf("Example: testfloat_compress_fastmode6 sz.config testfloat_8_8_128.dat 500 1E-3 1E-3\n");
+        printf("Usage: testfloat_compress_fastmode6 [configFile] [srcFile] [destFile] [block size] [reb] [abs]\n");
+        printf("Example: testfloat_compress_fastmode6 sz.config input.dat output.dat 500 1E-3 1E-3\n");
         exit(0);
     }
 
     cfgFile = argv[1];
-    sprintf(oriFilePath, "%s", argv[2]);
-    int blockSize = atoi(argv[3]);
-    float reb = atof(argv[4]);
-    float abs = atof(argv[5]);
+    oriFile = argv[2];
+    outputFile = argv[3];
+    int blockSize = atoi(argv[4]);
+    float reb = atof(argv[5]);
+    float abs = atof(argv[6]);
 
-    if (argc >= 7) {
-        omp_set_num_threads(atoi(argv[6]));
+    if (argc >= 8) {
+        omp_set_num_threads(atoi(argv[7]));
     }
     printf("cfgFile=%s\n", cfgFile);
-
-    sprintf(outputFilePath, "aramco-reb%s-aeb%s.b%s.stack.out", argv[4], argv[5], argv[3]);
 
     size_t nbEle = 449 * 449 * 235;
     size_t allocBufSize = nbEle * 300;
@@ -74,7 +72,7 @@ int main(int argc, char *argv[]) {
     float stack[nbEle];
     std::fill_n(stack, nbEle, 0);
 
-    std::ifstream is(oriFilePath);
+    std::ifstream is(oriFile);
     size_t snapshot = 0;
     do {
         is.read((char *) &buf[0], sizeof(float) * allocBufSize);
@@ -191,6 +189,6 @@ int main(int argc, char *argv[]) {
         }
     } while (is);
 
-    writefile(outputFilePath, stack, nbEle);
+    writefile(outputFile, stack, nbEle);
     return 0;
 }
