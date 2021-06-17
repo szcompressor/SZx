@@ -49,24 +49,28 @@ void writefile(const char *file, Type *data, size_t num_elements) {
 int main(int argc, char *argv[]) {
     char *oriFile, *outputFile, *cfgFile;
     if (argc < 4) {
-        printf("Usage: testfloat_compress_fastmode6 [configFile] [srcFile] [destFile] [block size] [reb] [abs]\n");
-        printf("Example: testfloat_compress_fastmode6 sz.config input.dat output.dat 500 1E-3 1E-3\n");
+        printf("Usage: testfloat_compress_fastmode6 [configFile] [srcFile] [destFile] [r1] [r2] [r3] [block size] [reb] [abs]\n");
+        printf("Example: testfloat_compress_fastmode6 sz.config input.dat output.dat 449 449 235 64 1E-3 1E-3\n");
         exit(0);
     }
 
     cfgFile = argv[1];
     oriFile = argv[2];
     outputFile = argv[3];
-    int blockSize = atoi(argv[4]);
-    float reb = atof(argv[5]);
-    float abs = atof(argv[6]);
+    size_t r1 = atoi(argv[4]);
+    size_t r2 = atoi(argv[5]);
+    size_t r3 = atoi(argv[6]);
+    int blockSize = atoi(argv[7]);
+    float reb = atof(argv[8]);
+    float abs = atof(argv[9]);
 
-    if (argc >= 8) {
-        omp_set_num_threads(atoi(argv[7]));
+    if (argc >= 11) {
+        omp_set_num_threads(atoi(argv[10]));
     }
-    printf("cfgFile=%s\n", cfgFile);
+    printf("input=%s\noutput=%s\nr1=%lu r2=%lu r3=%lu\n block=%d reb=%.8f abs=%.8f\n",
+           oriFile, outputFile, r1, r2, r3, blockSize, reb, abs);
 
-    size_t nbEle = 449 * 449 * 235;
+    size_t nbEle = r1 * r2 * r3;
     size_t allocBufSize = nbEle * 300;
     float buf[allocBufSize];
     float stack[nbEle];
