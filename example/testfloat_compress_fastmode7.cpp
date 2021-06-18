@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
             if (status == SZ_NSCS)
                 exit(0);
             cost_start();
-            blockSize = rand() % 128;
+            blockSize = 32 + rand() % 24 * 4;
 #ifdef _OPENMP
             unsigned char *bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(
                     data, &outSize, errBound, nbEle, blockSize);
