@@ -493,6 +493,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     printf("use avx2\n");
 #else
 #endif
+    printf("blockSize = %d\n",blockSize);
     sz_cost_start();
     float *op = oriData;
 
