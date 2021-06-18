@@ -331,13 +331,14 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 	size_t nbNonConstantBlocks = actualNBBlocks - nbConstantBlocks;
 
 	unsigned char *stateArray = (unsigned char *) malloc(actualNBBlocks);
-	float *constantMedianArray = (float *) malloc(nbConstantBlocks * sizeof(float));
+//	float *constantMedianArray = (float *) malloc(nbConstantBlocks * sizeof(float));
     unsigned char **qarray = (unsigned char **) malloc(actualNBBlocks * sizeof(unsigned char *));
     float *parray = (float *) malloc(actualNBBlocks * sizeof(float));
 
     int16_t* O = (int16_t*) r;
     unsigned char *R = r + nbNonConstantBlocks*sizeof(uint16_t); //block-size information
     unsigned char *p = R + stateNBBytes; //p is the starting address of constant median values.
+    float *constantMedianArray = (float *) p;
     unsigned char *q = p + sizeof(float) * nbConstantBlocks; //q is the starting address of the non-constant data blocks
     float *op = *newData;
 
@@ -346,8 +347,9 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 
     sz_cost_start();
     size_t i = 0, k = 0; //k is used to keep track of constant block index
-    for (i = 0; i < nbConstantBlocks; i++, k += 4) //get the median values for constant-value blocks
-        constantMedianArray[i] = bytesToFloat(p + k);
+//    for (i = 0; i < nbConstantBlocks; i++, k += 4) //get the median values for constant-value blocks
+//        constantMedianArray[i] = bytesToFloat(p + k);
+
     convertByteArray2IntArray_fast_1b_args(actualNBBlocks, R, stateNBBytes, stateArray); //get the stateArray
     sz_cost_end_msg("sequential-2 byte to int");
 
@@ -389,7 +391,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 	free(parray);
 	free(qarray);
 	free(stateArray);
-	free(constantMedianArray);
+//	free(constantMedianArray);
 	sz_cost_end_msg("sequence-3 free");
 }
 void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** newData, size_t nbEle, unsigned char* cmpBytes){
