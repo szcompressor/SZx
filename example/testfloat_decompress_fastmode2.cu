@@ -51,14 +51,12 @@ int main(int argc, char * argv[])
    
     sprintf(zipFilePath, "%s", argv[1]);
     nbEle = atoi(argv[2]);
-    sprintf(cuZipFilePath, "%s", argv[3]);
 
     sprintf(outputFilePath, "%s.out", zipFilePath);
     
     size_t byteLength; 
     int status;
     unsigned char *bytes = readByteData(zipFilePath, &byteLength, &status);
-    unsigned char *cuBytes = readByteData(cuZipFilePath, &byteLength, &status);
     if(status!=SZ_SCES)
     {
         printf("Error: %s cannot be read!\n", zipFilePath);
@@ -66,15 +64,14 @@ int main(int argc, char * argv[])
     }
   
  
-    cost_start();
     float *data = NULL;
-    float *d_data = NULL;
-    SZ_fast_decompress_args_unpredictable_blocked_float(&d_data, nbEle, bytes);
-    cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, cuBytes);
-    cost_end();
+#ifndef GPU
+    SZ_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
+#else
+    cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
+#endif
     
     free(bytes); 
-    printf("timecost=%f\n",totalCost); 
     writeFloatData_inBytes(data, nbEle, outputFilePath, &status);
     if(status!=SZ_SCES)
     {
@@ -117,7 +114,6 @@ int main(int argc, char * argv[])
         if (Min > ori_data[i]) Min = ori_data[i];
         
         float err = fabs(data[i] - ori_data[i]);
-        if (err>0.0001) printf("test:%.10f, %.10f, %.10f\n",data[i], ori_data[i], d_data[i]);
 	if(ori_data[i]!=0)
 	{
 		if(fabs(ori_data[i])>1)

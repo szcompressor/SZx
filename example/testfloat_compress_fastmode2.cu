@@ -57,7 +57,6 @@ int main(int argc, char * argv[])
     if(status == SZ_NSCS)
 	exit(0);
     sprintf(outputFilePath, "%s.sz", oriFilePath);
-    sprintf(cuOutputFilePath, "%s_cu.sz", oriFilePath);
    
     size_t nbEle;
     float *data = readFloatData(oriFilePath, &nbEle, &status);
@@ -68,21 +67,16 @@ int main(int argc, char * argv[])
     }
     //float *revValue = (float *)malloc(sizeof(float));
     //*revValue = 1.0E36;
-    unsigned char *test_meta = (unsigned char*)malloc(sizeof(float) * nbEle * sizeof(unsigned char));
-    memset(test_meta, 0, sizeof(float) * nbEle * sizeof(unsigned char));
-    //int *test_meta = (int*)malloc(nbEle/blockSize*sizeof(int));
-    //memset(test_meta, 0, nbEle/blockSize*sizeof(int));
    
-    size_t outSize, cuOutSize; 
-    cost_start();
+    size_t outSize; 
+#ifndef GPU
     unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, &outSize, errBound, nbEle, blockSize);
-    unsigned char* cuBytes = cuSZx_fast_compress_args_unpredictable_blocked_float(data, &cuOutSize, errBound, nbEle, blockSize);
+#else
+    unsigned char* bytes = cuSZx_fast_compress_args_unpredictable_blocked_float(data, &outSize, errBound, nbEle, blockSize);
+#endif
     //unsigned char* bytes =  SZ_fast_compress_args(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errBound, 0.001, 0, 0, 0, 0, 0, nbEle);
-    cost_end();
-    printf("timecost=%f, %d\n",totalCost, bytes[0]); 
-    printf("compression size = %zu, CR = %f\n", cuOutSize, 1.0f*nbEle*sizeof(float)/outSize);
+    printf("compression size = %zu, CR = %f\n", outSize, 1.0f*nbEle*sizeof(float)/outSize);
     writeByteData(bytes, outSize, outputFilePath, &status);
-    writeByteData(cuBytes, cuOutSize, cuOutputFilePath, &status);
     if(status != SZ_SCES)
     {
         printf("Error: data file %s cannot be written!\n", outputFilePath);
