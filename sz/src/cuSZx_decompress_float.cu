@@ -155,7 +155,7 @@ __device__ int _retrieve_leading(int pos, int reqBytesLength, int* sums)
     return pos;
 }
 
-__global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t mSize, int *test) 
+__global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t mSize) 
 {
     int tidx = threadIdx.x;
     int tidy = threadIdx.y;
@@ -196,7 +196,6 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
         leadingNum = (leadingNum >> (6-((tid&0x03)<<1))) & 0x03;
         int midByte_size = reqBytesLength - leadingNum;
         int midByte_sum = _deshfl_scan(midByte_size, sums);
-        //if (bi==true) printf("sss%d:%d\n",reqBytesLength, midByte_size);
 
         uchar4 tmp;
         tmp.x = 0;
@@ -220,21 +219,15 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
             if (midByte_size == 1){
                 tmp.y = cvalue[mSize+midByte_sum-1]; 
                 pos |= tid<<16;
-                //if (bi==true) printf("%i:%i:%i:%u\n", 0, threadIdx.x, threadIdx.y, tmp.y);
             }else if (midByte_size == 2){
                 tmp.z = cvalue[mSize+midByte_sum-1]; 
                 tmp.y = cvalue[mSize+midByte_sum-2]; 
-                //if (bi==true) printf("%i:%i:%i:%u\n", 0, threadIdx.x, threadIdx.y, tmp.z);
-                //if (bi==true) printf("%i:%i:%i:%u\n", 1, threadIdx.x, threadIdx.y, tmp.y);
                 pos |= tid<<8;
                 pos |= tid<<16;
             }else if (midByte_size == 3){
                 tmp.w = cvalue[mSize+midByte_sum-1]; 
                 tmp.z = cvalue[mSize+midByte_sum-2]; 
                 tmp.y = cvalue[mSize+midByte_sum-3]; 
-                //if (bi==true) printf("%i:%i:%i:%u\n", 0, threadIdx.x, threadIdx.y, tmp.w);
-                //if (bi==true) printf("%i:%i:%i:%u\n", 1, threadIdx.x, threadIdx.y, tmp.z);
-                //if (bi==true) printf("%i:%i:%i:%u\n", 2, threadIdx.x, threadIdx.y, tmp.y);
                 pos |= tid;
                 pos |= tid<<8;
                 pos |= tid<<16;
@@ -280,18 +273,12 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
         if (leadingNum == 2){
             tmp.w = c4value[pos&0xff].w; 
             tmp.z = c4value[(pos>>8)&0xff].z;
-            //if (bi==true) printf("%i:%i:%i:%u\n", 0, threadIdx.x, threadIdx.y, pos&0xff);
-            //if (bi==true) printf("%i:%i:%i:%u\n", 1, threadIdx.x, threadIdx.y, (pos>>8)&0xff);
         }else if (leadingNum == 3){
             tmp.w = c4value[pos&0xff].w; 
             tmp.z = c4value[(pos>>8)&0xff].z;
             tmp.y = c4value[(pos>>16)&0xff].y; 
-            //if (bi==true) printf("%i:%i:%i:%u\n", 0, threadIdx.x, threadIdx.y, c4value[pos&0xff].w);
-            //if (bi==true) printf("%i:%i:%i:%u\n", 1, threadIdx.x, threadIdx.y, c4value[(pos>>8)&0xff].z);
-            //if (bi==true) printf("%i:%i:%i:%u\n", 2, threadIdx.x, threadIdx.y, c4value[(pos>>16)&0xff].y);
         }else if (leadingNum == 1){
             tmp.w = c4value[pos&0xff].w; 
-            //if (bi==true) printf("%i:%i:%i:%u\n", 0, threadIdx.x, threadIdx.y, pos&0xff);
         }else if (leadingNum == 4){
             tmp.w = c4value[pos&0xff].w; 
             tmp.z = c4value[(pos>>8)&0xff].z;
