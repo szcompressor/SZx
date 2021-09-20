@@ -98,7 +98,7 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
 
     timer_GPU.StartCounter();
     dim3 dimBlock(32, blockSize/32);
-    dim3 dimGrid(512, 1);
+    dim3 dimGrid(65536, 1);
     const int sMemsize = blockSize * sizeof(float) + dimBlock.y * sizeof(int);
     compress_float<<<dimGrid, dimBlock, sMemsize>>>(d_oriData, d_meta, d_offsets, d_midBytes, absErrBound, blockSize, nbBlocks, mSize);
     cudaError_t err = cudaGetLastError();        // Get error code
@@ -174,7 +174,7 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 
     timer_GPU.StartCounter();
     dim3 dimBlock(32, blockSize/32);
-    dim3 dimGrid(512, 1);
+    dim3 dimGrid(65536, 1);
     const int sMemsize = blockSize * sizeof(float) + dimBlock.y * sizeof(int);
     decompress_float<<<dimGrid, dimBlock, sMemsize>>>(d_data, blockSize, ncBlocks, mSize);
     cudaError_t err = cudaGetLastError();        // Get error code
