@@ -39,6 +39,10 @@
 #include <immintrin.h>
 #endif
 
+size_t old_mid_bits_counter = 0;
+size_t new_mid_bits_counter = 0;
+size_t nonConstantBlockCounter = 0;
+
 unsigned char *
 SZ_fast_compress_args_with_prediction_float(float *pred, float *data, size_t *outSize, float absErrBound, size_t r5,
                                             size_t r4, size_t r3, size_t r2, size_t r1, float medianValue,
@@ -53,14 +57,26 @@ SZ_fast_compress_args_with_prediction_float(float *pred, float *data, size_t *ou
     return output;
 }
 
+inline int computeNumberofLeadingZeros(unsigned int value)
+{
+	unsigned int tmp = 0;
+	int i = 0;
+	for(i = 0;i<32;i++)
+	{
+		tmp = value >> i;
+		if(tmp==0)
+			return 32 - i;
+	}
+	return 32-i;
+}
+
 inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, size_t nbEle, float absErrBound,
                                                                 unsigned char *outputBytes, int *outSize,
                                                                 unsigned char *leadNumberArray_int, float medianValue,
                                                                 float radius) {
     size_t totalSize = 0, i = 0;
-
     int reqLength;
-
+	nonConstantBlockCounter ++;
     //compute median, value range, and radius
 
     short radExpo = getExponent_float(radius);
@@ -72,9 +88,10 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 
     size_t leadNumberArray_size = nbEle % 4 == 0 ? nbEle / 4 : nbEle / 4 + 1;
 
-    register lfloat lfBuf_pre;
-    register lfloat lfBuf_cur;
+    register lfloat lfBuf_pre, lfBuf_pre2;
+    register lfloat lfBuf_cur, lfBuf_cur2, lfBuf_xor2;
     lfBuf_pre.ivalue = 0;
+    lfBuf_pre2.ivalue = 0;
 
     unsigned char *leadNumberArray = outputBytes + 1 + sizeof(float);
 
@@ -85,7 +102,7 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
         reqBytesLength++;
     }
 
-    register unsigned char leadingNum = 0;
+    register unsigned char leadingNum = 0, leadingNum2 = 0;
     size_t residualMidBytes_size = 0;
     if (sysEndianType == LITTLE_ENDIAN_SYSTEM) {
         if (reqBytesLength == 2) {
@@ -93,6 +110,18 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
                 leadingNum = 0;
                 lfBuf_cur.value = oriData[i] - medianValue;
 
+				lfBuf_cur2.value = lfBuf_cur.value;
+				lfBuf_xor2.ivalue = lfBuf_cur2.ivalue ^ lfBuf_pre2.ivalue;
+				leadingNum2 = computeNumberofLeadingZeros(lfBuf_xor2.ivalue);
+				int leadingBLen2 = (leadingNum2/8)*8;
+				int old = reqLength<leadingBLen2?0:reqLength-leadingBLen2;
+				old_mid_bits_counter += old;
+				int leadingBLen2_shifted = ((leadingNum2+rightShiftBits)/8)*8;
+				int new = reqLength + rightShiftBits < leadingBLen2_shifted? 0 : reqLength + rightShiftBits - leadingBLen2_shifted;
+				new_mid_bits_counter += new;
+				printf("%d %d ( %u %f ) ( %u %f ) %d %d %d\n", reqLength, leadingNum2, lfBuf_pre2.ivalue, lfBuf_pre2.value, lfBuf_cur2.ivalue, lfBuf_cur2.value, rightShiftBits, old, new);
+				lfBuf_pre2 = lfBuf_cur2;   
+	
                 lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
 
                 lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
@@ -121,6 +150,18 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
             for (i = 0; i < nbEle; i++) {
                 leadingNum = 0;
                 lfBuf_cur.value = oriData[i] - medianValue;
+                
+				lfBuf_cur2.value = lfBuf_cur.value;
+				lfBuf_xor2.ivalue = lfBuf_cur2.ivalue ^ lfBuf_pre2.ivalue;
+				leadingNum2 = computeNumberofLeadingZeros(lfBuf_xor2.ivalue);
+				int leadingBLen2 = (leadingNum2/8)*8;
+				int old = reqLength<leadingBLen2?0:reqLength-leadingBLen2;
+				old_mid_bits_counter += old;
+				int leadingBLen2_shifted = ((leadingNum2+rightShiftBits)/8)*8;
+				int new = reqLength + rightShiftBits < leadingBLen2_shifted? 0 : reqLength + rightShiftBits - leadingBLen2_shifted;
+				new_mid_bits_counter += new;
+				printf("%d %d ( %u %f ) ( %u %f ) %d %d %d\n", reqLength, leadingNum2, lfBuf_pre2.ivalue, lfBuf_pre2.value, lfBuf_cur2.ivalue, lfBuf_cur2.value, rightShiftBits, old, new);
+				lfBuf_pre2 = lfBuf_cur2;   
 
                 lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
 
@@ -156,6 +197,18 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
                 leadingNum = 0;
                 lfBuf_cur.value = oriData[i] - medianValue;
 
+				lfBuf_cur2.value = lfBuf_cur.value;
+				lfBuf_xor2.ivalue = lfBuf_cur2.ivalue ^ lfBuf_pre2.ivalue;
+				leadingNum2 = computeNumberofLeadingZeros(lfBuf_xor2.ivalue);
+				int leadingBLen2 = (leadingNum2/8)*8;
+				int old = reqLength<leadingBLen2?0:reqLength-leadingBLen2;
+				old_mid_bits_counter += old;
+				int leadingBLen2_shifted = ((leadingNum2+rightShiftBits)/8)*8;
+				int new = reqLength + rightShiftBits < leadingBLen2_shifted? 0 : reqLength + rightShiftBits - leadingBLen2_shifted;
+				new_mid_bits_counter += new;
+				printf("%d %d ( %u %f ) ( %u %f ) %d %d %d\n", reqLength, leadingNum2, lfBuf_pre2.ivalue, lfBuf_pre2.value, lfBuf_cur2.ivalue, lfBuf_cur2.value, rightShiftBits, old, new);
+				lfBuf_pre2 = lfBuf_cur2;    
+
                 lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
 
                 lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
@@ -181,6 +234,18 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
             for (i = 0; i < nbEle; i++) {
                 leadingNum = 0;
                 lfBuf_cur.value = oriData[i] - medianValue;
+
+				lfBuf_cur2.value = lfBuf_cur.value;
+				lfBuf_xor2.ivalue = lfBuf_cur2.ivalue ^ lfBuf_pre2.ivalue;
+				leadingNum2 = computeNumberofLeadingZeros(lfBuf_xor2.ivalue);
+				int leadingBLen2 = (leadingNum2/8)*8;
+				int old = reqLength<leadingBLen2?0:reqLength-leadingBLen2;
+				old_mid_bits_counter += old;
+				int leadingBLen2_shifted = ((leadingNum2+rightShiftBits)/8)*8;
+				int new = reqLength + rightShiftBits < leadingBLen2_shifted? 0 : reqLength + rightShiftBits - leadingBLen2_shifted;
+				new_mid_bits_counter += new;
+				printf("%d %d ( %u %f ) ( %u %f ) %d %d %d\n", reqLength, leadingNum2, lfBuf_pre2.ivalue, lfBuf_pre2.value, lfBuf_cur2.ivalue, lfBuf_cur2.value, rightShiftBits, old, new);
+				lfBuf_pre2 = lfBuf_cur2;   
 
                 lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
 
@@ -477,6 +542,13 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, r);
 
     free(leadNumberArray_int);
+    
+    printf("nonConstantBlocks = %zu, nonConstantRatio = %f, old_mid_bits_counter = (%zu,%f), new_mid_bits_counter = (%zu,%f)\n", nonConstantBlockCounter, ((float)nonConstantBlockCounter)/(nbConstantBlocks+nonConstantBlockCounter),
+    old_mid_bits_counter, (float)old_mid_bits_counter/nonConstantBlockCounter/blockSize, new_mid_bits_counter, (float)new_mid_bits_counter/nonConstantBlockCounter/blockSize);
+    unsigned int total_old_overhead_bytes = old_mid_bits_counter/8==0?old_mid_bits_counter/8:old_mid_bits_counter/8+1;
+	unsigned int total_new_overhead_bytes = new_mid_bits_counter/8==0?new_mid_bits_counter/8:new_mid_bits_counter/8+1;
+      
+    printf("total_new_old_overhead = %f\n", (float)(total_new_overhead_bytes-total_old_overhead_bytes)/(*outSize));
 
     return outputBytes;
 }
