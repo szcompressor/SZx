@@ -67,9 +67,20 @@ int main(int argc, char * argv[])
     //float *revValue = (float *)malloc(sizeof(float));
     //*revValue = 1.0E36;
 
+	float min = data[0], max = data[0];
+	for(size_t i = 0;i < nbEle;i++)
+	{
+		if(min>data[i])
+			min = data[i];
+		if(max<data[i])
+			max = data[i];
+	}
+	float valueRange = max - min;
+	float realPrecision = errBound*valueRange;
+
     size_t outSize;
     cost_start();
-    unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, &outSize, errBound, nbEle, blockSize);
+    unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, &outSize, realPrecision, nbEle, blockSize);
 //    unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, &outSize, errBound, nbEle, blockSize);
 
     //unsigned char* bytes =  SZ_fast_compress_args(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errBound, 0.001, 0, 0, 0, 0, 0, nbEle);
