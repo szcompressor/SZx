@@ -548,7 +548,7 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
     unsigned int total_old_overhead_bytes = old_mid_bits_counter/8==0?old_mid_bits_counter/8:old_mid_bits_counter/8+1;
 	unsigned int total_new_overhead_bytes = new_mid_bits_counter/8==0?new_mid_bits_counter/8:new_mid_bits_counter/8+1;
       
-    printf("total_new_old_overhead = %f\n", (float)(total_new_overhead_bytes-total_old_overhead_bytes)/(*outSize));
+    printf("total_new_old_overhead = %f\n", ((float)total_new_overhead_bytes-(float)total_old_overhead_bytes)/(*outSize));
 
     return outputBytes;
 }
