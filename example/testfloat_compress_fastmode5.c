@@ -43,6 +43,7 @@ int main(int argc, char *argv[]) {
     char oriFilePath[640], outputFilePath[645];
     char *cfgFile;
     if (argc < 4) {
+        printf("szx openmp reb+abs_eb dual limit");
         printf("Usage: testfloat_compress_fastmode5 [config_file] [srcFilePath] [block size] [reb] [abs]\n");
         printf("Example: testfloat_compress_fastmode5 sz.config testfloat_8_8_128.dat 500 1E-3 1E-3\n");
         exit(0);

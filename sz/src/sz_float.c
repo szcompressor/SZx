@@ -665,6 +665,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     sz_cost_end_msg("sequential-3 free");
     printf("blocksize = %d, actualNBBlocks = %lu\n", blockSize, actualNBBlocks);
     printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f * (nbConstantBlocks * blockSize) / nbEle);
+    printf("CR = %.3f\n", nbEle*4.0/(*outSize));
 }
 }
     return outputBytes;
