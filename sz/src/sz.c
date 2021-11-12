@@ -59,9 +59,9 @@ int SZ_Init(const char *configFilePath)
 	int loadFileResult = SZ_LoadConf(configFilePath);
 	if(loadFileResult==SZ_NSCS)
 		return SZ_NSCS;
-	
+
 	exe_params->SZ_SIZE_TYPE = sizeof(size_t);
-	
+
 	if(confparams_cpr->szMode == SZ_TEMPORAL_COMPRESSION)
 	{
 		initSZ_TSC();
@@ -78,7 +78,7 @@ int SZ_Init_Params(sz_params *params)
 
 	if(params->max_quant_intervals > 0)
 		params->maxRangeRadius = params->max_quant_intervals/2;
-		
+
 	memcpy(confparams_cpr, params, sizeof(sz_params));
 
 	if(params->quantization_intervals%2!=0)
@@ -93,69 +93,69 @@ int SZ_Init_Params(sz_params *params)
 int computeDimension(size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 {
 	int dimension;
-	if(r1==0) 
+	if(r1==0)
 	{
 		dimension = 0;
 	}
-	else if(r2==0) 
+	else if(r2==0)
 	{
 		dimension = 1;
 	}
-	else if(r3==0) 
+	else if(r3==0)
 	{
 		dimension = 2;
 	}
-	else if(r4==0) 
+	else if(r4==0)
 	{
 		dimension = 3;
 	}
-	else if(r5==0) 
+	else if(r5==0)
 	{
 		dimension = 4;
 	}
-	else 
+	else
 	{
 		dimension = 5;
 	}
-	return dimension;	
+	return dimension;
 }
 
 size_t computeDataLength(size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 {
 	size_t dataLength;
-	if(r1==0) 
+	if(r1==0)
 	{
 		dataLength = 0;
 	}
-	else if(r2==0) 
+	else if(r2==0)
 	{
 		dataLength = r1;
 	}
-	else if(r3==0) 
+	else if(r3==0)
 	{
 		dataLength = r1*r2;
 	}
-	else if(r4==0) 
+	else if(r4==0)
 	{
 		dataLength = r1*r2*r3;
 	}
-	else if(r5==0) 
+	else if(r5==0)
 	{
 		dataLength = r1*r2*r3*r4;
 	}
-	else 
+	else
 	{
 		dataLength = r1*r2*r3*r4*r5;
 	}
 	return dataLength;
 }
 
-unsigned char* SZ_fast_compress_ts_args(int dataType, void* pred, void *data, size_t *outSize, int errBoundMode, float absErrBound, 
+unsigned char* SZ_fast_compress_ts_args(int dataType, void* pred, void *data, size_t *outSize, int errBoundMode, float absErrBound,
 float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 {
-	
+
 	size_t length = computeDataLength(r5, r4, r3, r2, r1);
-	
+
 	//compute value range
 	size_t i = 0;
 	float* oriData = (float*)data;
@@ -180,31 +180,31 @@ float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_
 
 	//short exp = getExponent_float(realPrecision);
 	//float tunedPrecision = pow(2,exp);
-	
+
 	unsigned char* bytes = NULL;
 	if(dataType==SZ_FLOAT)
 	{
-		//bytes = SZ_fast_compress_args_float(data, outSize, tunedPrecision, r5, r4, r3, r2, r1, length);		
+		//bytes = SZ_fast_compress_args_float(data, outSize, tunedPrecision, r5, r4, r3, r2, r1, length);
 		bytes = SZ_fast_compress_args_with_prediction_float(pred, data, outSize, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);
 	}
 	else if(dataType==SZ_DOUBLE)
 	{
 		//TODO
 	}
-	
+
 	return bytes;
-	
+
 }
 
-unsigned char* SZ_fast_compress_args(int fastMode, int dataType, void *data, size_t *outSize, int errBoundMode, float absErrBound, 
+unsigned char* SZ_fast_compress_args(int fastMode, int dataType, void *data, size_t *outSize, int errBoundMode, float absErrBound,
 float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 {
 	unsigned char*  bytes = NULL;
 	size_t length = computeDataLength(r5, r4, r3, r2, r1);
-	size_t i = 0;	
+	size_t i = 0;
 	if(fastMode == SZ_WITH_BLOCK_FAST_CMPR)
 	{
-		float realPrecision = absErrBound;		
+		float realPrecision = absErrBound;
 		if(errBoundMode==REL)
 		{
 			float* oriData = (float*)data;
@@ -219,20 +219,21 @@ float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_
 					max = v;
 			}
 			float valueRange = max - min;
-			realPrecision = valueRange*relBoundRatio;			
+			realPrecision = valueRange*relBoundRatio;
 		}
 
         int blockSize = 32 + rand() % 24 * 4;
 		printf("blockSize = %d\n", blockSize);
-//		if(confparams_cpr->randomAccess)
+        if (confparams_cpr->randomAccess) {
 #ifdef _OPENMP
             bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(data, outSize, realPrecision, length,
                                                                                           blockSize);
 #else
             bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, outSize, realPrecision, length, blockSize);
 #endif
-//		else
-//        bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, 96);
+        } else {
+            bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, 96);
+        }
         return bytes;
     }
     //sz_cost_start();
@@ -410,7 +411,7 @@ double relBoundRatio, double pwrBoundRatio, size_t r5, size_t r4, size_t r3, siz
             {
                 newByteData =  SZ_fast_compress_args(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, data, outSize, errBoundMode, absErrBound, relBoundRatio, pwrBoundRatio, r5, r4, r3, r2, r1);
             }
-            
+
             if(confparams_cpr->szMode == SZ_BEST_SPEED2)
             {
 				unsigned char* bytes2 = NULL;
@@ -605,7 +606,7 @@ void *SZ_decompress(int dataType, unsigned char *bytes, size_t byteLength, size_
             confparams_dec->szMode = SZ_BEST_SPEED;
             if(bytes[3]==1)
                 randomAccess = 1;
-            bytes2 = bytes;    
+            bytes2 = bytes;
         }
         else
 			confparams_dec->szMode = SZ_GOOD_SPEED;
@@ -619,15 +620,15 @@ void *SZ_decompress(int dataType, unsigned char *bytes, size_t byteLength, size_
 			confparams_dec->szMode = SZ_BEST_SPEED2;
 			if(bytes[3]==1)
 				randomAccess = 1;
-			size_t nbEle = computeDataLength(r5, r4, r3, r2, r1);	
+			size_t nbEle = computeDataLength(r5, r4, r3, r2, r1);
 			int typeSize = dataType==SZ_FLOAT? sizeof(float):sizeof(double);
 			byteLength2 = sz_lossless_decompress(ZSTD_COMPRESSOR, bytes, byteLength, &bytes2, nbEle*typeSize);
-		}		
+		}
 		else
 		{
 			confparams_dec->szMode = SZ_BEST_COMPRESSION;
 		}
-		free(decData);	
+		free(decData);
 	}
     int x = 1;
     char *y = (char*)&x;
@@ -661,7 +662,7 @@ void *SZ_decompress(int dataType, unsigned char *bytes, size_t byteLength, size_
         {
 		   SZ_decompress_args_float(&newFloatData, r5, r4, r3, r2, r1, bytes, byteLength, 0, NULL);
 		}
-		
+
         return newFloatData;
     }
     else if(dataType == SZ_DOUBLE)
