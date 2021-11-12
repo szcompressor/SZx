@@ -476,6 +476,9 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
 
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, r);
 
+	free(stateArray);
+	free(medianArray);
+	free(radiusArray);
     free(leadNumberArray_int);
 
     return outputBytes;
@@ -530,6 +533,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
 
     size_t nbConstantBlocks;
     unsigned char *R, *p, *q;
+    float *pf;
     uint16_t *O;
 
 #pragma omp parallel
@@ -592,6 +596,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     O = (uint16_t*) r; //o is the starting address of 'block-size array'
     R = r + nbNonConstantBlocks * sizeof(uint16_t); //R is the starting address of the state array
     p = R + stateNBBytes; //p is the starting address of constant median values.
+    pf = (float *) p;
     q = p + sizeof(float) * nbConstantBlocks; //q is the starting address of the non-constant data sblocks
     // unsigned char *q0 = q;
     // printf("%lu %lu %lu %lu\n",r-outputBytes, R-outputBytes, p-outputBytes, q-outputBytes);
@@ -639,7 +644,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
             memcpy(q+outSizesAccumlate[i]-outSizes[i], tmp_q + i * blockSize * sizeof(float), outSizes[i]);
             O[nbNonConstantBlockAccumlate[i]-1]=outSizes[i];
         } else {
-            floatToBytes(p+(i-nbNonConstantBlockAccumlate[i])*sizeof(float), medianArray[i]);
+            pf[i-nbNonConstantBlockAccumlate[i]]=medianArray[i];
         }
     }
 #pragma omp single
@@ -660,8 +665,9 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     free(stateArray);
     free(outSizes);
     sz_cost_end_msg("sequential-3 free");
-    printf("actualNBBlocks=%lu\n", actualNBBlocks);
+    printf("blocksize = %d, actualNBBlocks = %lu\n", blockSize, actualNBBlocks);
     printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f * (nbConstantBlocks * blockSize) / nbEle);
+    printf("CR = %.3f, nbEle = %lu \n", nbEle*4.0/(*outSize), nbEle);
 }
 }
     return outputBytes;
