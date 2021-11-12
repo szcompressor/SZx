@@ -475,10 +475,10 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
     }
 
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, r);
-
-	free(stateArray);
-	free(medianArray);
-	free(radiusArray);
+	
+    free(stateArray);
+    free(medianArray);	
+    free(radiusArray);
     free(leadNumberArray_int);
 
     return outputBytes;
