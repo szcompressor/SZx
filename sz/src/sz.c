@@ -222,7 +222,8 @@ float relBoundRatio, float pwrBoundRatio, size_t r5, size_t r4, size_t r3, size_
 			realPrecision = valueRange*relBoundRatio;			
 		}
 
-//		if(confparams_cpr->randomAccess)
+		int blockSize = 64;
+		if(confparams_cpr->randomAccess) {
 #ifdef _OPENMP
             bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(data, outSize, realPrecision, length,
                                                                                           blockSize);
