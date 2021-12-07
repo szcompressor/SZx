@@ -608,12 +608,8 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
 
 }
     int tid = omp_get_thread_num();
-    int work = (actualNBBlocks + nbThreads-1) / nbThreads;
-    int lo = work * tid;
-    int hi = lo + work;
-    if (hi > actualNBBlocks){
-        hi = actualNBBlocks;
-    }
+    int lo = tid * actualNBBlocks / nbThreads;
+    int hi = (tid + 1) * actualNBBlocks / nbThreads;
     int b;
     nbNonConstantBlockAccumlate[lo]=stateArray[lo];
     for (b = lo+1; b < hi; b++){
