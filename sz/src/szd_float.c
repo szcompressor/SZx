@@ -7,7 +7,7 @@
  *      See COPYRIGHT in top-level directory.
  */
 
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "szd_float.h"
@@ -34,44 +34,44 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 {
 	int cmpSize = 0;
 	size_t nbEle = blockSize;
-	
+
 	register float medianValue;
 	size_t leadNumArray_size = nbEle%4==0?nbEle/4:nbEle/4+1;
-	
+
 	size_t k = 0;
 	int reqLength = (int)cmpBytes[k];
 	k++;
 	medianValue = bytesToFloat(&(cmpBytes[k]));
 	k+=sizeof(float);
-	
+
 	unsigned char* leadNumArray = &(cmpBytes[k]);
 	k += leadNumArray_size;
-	unsigned char* residualMidBytes = &(cmpBytes[k]);	
+	unsigned char* residualMidBytes = &(cmpBytes[k]);
 	unsigned char* q = residualMidBytes;
-		
-	cmpSize = k;	
-		
+
+	cmpSize = k;
+
 	size_t i = 0, j = 0;
 	k = 0;
-	
+
 	register lfloat lfBuf_pre;
 	register lfloat lfBuf_cur;
-	
+
 	lfBuf_pre.ivalue = 0;
 
-	int reqBytesLength, resiBitsLength; 
+	int reqBytesLength, resiBitsLength;
 	register unsigned char leadingNum;
 
 	reqBytesLength = reqLength/8;
 	resiBitsLength = reqLength%8;
 	int rightShiftBits = 0;
-	
+
 	if(resiBitsLength!=0)
 	{
 		rightShiftBits = 8 - resiBitsLength;
 		reqBytesLength ++;
 	}
-	
+
 	//sz_cost_start();
 	if(sysEndianType==LITTLE_ENDIAN_SYSTEM)
 	{
@@ -80,43 +80,43 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 			for(i=0;i < nbEle;i++)
 			{
 				lfBuf_cur.value = 0;
-				
+
 				j = (i >> 2); //i/4
 				k = (i & 0x03) << 1; //(i%4)*2
 				leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
-				
+
 				if(leadingNum == 1)
-				{	
+				{
 					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
 					lfBuf_cur.byte[1] = q[0];
-					lfBuf_cur.byte[2] = q[1];				
+					lfBuf_cur.byte[2] = q[1];
 					q += 2;
 				}
 				else if(leadingNum == 2)
 				{
 					lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
 					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
-					lfBuf_cur.byte[1] = q[0];									
+					lfBuf_cur.byte[1] = q[0];
 					q += 1;
 				}
 				else if(leadingNum == 3)
 				{
 					lfBuf_cur.byte[1] = lfBuf_pre.byte[1];
 					lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
-					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];				
+					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
 				}
 				else //==0
 				{
 					lfBuf_cur.byte[1] = q[0];
-					lfBuf_cur.byte[2] = q[1];					
-					lfBuf_cur.byte[3] = q[2];					
+					lfBuf_cur.byte[2] = q[1];
+					lfBuf_cur.byte[3] = q[2];
 					q += 3;
 				}
 
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
 				newData[i] = lfBuf_cur.value + medianValue;
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
-				
+
 				lfBuf_pre = lfBuf_cur;
 			}
 		}
@@ -125,119 +125,119 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 			for(i=0;i < nbEle;i++)
 			{
 				lfBuf_cur.value = 0;
-				
+
 				j = (i >> 2); //i/4
 				k = (i & 0x03) << 1; //(i%4)*2
 				leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
-	
+
 				if(leadingNum == 1)
-				{	
+				{
 					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
-					lfBuf_cur.byte[2] = q[0];			
-					q += 1;	
+					lfBuf_cur.byte[2] = q[0];
+					q += 1;
 				}
 				else if(leadingNum >= 2)
 				{
 					lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
-					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];									
+					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
 				}
 				else //==0
 				{
-					lfBuf_cur.byte[2] = q[0];					
-					lfBuf_cur.byte[3] = q[1];					
+					lfBuf_cur.byte[2] = q[0];
+					lfBuf_cur.byte[3] = q[1];
 					q += 2;
 				}
-				
+
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
 				newData[i] = lfBuf_cur.value + medianValue;
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
-				
+
 				lfBuf_pre = lfBuf_cur;
-			}					
+			}
 		}
 		else if(reqBytesLength == 1)
 		{
 			for(i=0;i < nbEle;i++)
 			{
 				lfBuf_cur.value = 0;
-				
+
 				j = (i >> 2); //i/4
 				k = (i & 0x03) << 1; //(i%4)*2
 				leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
-				
+
 				if(leadingNum != 0) //>=1
-				{	
-					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];				
+				{
+					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
 				}
 				else //==0
 				{
-					lfBuf_cur.byte[3] = q[0];				
-					q += 1;	
+					lfBuf_cur.byte[3] = q[0];
+					q += 1;
 				}
-				
+
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
 				newData[i] = lfBuf_cur.value + medianValue;
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
-				
+
 				lfBuf_pre = lfBuf_cur;
-			}				
+			}
 		}
 		else //reqBytesLength == 4
 		{
 			for(i=0;i < nbEle;i++)
 			{
 				lfBuf_cur.value = 0;
-				
+
 				j = (i >> 2); //i/4
 				k = (i & 0x03) << 1; //(i%4)*2
 				leadingNum = (leadNumArray[j] >> (6 - k)) & 0x03;
-				
+
 				if(leadingNum == 1)
-				{	
+				{
 					lfBuf_cur.byte[0] = q[0];
 					lfBuf_cur.byte[1] = q[1];
-					lfBuf_cur.byte[2] = q[2];				
-					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];					
+					lfBuf_cur.byte[2] = q[2];
+					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
 					q += 3;
 				}
 				else if(leadingNum == 2)
 				{
-					lfBuf_cur.byte[0] = q[0];									
-					lfBuf_cur.byte[1] = q[1];									
+					lfBuf_cur.byte[0] = q[0];
+					lfBuf_cur.byte[1] = q[1];
 					lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
-					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];					
+					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
 					q += 2;
 				}
 				else if(leadingNum == 3)
 				{
-					lfBuf_cur.byte[0] = q[0];									
+					lfBuf_cur.byte[0] = q[0];
 					lfBuf_cur.byte[1] = lfBuf_pre.byte[1];
 					lfBuf_cur.byte[2] = lfBuf_pre.byte[2];
-					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];	
-					q += 1;				
+					lfBuf_cur.byte[3] = lfBuf_pre.byte[3];
+					q += 1;
 				}
 				else //==0
 				{
 					lfBuf_cur.byte[0] = q[0];
 					lfBuf_cur.byte[1] = q[1];
-					lfBuf_cur.byte[2] = q[2];					
-					lfBuf_cur.byte[3] = q[3];					
+					lfBuf_cur.byte[2] = q[2];
+					lfBuf_cur.byte[3] = q[3];
 					q += 4;
 				}
 
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue << rightShiftBits;
 				newData[i] = lfBuf_cur.value + medianValue;
 				lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
-				
-				lfBuf_pre = lfBuf_cur;			
+
+				lfBuf_pre = lfBuf_cur;
 			}
 		}
 	}
 	else
 	{
-		
+
 	}
-	
+
 	cmpSize += (q - residualMidBytes); //add the number of residualMidBytes
 	return cmpSize;
 }
@@ -283,8 +283,10 @@ void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t
 		else //constant block
 		{
 			float medianValue = constantMedianArray[k];
-			for(j=0;j<blockSize;j++)
-				op[j] = medianValue;
+			for(j=0;j<blockSize;j++) {
+                op[j] = 0;
+//				op[j] = medianValue;
+            }
 			p += sizeof(float);
 			k ++;
 		}
@@ -300,8 +302,10 @@ void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t
 		else //constant block
 		{
 			float medianValue = constantMedianArray[k];
-			for(j=0;j<remainCount;j++)
-				op[j] = medianValue;
+			for(j=0;j<remainCount;j++) {
+                op[j] = 0;
+//				op[j] = medianValue;
+            }
 		}
 	}
 
@@ -360,7 +364,8 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 
 			q += O[nonConstantBlockID++];
 		} else {
-			parray[i] = constantMedianArray[constantBlockID++];
+//			parray[i] = constantMedianArray[constantBlockID++];
+			parray[i] = 0;
 		}
 	}
 
@@ -396,21 +401,21 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 }
 void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** newData, size_t nbEle, unsigned char* cmpBytes){
 	*newData = (float*)malloc(sizeof(float)*nbEle);
-	
+
 	unsigned char* r = cmpBytes;
 	r+=4; //skip version information
     int blockSize = bytesToLong_bigEndian(r);  //get block size
     r += sizeof(size_t);
 	size_t nbConstantBlocks = bytesToLong_bigEndian(r); //get number of constant blocks
 	r += sizeof(size_t);
-		
+
 	size_t nbBlocks = nbEle/blockSize;
 	size_t remainCount = nbEle%blockSize;
 	size_t stateNBBytes = remainCount == 0 ? (nbBlocks%8==0?nbBlocks/8:nbBlocks/8+1) : ((nbBlocks+1)%8==0? (nbBlocks+1)/8:(nbBlocks+1)/8+1);
 	size_t actualNBBlocks = remainCount==0 ? nbBlocks : nbBlocks+1;
-	
+
 	size_t nbNonConstantBlocks = actualNBBlocks - nbConstantBlocks;
-	
+
 
 	unsigned char* stateArray = (unsigned char*)malloc(actualNBBlocks);
 	float* constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));
@@ -419,9 +424,9 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
     unsigned char* R = r+ nbNonConstantBlocks*sizeof(uint16_t); //block-size information
 
     convertByteArray2IntArray_fast_1b_args(actualNBBlocks, R, stateNBBytes, stateArray); //get the stateArray
-	
+
 	unsigned char* p = R + stateNBBytes; //p is the starting address of constant median values.
-	
+
 	size_t i = 0, j = 0, k = 0; //k is used to keep track of constant block index
 	for(i = 0;i < nbConstantBlocks;i++, j+=4) //get the median values for constant-value blocks
 		constantMedianArray[i] = bytesToFloat(p+j);
@@ -441,9 +446,11 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
 		}
 		else //constant block
 		{
-			float medianValue = constantMedianArray[k];			
-			for(j=0;j<blockSize;j++)
-				op[j] = medianValue;
+			float medianValue = constantMedianArray[k];
+			for(j=0;j<blockSize;j++) {
+//				op[j] = medianValue;
+                op[j] = 0;
+            }
 			p += sizeof(float);
 			k ++;
 		}
@@ -454,16 +461,18 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
 		unsigned char state = stateArray[i];
 		if(state) //non-constant block
 		{
-			SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q);	
+			SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q);
 		}
 		else //constant block
 		{
-			float medianValue = constantMedianArray[k];				
-			for(j=0;j<remainCount;j++)
-				op[j] = medianValue;
-		}		
+			float medianValue = constantMedianArray[k];
+			for(j=0;j<remainCount;j++) {
+//				op[j] = medianValue;
+                op[j] = 0;
+            }
+		}
 	}
-	
+
 	free(stateArray);
 	free(constantMedianArray);
 }
@@ -472,8 +481,8 @@ void SZ_fast_decompress_args_unpredictable_float(float** newData, size_t r5, siz
 size_t cmpSize)
 {
 	size_t nbEle = computeDataLength(r5, r4, r3, r2, r1);
-	*newData = (float*)malloc(sizeof(float)*nbEle);	
-	
+	*newData = (float*)malloc(sizeof(float)*nbEle);
+
 	register float medianValue;
 	size_t leadNumArray_size;
 
@@ -487,33 +496,33 @@ size_t cmpSize)
 	k+=sizeof(float);
 	leadNumArray_size = bytesToSize(&(r[k]));
 	k+=sizeof(size_t);
-	
+
 	unsigned char* leadNumArray = &(r[k]);
 	k += leadNumArray_size;
 	unsigned char* residualMidBytes = &(r[k]);
 	unsigned char* q = residualMidBytes;
-		
+
 	size_t i = 0, j = 0;
 	k = 0;
-	
+
 	register lfloat lfBuf_pre;
 	register lfloat lfBuf_cur;
-	
+
 	lfBuf_pre.ivalue = 0;
 
-	int reqBytesLength, resiBitsLength; 
+	int reqBytesLength, resiBitsLength;
 	register unsigned char leadingNum;
 
 	reqBytesLength = reqLength/8;
 	resiBitsLength = reqLength%8;
 	int rightShiftBits = 0;
-	
+
 	if(resiBitsLength!=0)
 	{
 		rightShiftBits = 8 - resiBitsLength;
 		reqBytesLength ++;
 	}
-	
+
 	//sz_cost_start();
 	if(sysEndianType==LITTLE_ENDIAN_SYSTEM) {
         if (reqBytesLength == 3) {
@@ -647,32 +656,32 @@ size_t cmpSize)
             }
         }
     }
-	
+
 	//sz_cost_end();
 	//printf("totalCost = %f\n", sz_totalCost);
 	//free(leadNum);
-	
+
 }
 
 /**
- * 
+ *
  * int compressionType: 1 (time-based compression) ; 0 (space-based compression)
  * hist_data: only valid when compressionType==1, hist_data is the historical dataset such as the data in previous time step
- * 
+ *
  * @return status SUCCESSFUL (SZ_SCES) or not (other error codes) f
  * */
-int SZ_decompress_args_float(float** newData, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, unsigned char* cmpBytes, 
+int SZ_decompress_args_float(float** newData, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, unsigned char* cmpBytes,
 size_t cmpSize, int compressionType, float* hist_data)
 {
 	int status = SZ_SCES;
 	size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
-	
+
 	//unsigned char* tmpBytes;
 	size_t targetUncompressSize = dataLength <<2; //i.e., *4
 	//tmpSize must be "much" smaller than dataLength
 	size_t i, tmpSize = 8+MetaDataByteLength+exe_params->SZ_SIZE_TYPE;
-	unsigned char* szTmpBytes;	
-	
+	unsigned char* szTmpBytes;
+
 	if(cmpSize!=8+4+MetaDataByteLength && cmpSize!=8+8+MetaDataByteLength) //4,8 means two posibilities of SZ_SIZE_TYPE
 	{
 		confparams_dec->losslessCompressor = is_lossless_compressed_data(cmpBytes, cmpSize);
@@ -681,41 +690,41 @@ size_t cmpSize, int compressionType, float* hist_data)
 			if(confparams_dec->losslessCompressor!=-1)
 				confparams_dec->szMode = SZ_BEST_COMPRESSION;
 			else
-				confparams_dec->szMode = SZ_GOOD_SPEED;			
+				confparams_dec->szMode = SZ_GOOD_SPEED;
 		}
-		
+
 		if(confparams_dec->szMode==SZ_GOOD_SPEED)
 		{
 			tmpSize = cmpSize;
-			szTmpBytes = cmpBytes;	
+			szTmpBytes = cmpBytes;
 		}
 		else if(confparams_dec->szMode==SZ_BEST_COMPRESSION || confparams_dec->szMode==SZ_DEFAULT_COMPRESSION || confparams_dec->szMode==SZ_TEMPORAL_COMPRESSION)
 		{
 			if(targetUncompressSize<MIN_ZLIB_DEC_ALLOMEM_BYTES) //Considering the minimum size
-				targetUncompressSize = MIN_ZLIB_DEC_ALLOMEM_BYTES; 
+				targetUncompressSize = MIN_ZLIB_DEC_ALLOMEM_BYTES;
 			tmpSize = sz_lossless_decompress(confparams_dec->losslessCompressor, cmpBytes, (unsigned long)cmpSize, &szTmpBytes, (unsigned long)targetUncompressSize+4+MetaDataByteLength+exe_params->SZ_SIZE_TYPE);//		(unsigned long)targetUncompressSize+8: consider the total length under lossless compression mode is actually 3+4+1+targetUncompressSize
 			//szTmpBytes = (unsigned char*)malloc(sizeof(unsigned char)*tmpSize);
 			//memcpy(szTmpBytes, tmpBytes, tmpSize);
-			//free(tmpBytes); //release useless memory		
+			//free(tmpBytes); //release useless memory
 		}
 		else
 		{
 			printf("Wrong value of confparams_dec->szMode in the double compressed bytes.\n");
 			status = SZ_MERR;
 			return status;
-		}	
+		}
 	}
 	else
-		szTmpBytes = cmpBytes;	
-		
+		szTmpBytes = cmpBytes;
+
 	confparams_dec->sol_ID = szTmpBytes[4+14]; //szTmpBytes: version(3bytes), samebyte(1byte), [14]:sol_ID=SZ or SZ_Transpose
-		
+
 	//TODO: convert szTmpBytes to data array.
 	TightDataPointStorageF* tdps;
 	int errBoundMode = new_TightDataPointStorageF_fromFlatBytes(&tdps, szTmpBytes, tmpSize);
-	
+
 	//writeByteData(tdps->typeArray, tdps->typeArray_size, "decompress-typebytes.tbt");
-	int dim = computeDimension(r5,r4,r3,r2,r1);	
+	int dim = computeDimension(r5,r4,r3,r2,r1);
 	int floatSize = sizeof(float);
 	if(tdps->isLossless)
 	{
@@ -729,11 +738,11 @@ size_t cmpSize, int compressionType, float* hist_data)
 			unsigned char* p = szTmpBytes+4+MetaDataByteLength+exe_params->SZ_SIZE_TYPE;
 			for(i=0;i<dataLength;i++,p+=floatSize)
 				(*newData)[i] = bytesToFloat(p);
-		}		
+		}
 	}
 	else if(confparams_dec->sol_ID==SZ_Transpose)
 	{
-		getSnapshotData_float_1D(newData,dataLength,tdps, errBoundMode, 0, hist_data);		
+		getSnapshotData_float_1D(newData,dataLength,tdps, errBoundMode, 0, hist_data);
 	}
 	else //confparams_dec->sol_ID==SZ
 	{
@@ -751,7 +760,7 @@ size_t cmpSize, int compressionType, float* hist_data)
 			{
 				printf("Error: currently support only at most 4 dimensions!\n");
 				status = SZ_DERR;
-			}	
+			}
 		}
 		else //1.4.13 or time-based compression
 		{
@@ -767,16 +776,16 @@ size_t cmpSize, int compressionType, float* hist_data)
 			{
 				printf("Error: currently support only at most 4 dimensions!\n");
 				status = SZ_DERR;
-			}			
+			}
 		}
 	}
 
-	//cost_start_();	
+	//cost_start_();
 	if(confparams_dec->protectValueRange)
 	{
 		float* nd = *newData;
 		float min = confparams_dec->fmin;
-		float max = confparams_dec->fmax;		
+		float max = confparams_dec->fmax;
 		for(i=0;i<dataLength;i++)
 		{
 			float v = nd[i];
@@ -796,7 +805,7 @@ size_t cmpSize, int compressionType, float* hist_data)
 	return status;
 }
 
-void decompressDataSeries_float_1D(float** data, size_t dataSeriesLength, float* hist_data, TightDataPointStorageF* tdps) 
+void decompressDataSeries_float_1D(float** data, size_t dataSeriesLength, float* hist_data, TightDataPointStorageF* tdps)
 {
 	updateQuantizationInfo(tdps->intervals);
 	size_t i, j, k = 0, p = 0, l = 0; // k is to track the location of residual_bit
@@ -805,32 +814,32 @@ void decompressDataSeries_float_1D(float** data, size_t dataSeriesLength, float*
 								// leadNum
 	unsigned char* leadNum;
 	float interval = tdps->realPrecision*2;
-	
+
 	convertByteArray2IntArray_fast_2b(tdps->exactDataNum, tdps->leadNumArray, tdps->leadNumArray_size, &leadNum);
 	*data = (float*)malloc(sizeof(float)*dataSeriesLength);
 
 	int* type = (int*)malloc(dataSeriesLength*sizeof(int));
-	
+
 	HuffmanTree* huffmanTree = createHuffmanTree(tdps->stateNum);
 	decode_withTree(huffmanTree, tdps->typeArray, dataSeriesLength, type);
-	SZ_ReleaseHuffman(huffmanTree);	
+	SZ_ReleaseHuffman(huffmanTree);
 
 	unsigned char preBytes[4];
 	unsigned char curBytes[4];
-	
+
 	memset(preBytes, 0, 4);
 
 	size_t curByteIndex = 0;
-	int reqBytesLength, resiBitsLength, resiBits; 
-	unsigned char leadingNum;	
+	int reqBytesLength, resiBitsLength, resiBits;
+	unsigned char leadingNum;
 	float medianValue, exactData, predValue;
-	
+
 	reqBytesLength = tdps->reqLength/8;
 	resiBitsLength = tdps->reqLength%8;
 	medianValue = tdps->medianValue;
-	
+
 	int type_;
-	for (i = 0; i < dataSeriesLength; i++) {	
+	for (i = 0; i < dataSeriesLength; i++) {
 		type_ = type[i];
 		switch (type_) {
 		case 0:
@@ -860,7 +869,7 @@ void decompressDataSeries_float_1D(float** data, size_t dataSeriesLength, float*
 				k += resiBitsLength;
 			}
 
-			// recover the exact data	
+			// recover the exact data
 			memset(curBytes, 0, 4);
 			leadingNum = leadNum[l++];
 			memcpy(curBytes, preBytes, leadingNum);
@@ -870,7 +879,7 @@ void decompressDataSeries_float_1D(float** data, size_t dataSeriesLength, float*
 				unsigned char resiByte = (unsigned char) (resiBits << (8 - resiBitsLength));
 				curBytes[reqBytesLength] = resiByte;
 			}
-			
+
 			exactData = bytesToFloat(curBytes);
 			(*data)[i] = exactData + medianValue;
 			memcpy(preBytes,curBytes,4);
@@ -883,22 +892,22 @@ void decompressDataSeries_float_1D(float** data, size_t dataSeriesLength, float*
 		}
 		//printf("%.30G\n",(*data)[i]);
 	}
-	
-#ifdef HAVE_TIMECMPR	
+
+#ifdef HAVE_TIMECMPR
 	if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 		memcpy(hist_data, (*data), dataSeriesLength*sizeof(float));
-#endif	
-	
+#endif
+
 	free(leadNum);
 	free(type);
 	return;
 }
 
-void decompressDataSeries_float_2D(float** data, size_t r1, size_t r2, float* hist_data, TightDataPointStorageF* tdps) 
+void decompressDataSeries_float_2D(float** data, size_t r1, size_t r2, float* hist_data, TightDataPointStorageF* tdps)
 {
 	updateQuantizationInfo(tdps->intervals);
 	//printf("tdps->intervals=%d, exe_params->intvRadius=%d\n", tdps->intervals, exe_params->intvRadius);
-	
+
 	size_t j, k = 0, p = 0, l = 0; // k is to track the location of residual_bit
 	// in resiMidBits, p is to track the
 	// byte_index of resiMidBits, l is for
@@ -917,7 +926,7 @@ void decompressDataSeries_float_2D(float** data, size_t r1, size_t r2, float* hi
 
 	HuffmanTree* huffmanTree = createHuffmanTree(tdps->stateNum);
 	decode_withTree(huffmanTree, tdps->typeArray, dataSeriesLength, type);
-	SZ_ReleaseHuffman(huffmanTree);	
+	SZ_ReleaseHuffman(huffmanTree);
 
 	unsigned char preBytes[4];
 	unsigned char curBytes[4];
@@ -925,15 +934,15 @@ void decompressDataSeries_float_2D(float** data, size_t r1, size_t r2, float* hi
 	memset(preBytes, 0, 4);
 
 	size_t curByteIndex = 0;
-	int reqBytesLength, resiBitsLength, resiBits; 
-	unsigned char leadingNum;	
+	int reqBytesLength, resiBitsLength, resiBits;
+	unsigned char leadingNum;
 	float medianValue, exactData;
 	int type_;
 
 	reqBytesLength = tdps->reqLength/8;
 	resiBitsLength = tdps->reqLength%8;
 	medianValue = tdps->medianValue;
-	
+
 	float pred1D, pred2D;
 	size_t ii, jj;
 
@@ -981,7 +990,7 @@ void decompressDataSeries_float_2D(float** data, size_t r1, size_t r2, float* hi
 	memcpy(preBytes,curBytes,4);
 
 	/* Process Row-0, data 1 */
-	type_ = type[1]; 
+	type_ = type[1];
 	if (type_ != 0)
 	{
 		pred1D = (*data)[0];
@@ -1037,7 +1046,7 @@ void decompressDataSeries_float_2D(float** data, size_t r1, size_t r2, float* hi
 		type_ = type[jj];
 		if (type_ != 0)
 		{
-			pred1D = 2*(*data)[jj-1] - (*data)[jj-2];				
+			pred1D = 2*(*data)[jj-1] - (*data)[jj-2];
 			(*data)[jj] = pred1D + 2 * (type_ - exe_params->intvRadius) * realPrecision;
 		}
 		else
@@ -1095,7 +1104,7 @@ void decompressDataSeries_float_2D(float** data, size_t r1, size_t r2, float* hi
 		type_ = type[index];
 		if (type_ != 0)
 		{
-			pred1D = (*data)[index-r2];		
+			pred1D = (*data)[index-r2];
 			(*data)[index] = pred1D + 2 * (type_ - exe_params->intvRadius) * realPrecision;
 		}
 		else
@@ -1199,17 +1208,17 @@ void decompressDataSeries_float_2D(float** data, size_t r1, size_t r2, float* hi
 		}
 	}
 
-#ifdef HAVE_TIMECMPR	
+#ifdef HAVE_TIMECMPR
 	if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 		memcpy(hist_data, (*data), dataSeriesLength*sizeof(float));
-#endif	
+#endif
 
 	free(leadNum);
 	free(type);
 	return;
 }
 
-void decompressDataSeries_float_3D(float** data, size_t r1, size_t r2, size_t r3, float* hist_data, TightDataPointStorageF* tdps) 
+void decompressDataSeries_float_3D(float** data, size_t r1, size_t r2, size_t r3, float* hist_data, TightDataPointStorageF* tdps)
 {
 	updateQuantizationInfo(tdps->intervals);
 	size_t j, k = 0, p = 0, l = 0; // k is to track the location of residual_bit
@@ -1229,7 +1238,7 @@ void decompressDataSeries_float_3D(float** data, size_t r1, size_t r2, size_t r3
 
 	HuffmanTree* huffmanTree = createHuffmanTree(tdps->stateNum);
 	decode_withTree(huffmanTree, tdps->typeArray, dataSeriesLength, type);
-	SZ_ReleaseHuffman(huffmanTree);	
+	SZ_ReleaseHuffman(huffmanTree);
 
 	unsigned char preBytes[4];
 	unsigned char curBytes[4];
@@ -1244,7 +1253,7 @@ void decompressDataSeries_float_3D(float** data, size_t r1, size_t r2, size_t r3
 	reqBytesLength = tdps->reqLength/8;
 	resiBitsLength = tdps->reqLength%8;
 	medianValue = tdps->medianValue;
-	
+
 	float pred1D, pred2D, pred3D;
 	size_t ii, jj, kk;
 
@@ -1737,11 +1746,11 @@ void decompressDataSeries_float_3D(float** data, size_t r1, size_t r2, size_t r3
 			}
 		}
 	}
-	
-#ifdef HAVE_TIMECMPR	
+
+#ifdef HAVE_TIMECMPR
 	if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 		memcpy(hist_data, (*data), dataSeriesLength*sizeof(float));
-#endif		
+#endif
 
 	free(leadNum);
 	free(type);
@@ -1769,7 +1778,7 @@ void decompressDataSeries_float_4D(float** data, size_t r1, size_t r2, size_t r3
 
 	HuffmanTree* huffmanTree = createHuffmanTree(tdps->stateNum);
 	decode_withTree(huffmanTree, tdps->typeArray, dataSeriesLength, type);
-	SZ_ReleaseHuffman(huffmanTree);	
+	SZ_ReleaseHuffman(huffmanTree);
 
 	unsigned char preBytes[4];
 	unsigned char curBytes[4];
@@ -2297,11 +2306,11 @@ void decompressDataSeries_float_4D(float** data, size_t r1, size_t r2, size_t r3
 		}
 	}
 
-//I didn't implement time-based compression for 4D actually. 
-//#ifdef HAVE_TIMECMPR	
+//I didn't implement time-based compression for 4D actually.
+//#ifdef HAVE_TIMECMPR
 //	if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 //		memcpy(multisteps->hist_data, (*data), dataSeriesLength*sizeof(float));
-//#endif	
+//#endif
 
 	free(leadNum);
 	free(type);
@@ -2309,7 +2318,7 @@ void decompressDataSeries_float_4D(float** data, size_t r1, size_t r2, size_t r3
 }
 
 /*MSST19*/
-void decompressDataSeries_float_1D_MSST19(float** data, size_t dataSeriesLength, TightDataPointStorageF* tdps) 
+void decompressDataSeries_float_1D_MSST19(float** data, size_t dataSeriesLength, TightDataPointStorageF* tdps)
 {
 	updateQuantizationInfo(tdps->intervals);
 	size_t i, j, k = 0, p = 0, l = 0; // k is to track the location of residual_bit
@@ -2318,23 +2327,23 @@ void decompressDataSeries_float_1D_MSST19(float** data, size_t dataSeriesLength,
 								// leadNum
 	unsigned char* leadNum;
 	//double interval = tdps->realPrecision*2;
-	
+
 	convertByteArray2IntArray_fast_2b(tdps->exactDataNum, tdps->leadNumArray, tdps->leadNumArray_size, &leadNum);
 	*data = (float*)malloc(sizeof(float)*dataSeriesLength);
 
 	int* type = (int*)malloc(dataSeriesLength*sizeof(int));
-	
+
 	HuffmanTree* huffmanTree = createHuffmanTree(tdps->stateNum);
 	decode_withTree_MSST19(huffmanTree, tdps->typeArray, dataSeriesLength, type, tdps->max_bits);
-	SZ_ReleaseHuffman(huffmanTree);	
+	SZ_ReleaseHuffman(huffmanTree);
 	unsigned char preBytes[4];
 	unsigned char curBytes[4];
-	
+
 	memset(preBytes, 0, 4);
 
 	size_t curByteIndex = 0;
-	int reqBytesLength, resiBitsLength, resiBits; 
-	unsigned char leadingNum;	
+	int reqBytesLength, resiBitsLength, resiBits;
+	unsigned char leadingNum;
 	float exactData, predValue = 0;
 	reqBytesLength = tdps->reqLength/8;
 	resiBitsLength = tdps->reqLength%8;
@@ -2377,7 +2386,7 @@ void decompressDataSeries_float_1D_MSST19(float** data, size_t dataSeriesLength,
 				k += resiBitsLength;
 			}
 
-			// recover the exact data	
+			// recover the exact data
 			memset(curBytes, 0, 4);
 			leadingNum = leadNum[l++];
 			memcpy(curBytes, preBytes, leadingNum);
@@ -2387,7 +2396,7 @@ void decompressDataSeries_float_1D_MSST19(float** data, size_t dataSeriesLength,
 				unsigned char resiByte = (unsigned char) (resiBits << (8 - resiBitsLength));
 				curBytes[reqBytesLength] = resiByte;
 			}
-			
+
 			exactData = bytesToFloat(curBytes);
 			(*data)[i] = exactData;
 			memcpy(preBytes,curBytes,4);
@@ -2396,27 +2405,27 @@ void decompressDataSeries_float_1D_MSST19(float** data, size_t dataSeriesLength,
 		default:
 			//predValue = 2 * (*data)[i-1] - (*data)[i-2];
 			//predValue = (*data)[i-1];
-			predValue = fabs(predValue) * precisionTable[type_];			
+			predValue = fabs(predValue) * precisionTable[type_];
 			(*data)[i] = predValue;
 			break;
 		}
 		//printf("%.30G\n",(*data)[i]);
 	}
-	
-#ifdef HAVE_TIMECMPR	
+
+#ifdef HAVE_TIMECMPR
 	if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 		memcpy(multisteps->hist_data, (*data), dataSeriesLength*sizeof(float));
-#endif	
+#endif
 	free(precisionTable);
 	free(leadNum);
 	free(type);
 	return;
 }
 
-void decompressDataSeries_float_2D_MSST19(float** data, size_t r1, size_t r2, TightDataPointStorageF* tdps) 
+void decompressDataSeries_float_2D_MSST19(float** data, size_t r1, size_t r2, TightDataPointStorageF* tdps)
 {
 	updateQuantizationInfo(tdps->intervals);
-	
+
 	size_t j, k = 0, p = 0, l = 0; // k is to track the location of residual_bit
 	// in resiMidBits, p is to track the
 	// byte_index of resiMidBits, l is for
@@ -2434,7 +2443,7 @@ void decompressDataSeries_float_2D_MSST19(float** data, size_t r1, size_t r2, Ti
 
 	HuffmanTree* huffmanTree = createHuffmanTree(tdps->stateNum);
 	decode_withTree_MSST19(huffmanTree, tdps->typeArray, dataSeriesLength, type, tdps->max_bits);
-	SZ_ReleaseHuffman(huffmanTree);	
+	SZ_ReleaseHuffman(huffmanTree);
 
 	unsigned char preBytes[4];
 	unsigned char curBytes[4];
@@ -2442,8 +2451,8 @@ void decompressDataSeries_float_2D_MSST19(float** data, size_t r1, size_t r2, Ti
 	memset(preBytes, 0, 4);
 
 	size_t curByteIndex = 0;
-	int reqBytesLength, resiBitsLength, resiBits; 
-	unsigned char leadingNum;	
+	int reqBytesLength, resiBitsLength, resiBits;
+	unsigned char leadingNum;
 	float exactData;
 	int type_;
 
@@ -2456,7 +2465,7 @@ void decompressDataSeries_float_2D_MSST19(float** data, size_t r1, size_t r2, Ti
 
     reqBytesLength = tdps->reqLength/8;
 	resiBitsLength = tdps->reqLength%8;
-	
+
 	float pred1D, pred2D;
 	size_t ii, jj;
 
@@ -2504,7 +2513,7 @@ void decompressDataSeries_float_2D_MSST19(float** data, size_t r1, size_t r2, Ti
 	memcpy(preBytes,curBytes,4);
 
 	/* Process Row-0, data 1 */
-	type_ = type[1]; 
+	type_ = type[1];
 	if (type_ != 0)
 	{
 		pred1D = (*data)[0];
@@ -2618,7 +2627,7 @@ void decompressDataSeries_float_2D_MSST19(float** data, size_t r1, size_t r2, Ti
 		type_ = type[index];
 		if (type_ != 0)
 		{
-			pred1D = (*data)[index-r2];		
+			pred1D = (*data)[index-r2];
 			(*data)[index] = fabs(pred1D) * precisionTable[type_];
 		}
 		else
@@ -2722,17 +2731,17 @@ void decompressDataSeries_float_2D_MSST19(float** data, size_t r1, size_t r2, Ti
 		}
 	}
 
-#ifdef HAVE_TIMECMPR	
+#ifdef HAVE_TIMECMPR
 	if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 		memcpy(multisteps->hist_data, (*data), dataSeriesLength*sizeof(float));
-#endif	
+#endif
 
 	free(leadNum);
 	free(type);
 	return;
 }
 
-void decompressDataSeries_float_3D_MSST19(float** data, size_t r1, size_t r2, size_t r3, TightDataPointStorageF* tdps) 
+void decompressDataSeries_float_3D_MSST19(float** data, size_t r1, size_t r2, size_t r3, TightDataPointStorageF* tdps)
 {
 	updateQuantizationInfo(tdps->intervals);
 	size_t j, k = 0, p = 0, l = 0; // k is to track the location of residual_bit
@@ -2772,7 +2781,7 @@ void decompressDataSeries_float_3D_MSST19(float** data, size_t r1, size_t r2, si
 
 	reqBytesLength = tdps->reqLength/8;
 	resiBitsLength = tdps->reqLength%8;
-	
+
 	float pred1D, pred2D, pred3D;
 	double temp;
 	double temp2;
@@ -3225,7 +3234,7 @@ void decompressDataSeries_float_3D_MSST19(float** data, size_t r1, size_t r2, si
 				temp2 = (*data)[index-r3-1];
 				pred3D = temp * (*data)[index-r3] * (*data)[index-r23] * (*data)[index-r23-r3-1] / (temp2 * (*data)[index-r23-r3] * (*data)[index-r23-1]);
 
-				type_ = type[index];				
+				type_ = type[index];
 				if (type_ != 0)
 				{
 					(*data)[index] = fabsf(pred3D) * precisionTable[type_];
@@ -3276,11 +3285,11 @@ void decompressDataSeries_float_3D_MSST19(float** data, size_t r1, size_t r2, si
 			}
 		}
 	}
-	
-#ifdef HAVE_TIMECMPR	
+
+#ifdef HAVE_TIMECMPR
 	if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 		memcpy(multisteps->hist_data, (*data), dataSeriesLength*sizeof(float));
-#endif		
+#endif
 
 	free(leadNum);
 	free(type);
@@ -3288,7 +3297,7 @@ void decompressDataSeries_float_3D_MSST19(float** data, size_t r1, size_t r2, si
 }
 
 void getSnapshotData_float_1D(float** data, size_t dataSeriesLength, TightDataPointStorageF* tdps, int errBoundMode, int compressionType, float* hist_data)
-{	
+{
 	size_t i;
 
 	if (tdps->allSameData) {
@@ -3300,19 +3309,19 @@ void getSnapshotData_float_1D(float** data, size_t dataSeriesLength, TightDataPo
 		if (tdps->rtypeArray == NULL) {
 			if(errBoundMode < PW_REL)
 			{
-#ifdef HAVE_TIMECMPR				
+#ifdef HAVE_TIMECMPR
 				if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 				{
 					if(compressionType == 0) //snapshot
 						decompressDataSeries_float_1D(data, dataSeriesLength, hist_data, tdps);
 					else
-						decompressDataSeries_float_1D_ts(data, dataSeriesLength, hist_data, tdps);					
+						decompressDataSeries_float_1D_ts(data, dataSeriesLength, hist_data, tdps);
 				}
 				else
-#endif				
+#endif
 					decompressDataSeries_float_1D(data, dataSeriesLength, hist_data, tdps);
 			}
-			else 
+			else
 			{
 				if(confparams_dec->accelerate_pw_rel_compression)
 					decompressDataSeries_float_1D_pwr_pre_log_MSST19(data, dataSeriesLength, tdps);
@@ -3327,7 +3336,7 @@ void getSnapshotData_float_1D(float** data, size_t dataSeriesLength, TightDataPo
 	}
 }
 
-void getSnapshotData_float_2D(float** data, size_t r1, size_t r2, TightDataPointStorageF* tdps, int errBoundMode, int compressionType, float* hist_data) 
+void getSnapshotData_float_2D(float** data, size_t r1, size_t r2, TightDataPointStorageF* tdps, int errBoundMode, int compressionType, float* hist_data)
 {
 	size_t i;
 	size_t dataSeriesLength = r1*r2;
@@ -3340,26 +3349,26 @@ void getSnapshotData_float_2D(float** data, size_t r1, size_t r2, TightDataPoint
 		if (tdps->rtypeArray == NULL) {
 			if(errBoundMode < PW_REL)
 			{
-#ifdef HAVE_TIMECMPR					
+#ifdef HAVE_TIMECMPR
 				if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 				{
 					if(compressionType == 0)
 						decompressDataSeries_float_2D(data, r1, r2, hist_data, tdps);
 					else
-						decompressDataSeries_float_1D_ts(data, dataSeriesLength, hist_data, tdps);					
+						decompressDataSeries_float_1D_ts(data, dataSeriesLength, hist_data, tdps);
 				}
 				else
 #endif
 					decompressDataSeries_float_2D(data, r1, r2, hist_data, tdps);
 			}
-			else 
+			else
 			{
 				//decompressDataSeries_float_2D_pwr(data, r1, r2, tdps);
 				if(confparams_dec->accelerate_pw_rel_compression)
 					decompressDataSeries_float_2D_pwr_pre_log_MSST19(data, r1, r2, tdps);
 				else
 					decompressDataSeries_float_2D_pwr_pre_log(data, r1, r2, tdps);
-			}			
+			}
 
 			return;
 		} else {
@@ -3381,27 +3390,27 @@ void getSnapshotData_float_3D(float** data, size_t r1, size_t r2, size_t r3, Tig
 		if (tdps->rtypeArray == NULL) {
 			if(errBoundMode < PW_REL)
 			{
-#ifdef HAVE_TIMECMPR					
+#ifdef HAVE_TIMECMPR
 				if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 				{
 					if(compressionType == 0)
 						decompressDataSeries_float_3D(data, r1, r2, r3, hist_data, tdps);
 					else
-						decompressDataSeries_float_1D_ts(data, dataSeriesLength, hist_data, tdps);					
+						decompressDataSeries_float_1D_ts(data, dataSeriesLength, hist_data, tdps);
 				}
 				else
-#endif				
+#endif
 					decompressDataSeries_float_3D(data, r1, r2, r3, hist_data, tdps);
 			}
-			else 
+			else
 			{
 				//decompressDataSeries_float_3D_pwr(data, r1, r2, r3, tdps);
 				if(confparams_dec->accelerate_pw_rel_compression)
 					decompressDataSeries_float_3D_pwr_pre_log_MSST19(data, r1, r2, r3, tdps);
 				else
 					decompressDataSeries_float_3D_pwr_pre_log(data, r1, r2, r3, tdps);
-			}					
-			
+			}
+
 			return;
 		} else {
 			//TODO
@@ -3422,26 +3431,26 @@ void getSnapshotData_float_4D(float** data, size_t r1, size_t r2, size_t r3, siz
 		if (tdps->rtypeArray == NULL) {
 			if(errBoundMode < PW_REL)
 			{
-#ifdef HAVE_TIMECMPR					
+#ifdef HAVE_TIMECMPR
 				if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 				{
 					if(compressionType == 0)
 						decompressDataSeries_float_4D(data, r1, r2, r3, r4, hist_data, tdps);
 					else
-						decompressDataSeries_float_1D_ts(data, r1*r2*r3*r4, hist_data, tdps);					
+						decompressDataSeries_float_1D_ts(data, r1*r2*r3*r4, hist_data, tdps);
 				}
 				else
-#endif				
+#endif
 					decompressDataSeries_float_4D(data, r1, r2, r3, r4, hist_data, tdps);
 			}
-			else 
+			else
 			{
 				if(confparams_dec->accelerate_pw_rel_compression)
 					decompressDataSeries_float_3D_pwr_pre_log_MSST19(data, r1*r2, r3, r4, tdps);
 				else
 					decompressDataSeries_float_3D_pwr_pre_log(data, r1*r2, r3, r4, tdps);
 				//decompressDataSeries_float_4D_pwr(data, r1, r2, r3, r4, tdps);
-			}					
+			}
 			return;
 		} else {
 			//TODO
@@ -3510,7 +3519,7 @@ size_t decompressDataSeries_float_3D_RA_block(float * data, float mean, size_t d
 	for (i = 1; i < r2; i++)
 	{
 		/* Process row-i data 0 */
-		index = i*r3;	
+		index = i*r3;
 		pred1D = last_row_pos[0];
 		type_ = type[index];
 		if (type_ != 0){
@@ -3608,7 +3617,7 @@ size_t decompressDataSeries_float_3D_RA_block(float * data, float mean, size_t d
 			{
 //				if(k==63&&i==43&&j==27)
 //					printf("i=%d\n", i);
-				//index = k*r2*r3 + i*r3 + j;			
+				//index = k*r2*r3 + i*r3 + j;
 				index ++;
 				pred3D = cur_data_pos[j-1] + last_row_pos[j]+ cur_data_pos[j - dim0_offset] - last_row_pos[j-1] - last_row_pos[j - dim0_offset] - cur_data_pos[j-1 - dim0_offset] + last_row_pos[j-1 - dim0_offset];
 				type_ = type[index];
@@ -3631,7 +3640,7 @@ size_t decompressDataSeries_float_3D_RA_block(float * data, float mean, size_t d
 size_t decompressDataSeries_float_1D_RA_block(float * data, float mean, size_t dim_0, size_t block_dim_0, double realPrecision, int * type, float * unpredictable_data){
 
 	size_t unpredictable_count = 0;
-	
+
 	float * cur_data_pos = data;
 	size_t type_index = 0;
 	int type_;
@@ -3712,7 +3721,7 @@ size_t decompressDataSeries_float_2D_RA_block(float * data, float mean, size_t d
 	for (i = 1; i < r1; i++)
 	{
 		/* Process row-i data 0 */
-		index = i*r2;	
+		index = i*r2;
 		type_ = type[index];
 		if (type_ != 0){
 			pred1D = last_row_pos[0];
@@ -3778,9 +3787,9 @@ void decompressDataSeries_float_2D_nonblocked_with_blocked_regression(float** da
 
 	int stateNum = 2*intervals;
 	HuffmanTree* huffmanTree = createHuffmanTree(stateNum);
-	
+
 	int nodeCount = bytesToInt_bigEndian(comp_data_pos);
-	
+
 	node root = reconstruct_HuffTree_from_bytes_anyStates(huffmanTree,comp_data_pos+sizeof(int), nodeCount);
 	comp_data_pos += sizeof(int) + tree_size;
 
@@ -3815,7 +3824,7 @@ void decompressDataSeries_float_2D_nonblocked_with_blocked_regression(float** da
 			unsigned int tree_size = bytesToInt_bigEndian(comp_data_pos);
 			comp_data_pos += sizeof(int);
 			int stateNum = 2*coeff_intvRadius[i]*2;
-			HuffmanTree* huffmanTree = createHuffmanTree(stateNum);	
+			HuffmanTree* huffmanTree = createHuffmanTree(stateNum);
 			int nodeCount = bytesToInt_bigEndian(comp_data_pos);
 			node root = reconstruct_HuffTree_from_bytes_anyStates(huffmanTree, comp_data_pos+sizeof(int), nodeCount);
 			comp_data_pos += sizeof(int) + tree_size;
@@ -3845,9 +3854,9 @@ void decompressDataSeries_float_2D_nonblocked_with_blocked_regression(float** da
 	int * result_type = (int *) malloc(num_elements * sizeof(int));
 	decode(comp_data_pos, num_elements, root, result_type);
 	SZ_ReleaseHuffman(huffmanTree);
-	
+
 	int intvRadius = exe_params->intvRadius;
-	
+
 	int * type;
 
 	float * data_pos = *data;
@@ -3951,7 +3960,7 @@ void decompressDataSeries_float_2D_nonblocked_with_blocked_regression(float** da
 									*block_data_pos = unpred_data[unpredictable_count ++];
 								}
 
-								index ++;	
+								index ++;
 								block_data_pos ++;
 							}
 							block_data_pos += dim0_offset - current_blockcount_y;
@@ -3980,7 +3989,7 @@ void decompressDataSeries_float_2D_nonblocked_with_blocked_regression(float** da
 				size_t current_block_elements = current_blockcount_x * current_blockcount_y;
 				if(*indicator_pos){
 					// decompress by SZ
-					
+
 					float * block_data_pos = data_pos;
 					float pred;
 					size_t index = 0;
@@ -4056,7 +4065,7 @@ void decompressDataSeries_float_2D_nonblocked_with_blocked_regression(float** da
 								else{
 									*block_data_pos = unpred_data[unpredictable_count ++];
 								}
-								index ++;	
+								index ++;
 								block_data_pos ++;
 							}
 							block_data_pos += dim0_offset - current_blockcount_y;
@@ -4071,12 +4080,12 @@ void decompressDataSeries_float_2D_nonblocked_with_blocked_regression(float** da
 			}
 		}
 	}
-	
-#ifdef HAVE_TIMECMPR	
+
+#ifdef HAVE_TIMECMPR
 	if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 		memcpy(hist_data, (*data), num_elements*sizeof(float));
-#endif	
-	
+#endif
+
 	free(coeff_result_type);
 
 	free(indicator);
@@ -4120,10 +4129,10 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 
 	unsigned int tree_size = bytesToInt_bigEndian(comp_data_pos);
 	comp_data_pos += sizeof(int);
-	
+
 	int stateNum = 2*intervals;
-	HuffmanTree* huffmanTree = createHuffmanTree(stateNum);	
-	
+	HuffmanTree* huffmanTree = createHuffmanTree(stateNum);
+
 	int nodeCount = bytesToInt_bigEndian(comp_data_pos);
 	node root = reconstruct_HuffTree_from_bytes_anyStates(huffmanTree,comp_data_pos+sizeof(int), nodeCount);
 	comp_data_pos += sizeof(int) + tree_size;
@@ -4158,7 +4167,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 			unsigned int tree_size = bytesToInt_bigEndian(comp_data_pos);
 			comp_data_pos += sizeof(int);
 			int stateNum = 2*coeff_intvRadius[i]*2;
-			HuffmanTree* huffmanTree = createHuffmanTree(stateNum);	
+			HuffmanTree* huffmanTree = createHuffmanTree(stateNum);
 			int nodeCount = bytesToInt_bigEndian(comp_data_pos);
 			node root = reconstruct_HuffTree_from_bytes_anyStates(huffmanTree, comp_data_pos+sizeof(int), nodeCount);
 			comp_data_pos += sizeof(int) + tree_size;
@@ -4188,9 +4197,9 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 	int * result_type = (int *) malloc(num_elements * sizeof(int));
 	decode(comp_data_pos, num_elements, root, result_type);
 	SZ_ReleaseHuffman(huffmanTree);
-	
+
 	int intvRadius = exe_params->intvRadius;
-	
+
 	int * type;
 	float * data_pos = *data;
 	size_t offset_x, offset_y, offset_z;
@@ -4330,7 +4339,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 		// 								else{
 		// 									*block_data_pos = unpred_data[unpredictable_count ++];
 		// 								}
-		// 								index ++;	
+		// 								index ++;
 		// 								block_data_pos ++;
 		// 							}
 		// 							block_data_pos += dim1_offset - current_blockcount_z;
@@ -4446,7 +4455,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 								}
 								block_data_pos += dim1_offset - current_blockcount_z;
 							}
-							block_data_pos += dim0_offset - current_blockcount_y * dim1_offset;						
+							block_data_pos += dim0_offset - current_blockcount_y * dim1_offset;
 						}
 						for(size_t ii=1; ii<current_blockcount_x; ii++){
 							// jj == 0
@@ -4562,7 +4571,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -4716,7 +4725,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -4865,7 +4874,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -4979,7 +4988,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -5128,7 +5137,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -5238,7 +5247,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -5348,7 +5357,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -5440,7 +5449,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -5537,7 +5546,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 								}
 								block_data_pos += dim1_offset - current_blockcount_z;
 							}
-							block_data_pos += dim0_offset - current_blockcount_y * dim1_offset;						
+							block_data_pos += dim0_offset - current_blockcount_y * dim1_offset;
 						}
 						for(size_t ii=1; ii<current_blockcount_x; ii++){
 							// jj == 0
@@ -5637,7 +5646,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -5775,7 +5784,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -5908,7 +5917,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -6014,7 +6023,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -6147,7 +6156,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -6250,7 +6259,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -6352,7 +6361,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -6440,7 +6449,7 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 										else{
 											*block_data_pos = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 										block_data_pos ++;
 									}
 									block_data_pos += dim1_offset - current_blockcount_z;
@@ -6457,11 +6466,11 @@ void decompressDataSeries_float_3D_nonblocked_with_blocked_regression(float** da
 			}
 		}
 	}
-	
-#ifdef HAVE_TIMECMPR	
+
+#ifdef HAVE_TIMECMPR
 	if(confparams_dec->szMode == SZ_TEMPORAL_COMPRESSION)
 		memcpy(hist_data, (*data), num_elements*sizeof(float));
-#endif	
+#endif
 
 	free(coeff_result_type);
 
@@ -6499,10 +6508,10 @@ void decompressDataSeries_float_3D_random_access_with_blocked_regression(float**
 
 	unsigned int tree_size = bytesToInt_bigEndian(comp_data_pos);
 	comp_data_pos += sizeof(int);
-	
+
 	int stateNum = 2*intervals;
-	HuffmanTree* huffmanTree = createHuffmanTree(stateNum);	
-	
+	HuffmanTree* huffmanTree = createHuffmanTree(stateNum);
+
 	int nodeCount = bytesToInt_bigEndian(comp_data_pos);
 	node root = reconstruct_HuffTree_from_bytes_anyStates(huffmanTree,comp_data_pos+sizeof(int), nodeCount);
 	comp_data_pos += sizeof(int) + tree_size;
@@ -6537,7 +6546,7 @@ void decompressDataSeries_float_3D_random_access_with_blocked_regression(float**
 			unsigned int tree_size = bytesToInt_bigEndian(comp_data_pos);
 			comp_data_pos += sizeof(int);
 			int stateNum = 2*coeff_intvRadius[i]*2;
-			HuffmanTree* huffmanTree = createHuffmanTree(stateNum);	
+			HuffmanTree* huffmanTree = createHuffmanTree(stateNum);
 			int nodeCount = bytesToInt_bigEndian(comp_data_pos);
 			node root = reconstruct_HuffTree_from_bytes_anyStates(huffmanTree, comp_data_pos+sizeof(int), nodeCount);
 			comp_data_pos += sizeof(int) + tree_size;
@@ -6567,9 +6576,9 @@ void decompressDataSeries_float_3D_random_access_with_blocked_regression(float**
 	int * result_type = (int *) malloc(num_blocks*max_num_block_elements * sizeof(int));
 	decode(comp_data_pos, num_blocks*max_num_block_elements, root, result_type);
 	SZ_ReleaseHuffman(huffmanTree);
-	
+
 	int intvRadius = exe_params->intvRadius;
-	
+
 	int * type;
 	float * data_pos = *data;
 	size_t cur_unpred_count;
@@ -6656,7 +6665,7 @@ void decompressDataSeries_float_3D_random_access_with_blocked_regression(float**
 										else{
 											data_pos[ii*block_dim0_offset + jj*block_dim1_offset + kk] = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 									}
 								}
 							}
@@ -6764,7 +6773,7 @@ void decompressDataSeries_float_3D_random_access_with_blocked_regression(float**
 										else{
 											data_pos[ii*block_dim0_offset + jj*block_dim1_offset + kk] = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 									}
 								}
 							}
@@ -6835,10 +6844,10 @@ void decompressDataSeries_float_3D_decompression_random_access_with_blocked_regr
 
 	unsigned int tree_size = bytesToInt_bigEndian(comp_data_pos);
 	comp_data_pos += sizeof(int);
-	
+
 	int stateNum = 2*intervals;
-	HuffmanTree* huffmanTree = createHuffmanTree(stateNum);	
-	
+	HuffmanTree* huffmanTree = createHuffmanTree(stateNum);
+
 	int nodeCount = bytesToInt_bigEndian(comp_data_pos);
 	node root = reconstruct_HuffTree_from_bytes_anyStates(huffmanTree,comp_data_pos+sizeof(int), nodeCount);
 	comp_data_pos += sizeof(int) + tree_size;
@@ -6873,7 +6882,7 @@ void decompressDataSeries_float_3D_decompression_random_access_with_blocked_regr
 			unsigned int tree_size = bytesToInt_bigEndian(comp_data_pos);
 			comp_data_pos += sizeof(int);
 			int stateNum = 2*coeff_intvRadius[i]*2;
-			HuffmanTree* huffmanTree = createHuffmanTree(stateNum);	
+			HuffmanTree* huffmanTree = createHuffmanTree(stateNum);
 			int nodeCount = bytesToInt_bigEndian(comp_data_pos);
 			node root = reconstruct_HuffTree_from_bytes_anyStates(huffmanTree, comp_data_pos+sizeof(int), nodeCount);
 			comp_data_pos += sizeof(int) + tree_size;
@@ -6919,7 +6928,7 @@ void decompressDataSeries_float_3D_decompression_random_access_with_blocked_regr
 	unsigned short * type_array_block_size_pos = type_array_block_size;
 	for(size_t i=0; i<num_x; i++){
 		for(size_t j=0; j<num_y; j++){
-			for(size_t k=0; k<num_z; k++){	
+			for(size_t k=0; k<num_z; k++){
 				decode(comp_data_pos, max_num_block_elements, root, block_type);
 				comp_data_pos += *type_array_block_size_pos;
 				type_array_block_size_pos ++;
@@ -6929,7 +6938,7 @@ void decompressDataSeries_float_3D_decompression_random_access_with_blocked_regr
 	}
 	free(type_array_block_size);
 
-	SZ_ReleaseHuffman(huffmanTree);	
+	SZ_ReleaseHuffman(huffmanTree);
 	int * type;
 	float * data_pos = *data;
 	size_t cur_unpred_count;
@@ -7016,7 +7025,7 @@ void decompressDataSeries_float_3D_decompression_random_access_with_blocked_regr
 										else{
 											data_pos[ii*block_dim0_offset + jj*block_dim1_offset + kk] = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 									}
 								}
 							}
@@ -7124,7 +7133,7 @@ void decompressDataSeries_float_3D_decompression_random_access_with_blocked_regr
 										else{
 											data_pos[ii*block_dim0_offset + jj*block_dim1_offset + kk] = unpred_data[unpredictable_count ++];
 										}
-										index ++;	
+										index ++;
 									}
 								}
 							}
