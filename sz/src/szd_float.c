@@ -243,6 +243,12 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 }
 
 
+/**
+ * This function is deprecated
+ * @param newData
+ * @param nbEle
+ * @param cmpBytes
+ */
 void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes)
 {
 	*newData = (float*)malloc(sizeof(float)*nbEle);
@@ -313,7 +319,8 @@ void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t
 	free(constantMedianArray);
 }
 
-void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(float** newData, size_t nbEle, unsigned char* cmpBytes) {
+
+void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_fill0_float_openmp(float** newData, size_t nbEle, unsigned char* cmpBytes, float fill0Threshold) {
 
 	*newData = (float *) malloc(sizeof(float) * nbEle);
 	sz_cost_start();
@@ -361,11 +368,10 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
     for (i = 0; i < actualNBBlocks; i++) {
 		if (stateArray[i]) {
 			qarray[i] = q;
-
 			q += O[nonConstantBlockID++];
 		} else {
-//			parray[i] = constantMedianArray[constantBlockID++];
-			parray[i] = 0;
+			parray[i] = constantMedianArray[constantBlockID++];
+            parray[i] = (fabs(parray[i]) > fill0Threshold) ? parray[i] : 0;
 		}
 	}
 
@@ -399,7 +405,12 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 //	free(constantMedianArray);
 	sz_cost_end_msg("sequence-3 free");
 }
-void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** newData, size_t nbEle, unsigned char* cmpBytes){
+
+void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(float** newData, size_t nbEle, unsigned char* cmpBytes) {
+    return SZ_fast_decompress_args_unpredictable_blocked_randomaccess_fill0_float_openmp(newData, nbEle, cmpBytes, 0);
+}
+
+void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_fill0_float(float** newData, size_t nbEle, unsigned char* cmpBytes, float fill0Threshold){
 	*newData = (float*)malloc(sizeof(float)*nbEle);
 
 	unsigned char* r = cmpBytes;
@@ -447,9 +458,14 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
 		else //constant block
 		{
 			float medianValue = constantMedianArray[k];
-			for(j=0;j<blockSize;j++) {
-//				op[j] = medianValue;
-                op[j] = 0;
+            if (fabs(medianValue) > fill0Threshold) {
+                for (j = 0; j < blockSize; j++) {
+                    op[j] = medianValue;
+                }
+            } else {
+                for (j = 0; j < blockSize; j++) {
+                    op[j] = 0;
+                }
             }
 			p += sizeof(float);
 			k ++;
@@ -466,15 +482,27 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
 		else //constant block
 		{
 			float medianValue = constantMedianArray[k];
-			for(j=0;j<remainCount;j++) {
-//				op[j] = medianValue;
-                op[j] = 0;
+            if (fabs(medianValue) > fill0Threshold) {
+                for (j = 0; j < remainCount; j++) {
+                    op[j] = medianValue;
+                }
+            } else {
+                for (j = 0; j < remainCount; j++) {
+                    op[j] = 0;
+                }
             }
+//			for(j=0;j<remainCount;j++) {
+//				op[j] = medianValue;
+//            }
 		}
 	}
 
 	free(stateArray);
 	free(constantMedianArray);
+}
+
+void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** newData, size_t nbEle, unsigned char* cmpBytes){
+    return SZ_fast_decompress_args_unpredictable_blocked_randomaccess_fill0_float(newData, nbEle,cmpBytes, 0);
 }
 
 void SZ_fast_decompress_args_unpredictable_float(float** newData, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, unsigned char* cmpBytes,

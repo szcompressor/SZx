@@ -323,6 +323,51 @@ void* SZ_fast_decompress_pred(int dataType, float* preData, unsigned char *curBy
     return NULL;
 }
 
+void* SZ_fast_decompress_fill0(int fastMode, int dataType, unsigned char *bytes, size_t byteLength, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, float threshold)
+{
+    if(exe_params==NULL)
+        exe_params = (sz_exedata*)malloc(sizeof(sz_exedata));
+    memset(exe_params, 0, sizeof(sz_exedata));
+    exe_params->SZ_SIZE_TYPE = 8;
+
+    int x = 1;
+    char *y = (char*)&x;
+    if(*y==1)
+        sysEndianType = LITTLE_ENDIAN_SYSTEM;
+    else //=0
+        sysEndianType = BIG_ENDIAN_SYSTEM;
+
+    if(dataType == SZ_FLOAT)
+    {
+        float* newFloatData = NULL;
+        if(fastMode == SZ_NO_BLOCK_FAST_CMPR)
+            SZ_fast_decompress_args_unpredictable_float(&newFloatData, r5, r4, r3, r2, r1, bytes, byteLength);
+        else //SZ_WITH_BLOCK_FAST_CMPR
+        {
+            size_t nbEle = computeDataLength(r5, r4, r3, r2, r1);
+//            if(fastMode == SZ_RANDOMACCESS_FAST_CMPR)
+#ifdef _OPENMP
+            SZ_fast_decompress_args_unpredictable_blocked_randomaccess_fill0_float_openmp(&newFloatData, nbEle, bytes, threshold);
+#else
+            SZ_fast_decompress_args_unpredictable_blocked_randomaccess_fill0_float(&newFloatData, nbEle, bytes, threshold);
+#endif
+//            else
+//                SZ_fast_decompress_args_unpredictable_blocked_float(&newFloatData, nbEle, bytes);
+        }
+        return newFloatData;
+    }
+    else if(dataType == SZ_DOUBLE)
+    {
+        double* newDoubleData = NULL;
+        //SZ_fast_decompress_args_unpredictable_float(&newDoubleData, r5, r4, r3, r2, r1, bytes, byteLength, 0, NULL);
+        return newDoubleData;
+    }
+
+    free(exe_params);
+    return NULL;
+}
+
+
 void* SZ_fast_decompress(int fastMode, int dataType, unsigned char *bytes, size_t byteLength, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 {
     if(exe_params==NULL)
