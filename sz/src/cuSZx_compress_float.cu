@@ -119,7 +119,7 @@ __device__ int _shfl_scan(int lznum, int *sums)
     return value;
 }
 
-__device__ void _compute_oneBlock(int bbase, int mbase, int obase, int reqLength, float *value, int *ivalue, uchar4 *cvalue, int *sums, unsigned char *meta, short *offsets, unsigned char *midBytes)
+__device__ void _compute_oneBlock(unsigned long bbase, int mbase, int obase, int reqLength, float *value, int *ivalue, uchar4 *cvalue, int *sums, unsigned char *meta, short *offsets, unsigned char *midBytes)
 {
 	int reqBytesLength;
 	int rightShiftBits;
@@ -234,7 +234,7 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
     int* sums = &ivalue[bs];
 
 
-    for (int b=bid; b<nb; b+=gridDim.x){
+    for (unsigned long b=bid; b<nb; b+=gridDim.x){
         data = oriData[b*bs+tidy*warpSize+tidx];
         float Min = data;
         float Max = data;
