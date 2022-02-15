@@ -2,9 +2,9 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT(SZ, 2.1, sdi1@anl.gov)
+AC_INIT(SZx, 1.0, sdi1@anl.gov)
 AM_INIT_AUTOMAKE([foreign -Wall -Werror subdir-objects])
-AC_CONFIG_SRCDIR([sz/src/sz.c])
+AC_CONFIG_SRCDIR([szx/src/szx.c])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
@@ -110,78 +110,6 @@ AC_ARG_ENABLE([fortran],
               AS_HELP_STRING([--enable-fortran], [Enable fortran compilation]))
 AM_CONDITIONAL([FORTRAN], [test "x$enable_fortran" = "xyes"])
 
-
-##--------------------------------------------------------------------
-##
-## GSL  (GNU Scientific Library)
-##
-##  also need to find out a way to replace -lgslcblas with -lcblas
-##  or if ATLAS has been installed, with -lcblas -latlas
-## --  Also note the -DHAVE_GSL is a bit of a kludge, since i cannot
-## --  figure out how to do this properly through config.h
-##--------------------------------------------------------------------
-
-
-AC_ARG_ENABLE(gsl, [  --enable-gsl            use GSL], ok=$enableval, ok=no)
-AM_CONDITIONAL([GSL], [test "x$enable_gsl" = "xyes"])
-
-if test "$ok" = "yes"; then
-  AM_PATH_GSL(0.9.2, ok=yes, ok=no)
-  if test "$ok" = "yes"; then
-    GSL_CFLAGS="$GSL_CFLAGS -DHAVE_GSL"
-    AC_DEFINE(HAVE_LIBGSL)
-  else
-    AC_MSG_WARN([could not find GSL library])
-  fi
-else
-  AC_MSG_WARN([GSL disabled])
-fi
-
-AC_SUBST(GSL_CFLAGS)
-
-# Check GSL library
-
-if test "$ok" = "yes"; then
-AC_ARG_WITH([gsl-prefix], [AS_HELP_STRING([--with-gsl-prefix=DIR], 
-            [installation prefix for gsl])], 
-            [with_gsl_include_path=$with_gsl_prefix/include; 
-             with_gsl_lib_path=$with_gsl_prefix/lib])
-
-AC_ARG_WITH([gsl-include-path], [AS_HELP_STRING([--with-gsl-include-path=DIR],
-            [path to the gsl directory, defaults to /usr/include])], [])
-
-if test "x$with_gsl_include_path" = x ; then
-    with_gsl_include_path="/usr/include"
-fi
-
-AC_CHECK_FILE([${with_gsl_include_path}/gsl/gsl_cblas.h], [],
-              AC_MSG_ERROR([Invalid path to gsl/gsl_cblas.h]))
-GSL_HDR="-I$with_gsl_include_path"
-
-AC_ARG_WITH([gsl-lib-path], [AS_HELP_STRING([--with-gsl-lib-path],
-            [path to the  gsl libraries, defaults to /usr/lib])], [])
-if test "x$with_gsl_lib_path" = x ; then
-    with_gsl_lib_path="/usr/lib"
-fi
-GSL_LIB="-L$with_gsl_lib_path"
-LIBS="$GSL_LIB"
-AC_CHECK_LIB([gslcblas],[cblas_dgemm], [],
-              AC_MSG_ERROR([Function cblas_dgemm in gslcblas library not found]))
-AC_CHECK_LIB([gsl],[gsl_blas_dgemm], [],
-              AC_MSG_ERROR([Function gsl_blas_dgemm in gsl library not found]))
-
-if test "x$BUILD_STATIC" = xyes ; then
-    GSL_STATIC="${with_gsl_lib_path}/libgsl.a ${with_gsl_lib_path}/libgslcblas.a"
-    GSL_LIB=
-else
-    GSL_STATIC="-lgsl -lgslcblas"
-fi
-
-AC_SUBST(GSL_HDR)
-AC_SUBST(GSL_LIB)
-AC_SUBST(GSL_STATIC)
-fi
-
 ## 
 ## OPENMP
 ##
@@ -194,61 +122,6 @@ if test "$ok" = "yes"; then
 fi
 AC_SUBST(OPENMP_FLAGS)
 
-##
-## TIME-based compression
-##
-
-AC_ARG_ENABLE(timecmpr, [  --enable-timecmpr            use TIMECMPR], ok=$enableval, ok=no)
-AM_CONDITIONAL([TIMECMPR], [test "x$enable_timecmpr" = "xyes"])
-
-if test "$ok" = "yes"; then
-        TIMECMPR_FLAGS="-DHAVE_TIMECMPR"
-fi
-
-AC_SUBST(TIMECMPR_FLAGS)
-
-
-##
-## PASTRI
-##
-
-AC_ARG_ENABLE(pastri, [  --enable-pastri            use PASTRI], ok=$enableval, ok=no)
-AM_CONDITIONAL([PASTRI], [test "x$enable_pastri" = "xyes"])
-
-if test "$ok" = "yes"; then
-        PASTRI_FLAGS="-DHAVE_PASTRI"
-fi
-
-AC_SUBST(PASTRI_FLAGS)
-
-##
-## RANDOMACCESS
-##
-
-AC_ARG_ENABLE(randomaccess, [  --enable-randomaccess           use RANDOMACCESS], ok=$enableval, ok=no)
-AM_CONDITIONAL([RANDOMACCESS], [test "x$enable_randomaccess" = "xyes"])
-
-if test "$ok" = "yes"; then
-        RANDOMACCESS_FLAGS="-DHAVE_RANDOMACCESS"
-fi
-
-AC_SUBST(RANDOMACCESS_FLAGS)
-
-##
-## WRITESTATS_FLAGS
-##
-
-AC_ARG_ENABLE(writestats, [  --enable-writestats            use WRITESTATS], ok=$enableval, ok=no)
-AM_CONDITIONAL([WRITESTATS], [test "x$enable_writestats" = "xyes"])
-
-if test "$ok" = "yes"; then
-        WRITESTATS_FLAGS="-DHAVE_WRITESTATS"
-fi
-
-AC_SUBST(WRITESTATS_FLAGS)
-
-
-
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
 AC_CHECK_TYPES([ptrdiff_t])
@@ -259,8 +132,6 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memchr memset strchr strtol])
 
 AC_CONFIG_FILES([Makefile
-                 sz/Makefile
-                 zlib/Makefile
-		 zstd/Makefile
+                 szx/Makefile
 		 example/Makefile])
 AC_OUTPUT

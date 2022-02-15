@@ -13,8 +13,11 @@
 #include <string.h>
 #include <math.h>
 #include <inttypes.h>
-#include "sz.h"
-#include "rw.h"
+#include "szx.h"
+#include "szx_rw.h"
+#ifdef _OPENMP
+#include "omp.h"
+#endif
 
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
@@ -67,7 +70,8 @@ int main(int argc, char * argv[])
 
     cost_start();
     float *data = NULL;
-    SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(&data, nbEle, bytes);
+    //SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(&data, nbEle, bytes);
+    SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(&data, nbEle, bytes);
     cost_end();
 
     free(bytes);
@@ -81,8 +85,8 @@ int main(int argc, char * argv[])
     printf("done\n");
 
     char oriFilePath[645];
-    strncpy(oriFilePath, zipFilePath, (unsigned)strlen(zipFilePath)-3);
-    oriFilePath[strlen(zipFilePath)-3] = '\0';
+    strcpy(oriFilePath, zipFilePath);
+    oriFilePath[strlen(zipFilePath)-4] = '\0';
     float *ori_data = readFloatData(oriFilePath, &totalNbEle, &status);
     if(status!=SZ_SCES)
     {

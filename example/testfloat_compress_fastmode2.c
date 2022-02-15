@@ -10,8 +10,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "sz.h"
-#include "rw.h"
+#include "szx.h"
+#include "szx_rw.h"
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
 struct timeval costStart; /*only used for recording the cost*/
@@ -38,25 +38,20 @@ void cost_end()
 int main(int argc, char * argv[])
 {
     char oriFilePath[640], outputFilePath[645];
-    char *cfgFile;
-    if(argc < 4)
+    if(argc < 3)
     {
-		printf("Usage: testfloat_compress_fastmode2 [config_file] [srcFilePath] [block size] [err bound]\n");
-		printf("Example: testfloat_compress_fastmode2 sz.config testfloat_8_8_128.dat 64 1E-3\n");
+		printf("Usage: testfloat_compress_fastmode2 [srcFilePath] [block size] [err bound]\n");
+		printf("Example: testfloat_compress_fastmode2 testfloat_8_8_128.dat 64 1E-3\n");
 		exit(0);
     }
 
-    cfgFile=argv[1];
-    sprintf(oriFilePath, "%s", argv[2]);
-    int blockSize = atoi(argv[3]);
-    float errBound = atof(argv[4]);
+    sprintf(oriFilePath, "%s", argv[1]);
+    int blockSize = atoi(argv[2]);
+    float errBound = atof(argv[3]);
 
-    printf("cfgFile=%s\n", cfgFile);
-    int status = SZ_Init(cfgFile);
-    if(status == SZ_NSCS)
-	exit(0);
-    sprintf(outputFilePath, "%s.sz", oriFilePath);
+    sprintf(outputFilePath, "%s.szx", oriFilePath);
 
+    int status = 1;
     size_t nbEle;
     float *data = readFloatData(oriFilePath, &nbEle, &status);
     if(status != SZ_SCES)
@@ -72,7 +67,7 @@ int main(int argc, char * argv[])
     unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, &outSize, errBound, nbEle, blockSize);
 //    unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, &outSize, errBound, nbEle, blockSize);
 
-    //unsigned char* bytes =  SZ_fast_compress_args(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errBound, 0.001, 0, 0, 0, 0, 0, nbEle);
+//    unsigned char* bytes =  SZ_fast_compress_args(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errBound, errBound, 0, 0, 0, 0, 0, nbEle);
     cost_end();
     printf("\ntimecost=%f, total fastmode2\n",totalCost);
     printf("compression size = %zu, CR = %f\n", outSize, 1.0f*nbEle*sizeof(float)/outSize);
@@ -86,7 +81,6 @@ int main(int argc, char * argv[])
     printf("done\n");
     free(bytes);
     free(data);
-    SZ_Finalize();
 
     return 0;
 }

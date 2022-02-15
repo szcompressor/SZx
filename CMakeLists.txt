@@ -5,9 +5,9 @@ set (CMAKE_DISABLE_SOURCE_CHANGES ON)
 set (CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 #define the project
-project (sz 
-  VERSION 2.1.6.2
-  DESCRIPTION "SZ Error Bounded Lossy Compressor"
+project (szx 
+  VERSION 1.0.0
+  DESCRIPTION "SZx Error Bounded Lossy Compressor"
   LANGUAGES C CXX
   )
 enable_testing()
@@ -58,26 +58,9 @@ pkg_search_module(ZSTD  IMPORTED_TARGET libzstd)
 #by default pass no 3rd party exports
 set(thirdparty_export "")
 
-if(ZSTD_FOUND)
-  set(ZSTD_dep PkgConfig::ZSTD)
-else()
-  add_subdirectory(zstd)
-  set(ZSTD_dep zstd)
-  list(APPEND thirdparty_export "zstd")
-endif()
-
-find_package(ZLIB)
-if(ZLIB_FOUND)
-  set(ZLIB_dep ZLIB::ZLIB)
-else()
-  add_subdirectory(zlib)
-  set(ZLIB_dep ZLIB)
-  list(APPEND thirdparty_export "ZLIB")
-endif()
-
 find_package(OpenMP)
 
-add_subdirectory(sz)
+add_subdirectory(szx)
 add_subdirectory(example)
 
 option(BUILD_PYTHON_WRAPPER "build python wrapper" OFF)
@@ -85,38 +68,16 @@ if(BUILD_PYTHON_WRAPPER)
   add_subdirectory(swig)
 endif()
 
-option(BUILD_TESTS "build test cases" OFF)
-if(BUILD_TESTS)
-  add_subdirectory(test)
-endif()
-
-option(BUILD_NETCDF_READER "build the NetCDF reader" OFF)
-if(BUILD_NETCDF_READER)
-  add_subdirectory(NetCDFReader)
-endif()
-
-option(BUILD_HDF5_FILTER "build the HDF5 filter" OFF)
-if(BUILD_HDF5_FILTER)
-  add_subdirectory(hdf5-filter/H5Z-SZ/)
-endif()
-
-option(BUILD_PASTRI "build the pastri code" OFF)
-option(BUILD_TIMECMPR "build the time based compression code" OFF)
-option(BUILD_RANDOMACCESS "build the random access code" OFF)
-option(BUILD_DOCKER_CONTAINERS "build docker containers for testing" OFF)
-option(BUILD_FORTRAN "build the fortran interface" OFF)
-option(BUILD_STATS "record statistics for prediction" OFF)
 if(BUILD_DOCKER_CONTAINERS)
-  
   foreach(CONTAINER Centos Fedora Ubuntu Travis CentosPackaged)
     set(BuildSentinel ${CMAKE_BINARY_DIR}/${CONTAINER}-built)
     set(Dockerfile docker/Dockerfile-${CONTAINER})
-    string(TOLOWER "sz${CONTAINER}" CONTAINER_TAG)
+    string(TOLOWER "szx${CONTAINER}" CONTAINER_TAG)
     add_custom_command(OUTPUT ${BuildSentinel}
       COMMAND sudo docker build -t ${CONTAINER_TAG} -f ${Dockerfile} .
       COMMAND touch ${BuildSentinel}
       MAIN_DEPENDENCY ${Dockerfile}
-      DEPENDS SZ
+      DEPENDS SZx
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
       COMMENT "DOCKER ${Dockerfile}"
       )
@@ -126,9 +87,9 @@ if(BUILD_DOCKER_CONTAINERS)
 endif()
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/sz.pc.in
-  ${CMAKE_BINARY_DIR}/sz.pc
+  ${CMAKE_CURRENT_SOURCE_DIR}/szx.pc.in
+  ${CMAKE_BINARY_DIR}/szx.pc
   @ONLY
 )
-install(FILES ${CMAKE_BINARY_DIR}/sz.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/share/pkgconfig)
+install(FILES ${CMAKE_BINARY_DIR}/szx.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/share/pkgconfig)
 

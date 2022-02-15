@@ -1,13 +1,13 @@
-Copyright © 2016 - 2020, UChicago Argonne, LLC
+Copyright © 2022-, UChicago Argonne, LLC
 All Rights Reserved
-[SZ, Version 2.1]
+[SZx, Version 1.0]
 Sheng Di
-Dingwen Tao
-Xin Liang
+Xiaodong Yu
+Kai Zhao
 Franck Cappello
 Argonne National Laboratory
 
-SZ licence is under the BSD license. Details are shown below.
+SZx licence is under the BSD license. Details are shown below.
 
 OPEN SOURCE LICENSE (license number: SF-16-105)
  

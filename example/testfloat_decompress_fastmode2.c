@@ -13,8 +13,8 @@
 #include <string.h>
 #include <math.h>
 #include <inttypes.h>
-#include "sz.h"
-#include "rw.h"
+#include "szx.h"
+#include "szx_rw.h"
 
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
@@ -82,8 +82,8 @@ int main(int argc, char * argv[])
     printf("done\n");
 
     char oriFilePath[645];
-    strncpy(oriFilePath, zipFilePath, (unsigned)strlen(zipFilePath)-3);
-    oriFilePath[strlen(zipFilePath)-3] = '\0';
+    strcpy(oriFilePath, zipFilePath);
+    oriFilePath[strlen(zipFilePath)-4] = '\0';
     float *ori_data = readFloatData(oriFilePath, &totalNbEle, &status);
     if(status!=SZ_SCES)
     {
