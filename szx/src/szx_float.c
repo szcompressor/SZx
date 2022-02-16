@@ -1,6 +1,6 @@
 /**
  *  @file szx_float.c
- *  @author Sheng Di, Dingwen Tao, Xin Liang, Xiangyu Zou, Tao Lu, Wen Xia, Xuan Wang, Weizhe Zhang
+ *  @author Sheng Di, Kai Zhao
  *  @date Aug, 2022
  *  @brief SZ_Init, Compression and Decompression functions
  *  (C) 2022 by Mathematics and Computer Science (MCS), Argonne National Laboratory.
@@ -288,7 +288,7 @@ size_t computeStateMedianRadius_float(float *oriData, size_t nbEle, float absErr
 }
 
 
-void max_min(float *x, int n, float *tmp_max, float *tmp_min) {
+void max_min_float(float *x, int n, float *tmp_max, float *tmp_min) {
     for (size_t i = 0; i < n; i++) {
         if (x[i] > *tmp_max) {
             *tmp_max = x[i];
@@ -299,7 +299,7 @@ void max_min(float *x, int n, float *tmp_max, float *tmp_min) {
     }
 }
 
-void simd_max_min(float *x, int n, float *tmp_max, float *tmp_min) {
+void simd_max_min_float(float *x, int n, float *tmp_max, float *tmp_min) {
     *tmp_max = x[0];
     *tmp_min = x[0];
 #ifdef  __AVX512F__
@@ -334,10 +334,10 @@ void simd_max_min(float *x, int n, float *tmp_max, float *tmp_min) {
           }
 
         if ( i < n ) {
-            max_min(ptr_x, n - i, tmp_max, tmp_min);
+            max_min_float(ptr_x, n - i, tmp_max, tmp_min);
         }
     } else {
-        max_min(x, n, tmp_max, tmp_min);
+        max_min_float(x, n, tmp_max, tmp_min);
     }
 #elif __AVX2__
 //        printf("use avx2, n=%d \n", n);
@@ -365,13 +365,13 @@ void simd_max_min(float *x, int n, float *tmp_max, float *tmp_min) {
             *tmp_min = *tmp_min > min1[j] ? min1[j] : *tmp_min;
         }
         if ( i < n ) {
-            max_min(ptr_x, n - i, tmp_max, tmp_min);
+            max_min_float(ptr_x, n - i, tmp_max, tmp_min);
         }
     } else {
-        max_min(x, n, tmp_max, tmp_min);
+        max_min_float(x, n, tmp_max, tmp_min);
     }
 #else
-    max_min(x, n, tmp_max, tmp_min);
+    max_min_float(x, n, tmp_max, tmp_min);
 #endif
 }
 
@@ -379,7 +379,7 @@ void computeStateMedianRadius_float2(float *oriData, size_t nbEle, float absErrB
                                      unsigned char *state, float *median, float *radius) {
      float min = oriData[0];
      float max = oriData[0];
-     simd_max_min(oriData, nbEle, &max, &min);
+     simd_max_min_float(oriData, nbEle, &max, &min);
 
     float valueRange = max - min;
     *radius = valueRange / 2;

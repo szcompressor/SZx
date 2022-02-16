@@ -29,6 +29,9 @@ extern "C" {
 #endif
 
 #include "szx_defines.h"
+#include "szx_double.h"
+#include "szxd_double.h"
+#include "szx_float.h"
 #include "szxd_float.h"
 #include "szx_TypeManager.h"
 

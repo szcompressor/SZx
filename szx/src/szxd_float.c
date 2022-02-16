@@ -1,6 +1,6 @@
 /**
  *  @file szxd_float.c
- *  @author Sheng Di
+ *  @author Sheng Di, Kai Zhao
  *  @date Feb, 2022
  *  @brief 
  *  (C) 2022 by Mathematics and Computer Science (MCS), Argonne National Laboratory.

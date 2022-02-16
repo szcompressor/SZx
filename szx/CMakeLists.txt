@@ -6,7 +6,9 @@ add_library (SZx STATIC
 	src/szx_TypeManager.c
 	src/szx_dataCompression.c
 	src/szxd_float.c
-	src/szx_utility.c	
+	src/szx_utility.c
+	src/szx_double.c
+	src/szxd_double.c	
 )
 
 target_include_directories(SZx
