@@ -1,14 +1,20 @@
 cmake_minimum_required (VERSION 3.10.2)
 
+include(CheckLanguage)
+check_language(CUDA)
+if(CMAKE_CUDA_COMPILER)
+    enable_language(CUDA)
+endif()
+
 #disable in-source builds
 set (CMAKE_DISABLE_SOURCE_CHANGES ON)
 set (CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 #define the project
-project (szx 
+project (szx
   VERSION 1.0.0
   DESCRIPTION "SZx Error Bounded Lossy Compressor"
-  LANGUAGES C CXX
+  LANGUAGES C CXX CUDA
   )
 enable_testing()
 
@@ -17,7 +23,7 @@ enable_testing()
 set(default_build_type "Release")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "No build type was set. Setting build type to ${default_build_type}.")
-  set(CMAKE_BUILD_TYPE ${default_build_type} CACHE 
+  set(CMAKE_BUILD_TYPE ${default_build_type} CACHE
     STRING "Choose the type to build" FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release"
     "MinSizeRel" "RelWithDebInfo")
@@ -35,6 +41,21 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+set (CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=-Wall")
+
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/sz/include)
+find_package(CUDAToolkit  REQUIRED)
+include_directories("${CUDAToolkit_INCLUDE_DIRS}")
+include_directories (${CUDAToolkit_LIBRARY_ROOT}/samples/common/inc)
+#include_directories (/usr/local/cuda/samples/common/inc)
+
+if (NOT DEFINED CMAKE_CUDA_STANDARD)
+    set(CMAKE_CUDA_STANDARD 11)
+    set(CMAKE_CUDA_STANDARD_REQUIRED True)
+endif ()
 #generate tags for the project if tags exist
 option(BUILD_CTAGS "enable ctags generation target" OFF)
 if(BUILD_CTAGS)

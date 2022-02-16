@@ -6,11 +6,15 @@ add_library (SZx STATIC
 	src/szx_TypeManager.c
 	src/szx_dataCompression.c
 	src/szxd_float.c
-	src/szx_utility.c	
+	src/szx_utility.c
+    src/cuszx_entry.cu
+    src/cuszx_float.cu
+    src/cuszxd_float.cu
+    src/timingGPU.cu
 )
 
 target_include_directories(SZx
-  PUBLIC 
+  PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/szx>
   )
