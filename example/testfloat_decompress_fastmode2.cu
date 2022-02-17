@@ -45,8 +45,8 @@ int main(int argc, char * argv[])
     char zipFilePath[640], outputFilePath[645];
     if(argc < 2)
     {
-		printf("Usage: testfloat_decompress_fastmode2 [srcFilePath] [nbEle]\n");
-		printf("Example: testfloat_decompress_fastmode2 testfloat_8_8_128.dat.sz 8192\n");
+		printf("Usage: testfloat_decompress_fastmode2 [srcFilePath] [nbEle] [--cuda]\n");
+		printf("Example: testfloat_decompress_fastmode2 testfloat_8_8_128.dat.sz 8192 --cuda\n");
 		exit(0);
 	}
 

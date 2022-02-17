@@ -42,8 +42,8 @@ int main(int argc, char * argv[])
     char oriFilePath[640], outputFilePath[645];
     if(argc < 3)
     {
-		printf("Usage: testfloat_compress_fastmode2 [srcFilePath] [block size] [err bound]\n");
-		printf("Example: testfloat_compress_fastmode2 testfloat_8_8_128.dat 64 1E-3\n");
+		printf("Usage: testfloat_compress_fastmode2 [srcFilePath] [block size] [err bound] [--cuda]\n");
+		printf("Example: testfloat_compress_fastmode2 testfloat_8_8_128.dat 64 1E-3 --cuda\n");
 		exit(0);
     }
 
@@ -52,7 +52,6 @@ int main(int argc, char * argv[])
     float errBound = atof(argv[3]);
     bool withGPU = false;
     if (argc > 4 && !strcmp(argv[4], "--cuda")) withGPU = true;
-    printf("test:%i, %s, %i\n", argc, argv[4], withGPU);
 
     sprintf(outputFilePath, "%s.szx", oriFilePath);
 

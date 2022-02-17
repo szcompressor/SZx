@@ -16,7 +16,7 @@ project (szx
   DESCRIPTION "SZx Error Bounded Lossy Compressor"
   LANGUAGES C CXX CUDA
   )
-#enable_testing()
+enable_testing()
 
 #correct was to set a default build type
 # https://blog.kitware.com/cmake-and-the-default-build-type/
