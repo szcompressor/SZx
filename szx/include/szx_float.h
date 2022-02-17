@@ -25,9 +25,9 @@ void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, size_t 
 size_t computeStateMedianRadius_float(float *oriData, size_t nbEle, float absErrBound, int blockSize,
                                       unsigned char *stateArray, float *medianArray, float *radiusArray) ;
                                       
-void max_min(float *x, int n, float *tmp_max, float *tmp_min);
+void max_min_float(float *x, int n, float *tmp_max, float *tmp_min);
 
-void simd_max_min(float *x, int n, float *tmp_max, float *tmp_min);
+void simd_max_min_float(float *x, int n, float *tmp_max, float *tmp_min);
 
 void computeStateMedianRadius_float2(float *oriData, size_t nbEle, float absErrBound,
                                      unsigned char *state, float *median, float *radius) ;

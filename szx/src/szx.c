@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include "szx.h"
 #include "szx_rw.h"
-#include "szxd_float.h"
 
 int versionNumber[4] = {SZx_VER_MAJOR,SZx_VER_MINOR,SZx_VER_BUILD,SZx_VER_REVISION};
 
@@ -215,11 +214,51 @@ float relBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 	unsigned char*  bytes = NULL;
 	size_t length = computeDataLength(r5, r4, r3, r2, r1);
 	size_t i = 0;
-	if(fastMode == SZx_WITH_BLOCK_FAST_CMPR || fastMode == SZx_RANDOMACCESS_FAST_CMPR || fastMode == SZx_OPENMP_FAST_CMPR)
+	
+	if(dataType == SZ_FLOAT)
 	{
-		float realPrecision = absErrBound;
-		if(errBoundMode==REL)
+		if(fastMode == SZx_WITH_BLOCK_FAST_CMPR || fastMode == SZx_RANDOMACCESS_FAST_CMPR || fastMode == SZx_OPENMP_FAST_CMPR)
 		{
+			float realPrecision = absErrBound;
+			if(errBoundMode==REL)
+			{
+				float* oriData = (float*)data;
+				float min = oriData[0];
+				float max = oriData[0];
+				for(i=0;i<length;i++)
+				{
+					float v = oriData[i];
+					if(min>v)
+						min = v;
+					else if(max<v)
+						max = v;
+				}
+				float valueRange = max - min;
+				realPrecision = valueRange*relBoundRatio;
+			}
+
+			int blockSize = 128;
+			if (fastMode == SZx_RANDOMACCESS_FAST_CMPR) {
+				bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, outSize, realPrecision, length, blockSize);
+			} 
+			else if(fastMode == SZx_OPENMP_FAST_CMPR)
+			{
+				#ifdef _OPENMP
+				bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(data, outSize, realPrecision, length,
+																							  blockSize);
+				#else
+				bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, outSize, realPrecision, length, blockSize);
+				printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the compression is degraded to serial version automatically.\n");
+				#endif
+			}
+			else {
+				bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, blockSize);
+			}
+			return bytes;
+		}
+		else
+		{
+			//compute value range
 			float* oriData = (float*)data;
 			float min = oriData[0];
 			float max = oriData[0];
@@ -232,59 +271,86 @@ float relBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 					max = v;
 			}
 			float valueRange = max - min;
-			realPrecision = valueRange*relBoundRatio;
+			float radius = valueRange/2;
+			float medianValue = min + radius;
+
+			float realPrecision = 0;
+			if(errBoundMode==ABS)
+				realPrecision = absErrBound;
+			else if(errBoundMode==REL)
+				realPrecision = valueRange*relBoundRatio;
+
+			bytes = SZ_fast_compress_args_unpredictable_float(data, outSize, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);		
 		}
+	}
+	else if(dataType == SZ_DOUBLE)
+	{
+		if(fastMode == SZx_WITH_BLOCK_FAST_CMPR || fastMode == SZx_RANDOMACCESS_FAST_CMPR || fastMode == SZx_OPENMP_FAST_CMPR)
+		{
+			float realPrecision = absErrBound;
+			if(errBoundMode==REL)
+			{
+				double* oriData = (double*)data;
+				double min = oriData[0];
+				double max = oriData[0];
+				for(i=0;i<length;i++)
+				{
+					double v = oriData[i];
+					if(min>v)
+						min = v;
+					else if(max<v)
+						max = v;
+				}
+				double valueRange = max - min;
+				realPrecision = valueRange*relBoundRatio;
+			}
 
-        int blockSize = 128;
-        if (fastMode == SZx_RANDOMACCESS_FAST_CMPR) {
-            bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, outSize, realPrecision, length, blockSize);
-        } 
-        else if(fastMode == SZx_OPENMP_FAST_CMPR)
-        {
-			#ifdef _OPENMP
-            bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(data, outSize, realPrecision, length,
-                                                                                          blockSize);
-			#else
-			bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, outSize, realPrecision, length, blockSize);
-			printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the compression is degraded to serial version automatically.\n");
-			#endif
+			int blockSize = 128;
+			if (fastMode == SZx_RANDOMACCESS_FAST_CMPR) {
+				bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_double(data, outSize, realPrecision, length, blockSize);
+			} 
+			else if(fastMode == SZx_OPENMP_FAST_CMPR)
+			{
+				#ifdef _OPENMP
+				bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_double_openmp(data, outSize, realPrecision, length,
+																							  blockSize);
+				#else
+				bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_double(data, outSize, realPrecision, length, blockSize);
+				printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the compression is degraded to serial version automatically.\n");
+				#endif
+			}
+			else {
+				bytes = SZ_fast_compress_args_unpredictable_blocked_double(data, outSize, realPrecision, length, blockSize);
+			}
+			return bytes;
 		}
-        else {
-            bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, blockSize);
-        }
-        return bytes;
-    }
-    //sz_cost_start();
-    //compute value range
-    float* oriData = (float*)data;
-    float min = oriData[0];
-    float max = oriData[0];
-    for(i=0;i<length;i++)
-    {
-        float v = oriData[i];
-        if(min>v)
-            min = v;
-        else if(max<v)
-            max = v;
-    }
-    float valueRange = max - min;
-    float radius = valueRange/2;
-    float medianValue = min + radius;
+		else
+		{
+			//compute value range
+			double* oriData = (double*)data;
+			double min = oriData[0];
+			double max = oriData[0];
+			for(i=0;i<length;i++)
+			{
+				double v = oriData[i];
+				if(min>v)
+					min = v;
+				else if(max<v)
+					max = v;
+			}
+			double valueRange = max - min;
+			float radius = valueRange/2;
+			float medianValue = min + radius;
 
-    float realPrecision = 0;
-    if(errBoundMode==ABS)
-        realPrecision = absErrBound;
-    else if(errBoundMode==REL)
-        realPrecision = valueRange*relBoundRatio;
+			float realPrecision = 0;
+			if(errBoundMode==ABS)
+				realPrecision = absErrBound;
+			else if(errBoundMode==REL)
+				realPrecision = valueRange*relBoundRatio;
 
-    if(dataType==SZ_FLOAT)
-    {
-        bytes = SZ_fast_compress_args_unpredictable_float(data, outSize, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);
-    }
-    else if(dataType==SZ_DOUBLE)
-    {
-        //TODO
-    }
+			bytes = SZ_fast_compress_args_unpredictable_double(data, outSize, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);		
+		}		
+	}
 
     return bytes;
 
@@ -350,9 +416,23 @@ void* SZ_fast_decompress(int fastMode, int dataType, unsigned char *bytes, size_
     }
     else if(dataType == SZ_DOUBLE)
     {
-        double* newDoubleData = NULL;
-        //SZ_fast_decompress_args_unpredictable_float(&newDoubleData, r5, r4, r3, r2, r1, bytes, byteLength, 0, NULL);
-        return newDoubleData;
+        double* newFloatData = NULL;
+        if(fastMode == SZx_NO_BLOCK_FAST_CMPR)
+            SZ_fast_decompress_args_unpredictable_double(&newFloatData, r5, r4, r3, r2, r1, bytes, byteLength);
+		else if(fastMode == SZx_WITH_BLOCK_FAST_CMPR)
+			SZ_fast_decompress_args_unpredictable_blocked_double(&newFloatData, nbEle, bytes);            
+        else if(fastMode == SZx_RANDOMACCESS_FAST_CMPR)
+			SZ_fast_decompress_args_unpredictable_blocked_randomaccess_double(&newFloatData, nbEle, bytes);
+        else //SZx_openmp
+        {
+#ifdef _OPENMP
+                SZ_fast_decompress_args_unpredictable_blocked_randomaccess_double_openmp(&newFloatData, nbEle, bytes);
+#else
+                SZ_fast_decompress_args_unpredictable_blocked_double(&newFloatData, nbEle, bytes);
+                printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the decompression is degraded to serial version automatically.\n");
+#endif
+        }
+        return newFloatData;
     }
 
     return NULL;

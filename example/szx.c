@@ -245,7 +245,7 @@ int main(int argc, char* argv[])
 			relBoundRatio = atof(relErrBound);
 		
 		size_t outSize;	
-		if(dataType == 0) //single precision
+		if(dataType == SZ_FLOAT) //single precision
 		{
 			float *data = readFloatData(inPath, &nbEle, &status);
 			
@@ -485,7 +485,7 @@ int main(int argc, char* argv[])
 				exit(0);
 			}
 			cost_start();
-			double* data = SZ_fast_decompress(fastMode, SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
+			double* data = SZ_fast_decompress(fastMode, SZ_DOUBLE, bytes, byteLength, r5, r4, r3, r2, r1);
 			cost_end();
 			if(decPath == NULL)
 				sprintf(outputFilePath, "%s.out", cmpPath);	

@@ -11,6 +11,8 @@ add_library (SZx STATIC
     src/cuszx_float.cu
     src/cuszxd_float.cu
     src/timingGPU.cu
+	src/szx_double.c
+	src/szxd_double.c
 )
 
 target_include_directories(SZx
