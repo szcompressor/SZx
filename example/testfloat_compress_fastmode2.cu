@@ -10,8 +10,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "szx.h"
 #include "szx_rw.h"
+#include "cuszx_entry.h"
+
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
 struct timeval costStart; /*only used for recording the cost*/
@@ -34,7 +37,6 @@ void cost_end()
 }
 
 
-
 int main(int argc, char * argv[])
 {
     char oriFilePath[640], outputFilePath[645];
@@ -48,6 +50,9 @@ int main(int argc, char * argv[])
     sprintf(oriFilePath, "%s", argv[1]);
     int blockSize = atoi(argv[2]);
     float errBound = atof(argv[3]);
+    bool withGPU = false;
+    if (argc > 4 && !strcmp(argv[4], "--cuda")) withGPU = true;
+    printf("test:%i, %s, %i\n", argc, argv[4], withGPU);
 
     sprintf(outputFilePath, "%s.szx", oriFilePath);
 
@@ -63,13 +68,19 @@ int main(int argc, char * argv[])
     //*revValue = 1.0E36;
 
     size_t outSize;
-    cost_start();
-    unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, &outSize, errBound, nbEle, blockSize);
-//    unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, &outSize, errBound, nbEle, blockSize);
+    unsigned char* bytes = NULL;
+    if (withGPU)
+    {
+        bytes = cuSZx_fast_compress_args_unpredictable_blocked_float(data, &outSize, errBound, nbEle, blockSize);
+    }else{
+        cost_start();
+        bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, &outSize, errBound, nbEle, blockSize);
+    //    unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, &outSize, errBound, nbEle, blockSize);
 
-//    unsigned char* bytes =  SZ_fast_compress_args(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errBound, errBound, 0, 0, 0, 0, 0, nbEle);
-    cost_end();
-    printf("\ntimecost=%f, total fastmode2\n",totalCost);
+    //    unsigned char* bytes =  SZ_fast_compress_args(SZ_WITH_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errBound, errBound, 0, 0, 0, 0, 0, nbEle);
+        cost_end();
+        printf("\ntimecost=%f, total fastmode2\n",totalCost);
+    }
     printf("compression size = %zu, CR = %f\n", outSize, 1.0f*nbEle*sizeof(float)/outSize);
     writeByteData(bytes, outSize, outputFilePath, &status);
     if(status != SZ_SCES)

@@ -27,9 +27,9 @@ endif()
 target_compile_options(SZx
 	PRIVATE $<$<CONFIG:Debug>:-Wall -g -Wextra -Wpedantic -Wno-unused-parameter>
 	)
-target_compile_options(SZx
-        PRIVATE -march=native
-        )
+#target_compile_options(SZx
+#        PRIVATE -march=native
+#        )
 
 install (TARGETS SZx ${thirdparty_export} EXPORT SZxConfig
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

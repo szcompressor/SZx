@@ -16,7 +16,7 @@ project (szx
   DESCRIPTION "SZx Error Bounded Lossy Compressor"
   LANGUAGES C CXX CUDA
   )
-enable_testing()
+#enable_testing()
 
 #correct was to set a default build type
 # https://blog.kitware.com/cmake-and-the-default-build-type/
@@ -46,7 +46,7 @@ set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=-Wall")
 
-include_directories (${CMAKE_CURRENT_SOURCE_DIR}/sz/include)
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/szx/include)
 find_package(CUDAToolkit  REQUIRED)
 include_directories("${CUDAToolkit_INCLUDE_DIRS}")
 include_directories (${CUDAToolkit_LIBRARY_ROOT}/samples/common/inc)

@@ -1,7 +1,7 @@
 #include "cuszx_entry.h"
-#include "defines.h"
-#include "ByteToolkit.h"
-#include "TypeManager.h"
+#include "szx_defines.h"
+#include "szx_BytesToolkit.h"
+#include "szx_TypeManager.h"
 #include "timingGPU.h"
 
 TimingGPU timer_GPU;
@@ -32,9 +32,9 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
 
     //outBytes = (unsigned char*)malloc(out_size);
 	unsigned char* r = outBytes; 
-	r[0] = SZ_VER_MAJOR;
-	r[1] = SZ_VER_MINOR;
-	r[2] = SZ_VER_SUPERFAST;
+	r[0] = SZx_VER_MAJOR;
+	r[1] = SZx_VER_MINOR;
+	r[2] = 1;
 	r[3] = 0; // indicates this is not a random access version
 	r[4] = (unsigned char)blockSize;
 	r=r+5; //1 byte
