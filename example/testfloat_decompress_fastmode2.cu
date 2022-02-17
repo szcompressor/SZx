@@ -15,6 +15,7 @@
 #include <inttypes.h>
 #include "szx.h"
 #include "szx_rw.h"
+#include "cuszx_entry.h"
 
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
@@ -52,6 +53,8 @@ int main(int argc, char * argv[])
     sprintf(zipFilePath, "%s", argv[1]);
 //    nbEle = atoi(argv[2]);
     nbEle = strtoimax(argv[2], NULL, 10);
+    bool withGPU = false;
+    if (argc > 3 && !strcmp(argv[3], "--cuda")) withGPU = true;
 
     sprintf(outputFilePath, "%s.out", zipFilePath);
 
@@ -65,14 +68,19 @@ int main(int argc, char * argv[])
     }
 
 
-    cost_start();
     float *data = NULL;
-    SZ_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
+    if (withGPU)
+    {
+        cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
+    }else{
+        cost_start();
+        SZ_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
 //    SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(&data, nbEle, bytes);
-    cost_end();
+        cost_end();
+        printf("timecost=%f\n",totalCost);
+    }
 
     free(bytes);
-    printf("timecost=%f\n",totalCost);
     writeFloatData_inBytes(data, nbEle, outputFilePath, &status);
     if(status!=SZ_SCES)
     {
