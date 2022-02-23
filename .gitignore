@@ -3,6 +3,7 @@
 *.o
 *.swp
 *.log
+*.sh
 .dirstamp
 .libs/
 .deps/
@@ -10,6 +11,7 @@
 Makefile
 build*/
 data/
+logs/
 
 testfloat_compress
 testfloat_decompress
