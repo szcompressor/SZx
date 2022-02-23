@@ -25,9 +25,9 @@ void gridReduction_cg(double *results)
 
         for (int offset = warpSize/2; offset > 0; offset /= 2) 
         {
-            if (tidy<2) data = min(data, __shfl_xor_sync(FULL_MASK, data, offset));
-            else if (tidy<4) data = max(data, __shfl_xor_sync(FULL_MASK, data, offset));
-            else data += __shfl_down_sync(FULL_MASK, data, offset);
+            if (tidy<2) data = min(data, __shfl_xor(data, offset));
+            else if (tidy<4) data = max(data, __shfl_xor(data, offset));
+            else data += __shfl_down(data, offset);
         }
 
         if (tidx==0) results[tidy*gridDim.x] = data;
@@ -39,7 +39,7 @@ __device__ void _IntArray2ByteArray(int leadingNum, int mbase, unsigned char* me
     leadingNum = leadingNum << (3-threadIdx.x%4)*2;
     for (int i = 1; i < 4; i *= 2) {
         unsigned int mask = 0xffffffff;
-        leadingNum |= __shfl_down_sync(mask, leadingNum, i);
+        leadingNum |= __shfl_down(leadingNum, i);
     }
 
     if (threadIdx.x%4==0)
@@ -75,7 +75,7 @@ __device__ int _shfl_scan(int lznum, int *sums)
 #pragma unroll
     for (int i = 1; i <= warpSize; i *= 2) {
         unsigned int mask = 0xffffffff;
-        int n = __shfl_up_sync(mask, value, i);
+        int n = __shfl_up(value, i);
 
         if (threadIdx.x >= i) value += n;
                       
@@ -100,7 +100,7 @@ __device__ int _shfl_scan(int lznum, int *sums)
         int mask = (1 << blockDim.y) - 1;
         for (int i = 1; i <= blockDim.y; i *= 2) {
             //int n = __shfl_up_sync(mask, warp_sum, i, blockDim.y);
-            int n = __shfl_up_sync(mask, warp_sum, i);
+            int n = __shfl_up(warp_sum, i);
             if (threadIdx.x >= i) warp_sum += n;
         }
 
@@ -241,8 +241,8 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
 
         for (int offset = warpSize/2; offset > 0; offset /= 2) 
         {
-            Min = min(Min, __shfl_xor_sync(FULL_MASK, Min, offset));
-            Max = max(Max, __shfl_xor_sync(FULL_MASK, Max, offset));
+            Min = min(Min, __shfl_xor(Min, offset));
+            Max = max(Max, __shfl_xor(Max, offset));
         }
         if (tidx==0){
             value[tidy] = Min;
@@ -256,11 +256,11 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
                 Max = value[blockDim.y+tidx];
             }
 
-            mask = __ballot_sync(FULL_MASK, tidx < blockDim.y);
+            mask = __ballot(tidx < blockDim.y);
             for (int offset = blockDim.y/2; offset > 0; offset /= 2) 
             {
-                Min = min(Min, __shfl_xor_sync(mask, Min, offset));
-                Max = max(Max, __shfl_xor_sync(mask, Max, offset));
+                Min = min(Min, __shfl_xor(Min, offset));
+                Max = max(Max, __shfl_xor(Max, offset));
             }
             
             if (tidx==0){

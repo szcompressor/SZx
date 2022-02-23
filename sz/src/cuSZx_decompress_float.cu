@@ -23,7 +23,7 @@ __device__ int _deshfl_scan(int lznum, int *sums)
 #pragma unroll
     for (int i = 1; i <= warpSize; i *= 2) {
         unsigned int mask = 0xffffffff;
-        int n = __shfl_up_sync(mask, value, i);
+        int n = __shfl_up(value, i);
 
         if (threadIdx.x >= i) value += n;
                       
@@ -48,7 +48,7 @@ __device__ int _deshfl_scan(int lznum, int *sums)
         int mask = (1 << blockDim.y) - 1;
         for (int i = 1; i <= blockDim.y; i *= 2) {
             //int n = __shfl_up_sync(mask, warp_sum, i, blockDim.y);
-            int n = __shfl_up_sync(mask, warp_sum, i);
+            int n = __shfl_up(warp_sum, i);
             if (threadIdx.x >= i) warp_sum += n;
         }
 
@@ -124,7 +124,7 @@ __device__ int _retrieve_leading(int pos, int reqBytesLength, int* sums)
 #pragma unroll
     for (int i = 1; i <= warpSize; i *= 2) {
         unsigned int mask = 0xffffffff;
-        int n = __shfl_up_sync(mask, pos, i);
+        int n = __shfl_up(pos, i);
         if (threadIdx.x >= i)
             pos = _compareByte(n, pos, reqBytesLength);
     }
@@ -138,7 +138,7 @@ __device__ int _retrieve_leading(int pos, int reqBytesLength, int* sums)
 
         int mask = (1 << blockDim.y) - 1;
         for (int i = 1; i <= blockDim.y; i *= 2) {
-            int n = __shfl_up_sync(mask, warp_pos, i);
+            int n = __shfl_up(warp_pos, i);
             if (threadIdx.x >= i)
                 warp_pos = _compareByte(n, warp_pos, reqBytesLength);
         }
