@@ -3,6 +3,8 @@
 *.o
 *.swp
 *.log
+*.sh
+*.txt
 .dirstamp
 .libs/
 .deps/

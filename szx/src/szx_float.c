@@ -11,6 +11,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
@@ -232,10 +233,14 @@ inline void SZ_fast_compress_args_unpredictable_one_block_float(float *oriData, 
 size_t computeStateMedianRadius_float(float *oriData, size_t nbEle, float absErrBound, int blockSize,
                                       unsigned char *stateArray, float *medianArray, float *radiusArray) {
     size_t nbConstantBlocks = 0;
+    size_t nbConstantBlock1 = 0;
     size_t i = 0, j = 0;
     size_t nbBlocks = nbEle / blockSize;
     size_t offset = 0;
 
+    bool r = false, l = false;
+    char * filename = "lreg_result.txt";
+    FILE *fp = fopen(filename, "w");//open for append
     for (i = 0; i < nbBlocks; i++) {
         float min = oriData[offset];
         float max = oriData[offset];
@@ -253,14 +258,48 @@ size_t computeStateMedianRadius_float(float *oriData, size_t nbEle, float absErr
         if (radius <= absErrBound) {
             stateArray[i] = 0;
             nbConstantBlocks++;
+            r = true;
         } else
             stateArray[i] = 1;
 
         stateArray[i] = radius <= absErrBound ? 0 : 1;
         medianArray[i] = medianValue;
         radiusArray[i] = radius;
+        //offset += blockSize;
+
+        //linear-regression
+        float v0=0, vx=0;
+        for (j = 0; j < blockSize; j++) {
+            v0 += oriData[offset + j];
+            vx += oriData[offset + j] * j;
+        }
+        float beta1 = 6.0 / (blockSize * (blockSize + 1)) * (2 * vx / (blockSize - 1) - v0);
+        float beta0 = v0 / blockSize - (blockSize - 1) / 2 * beta1;
+        float max1 = fabs(oriData[offset] - beta0);
+        for (j = 1; j < blockSize; j++) {
+            float v = fabs(oriData[offset + j] - beta0 - beta1 * j);
+            if (max1 < v) max1 = v;
+        }
+        if (max1 <= absErrBound){
+            nbConstantBlock1++;
+            l = true;
+        } 
+        if (r==false && l==true){
+            printf("test:%f, %f, %f\n", v0, vx, beta1);
+            if (fp == NULL){
+                printf("Error opening the file %s", filename);
+                return -1;
+                                    
+            }
+            for (j = 0; j < blockSize; j++) {
+                fprintf(fp, "%f %f %f\n", oriData[offset + j], medianArray[i], (beta0 + beta1 * j));
+            }
+        }
         offset += blockSize;
+        r = false; l = false;
     }
+    fclose(fp);
+    printf("Radius: %i, %i\n", nbConstantBlocks, nbConstantBlock1);
 
     int remainCount = nbEle % blockSize;
     if (remainCount != 0) {
