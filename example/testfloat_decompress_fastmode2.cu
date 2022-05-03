@@ -46,7 +46,7 @@ int main(int argc, char * argv[])
     if(argc < 2)
     {
 		printf("Usage: testfloat_decompress_fastmode2 [srcFilePath] [nbEle] [--cuda]\n");
-		printf("Example: testfloat_decompress_fastmode2 testfloat_8_8_128.dat.sz 8192 --cuda\n");
+		printf("Example: testfloat_decompress_fastmode2 testfloat_8_8_128.dat.szx 8192 --cuda\n");
 		exit(0);
 	}
 
