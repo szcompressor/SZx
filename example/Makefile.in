@@ -88,12 +88,13 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = sz$(EXEEXT) testfloat_compress$(EXEEXT) \
-	testfloat_decompress$(EXEEXT) \
-	testfloat_compress_fastmode1$(EXEEXT) \
+@OPENMP_TRUE@am__append_1 = -fopenmp
+bin_PROGRAMS = testfloat_compress_fastmode1$(EXEEXT) \
 	testfloat_compress_fastmode2$(EXEEXT) \
 	testfloat_decompress_fastmode1$(EXEEXT) \
-	testfloat_decompress_fastmode2$(EXEEXT)
+	testfloat_decompress_fastmode2$(EXEEXT) \
+	testfloat_compress_fastmode3$(EXEEXT) \
+	testfloat_decompress_fastmode3$(EXEEXT) szx$(EXEEXT)
 subdir = example
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -106,46 +107,43 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_sz_OBJECTS = sz.$(OBJEXT)
-sz_OBJECTS = $(am_sz_OBJECTS)
-sz_DEPENDENCIES = ../sz/.libs/libSZ.a ../zlib/.libs/libzlib.a \
-	../zstd/.libs/libzstd.a
+am_szx_OBJECTS = szx.$(OBJEXT)
+szx_OBJECTS = $(am_szx_OBJECTS)
+szx_DEPENDENCIES = ../szx/.libs/libSZx.a
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-am_testfloat_compress_OBJECTS = testfloat_compress.$(OBJEXT)
-testfloat_compress_OBJECTS = $(am_testfloat_compress_OBJECTS)
-testfloat_compress_DEPENDENCIES = ../sz/.libs/libSZ.a \
-	../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a
 am_testfloat_compress_fastmode1_OBJECTS =  \
 	testfloat_compress_fastmode1.$(OBJEXT)
 testfloat_compress_fastmode1_OBJECTS =  \
 	$(am_testfloat_compress_fastmode1_OBJECTS)
-testfloat_compress_fastmode1_DEPENDENCIES = ../sz/.libs/libSZ.a \
-	../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a
+testfloat_compress_fastmode1_DEPENDENCIES = ../szx/.libs/libSZx.a
 am_testfloat_compress_fastmode2_OBJECTS =  \
 	testfloat_compress_fastmode2.$(OBJEXT)
 testfloat_compress_fastmode2_OBJECTS =  \
 	$(am_testfloat_compress_fastmode2_OBJECTS)
-testfloat_compress_fastmode2_DEPENDENCIES = ../sz/.libs/libSZ.a \
-	../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a
-am_testfloat_decompress_OBJECTS = testfloat_decompress.$(OBJEXT)
-testfloat_decompress_OBJECTS = $(am_testfloat_decompress_OBJECTS)
-testfloat_decompress_DEPENDENCIES = ../sz/.libs/libSZ.a \
-	../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a
+testfloat_compress_fastmode2_DEPENDENCIES = ../szx/.libs/libSZx.a
+am_testfloat_compress_fastmode3_OBJECTS =  \
+	testfloat_compress_fastmode3.$(OBJEXT)
+testfloat_compress_fastmode3_OBJECTS =  \
+	$(am_testfloat_compress_fastmode3_OBJECTS)
+testfloat_compress_fastmode3_DEPENDENCIES = ../szx/.libs/libSZx.a
 am_testfloat_decompress_fastmode1_OBJECTS =  \
 	testfloat_decompress_fastmode1.$(OBJEXT)
 testfloat_decompress_fastmode1_OBJECTS =  \
 	$(am_testfloat_decompress_fastmode1_OBJECTS)
-testfloat_decompress_fastmode1_DEPENDENCIES = ../sz/.libs/libSZ.a \
-	../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a
+testfloat_decompress_fastmode1_DEPENDENCIES = ../szx/.libs/libSZx.a
 am_testfloat_decompress_fastmode2_OBJECTS =  \
 	testfloat_decompress_fastmode2.$(OBJEXT)
 testfloat_decompress_fastmode2_OBJECTS =  \
 	$(am_testfloat_decompress_fastmode2_OBJECTS)
-testfloat_decompress_fastmode2_DEPENDENCIES = ../sz/.libs/libSZ.a \
-	../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a
+testfloat_decompress_fastmode2_DEPENDENCIES = ../szx/.libs/libSZx.a
+am_testfloat_decompress_fastmode3_OBJECTS =  \
+	testfloat_decompress_fastmode3.$(OBJEXT)
+testfloat_decompress_fastmode3_OBJECTS =  \
+	$(am_testfloat_decompress_fastmode3_OBJECTS)
+testfloat_decompress_fastmode3_DEPENDENCIES = ../szx/.libs/libSZx.a
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -161,13 +159,13 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/sz.Po \
-	./$(DEPDIR)/testfloat_compress.Po \
+am__depfiles_remade = ./$(DEPDIR)/szx.Po \
 	./$(DEPDIR)/testfloat_compress_fastmode1.Po \
 	./$(DEPDIR)/testfloat_compress_fastmode2.Po \
-	./$(DEPDIR)/testfloat_decompress.Po \
+	./$(DEPDIR)/testfloat_compress_fastmode3.Po \
 	./$(DEPDIR)/testfloat_decompress_fastmode1.Po \
-	./$(DEPDIR)/testfloat_decompress_fastmode2.Po
+	./$(DEPDIR)/testfloat_decompress_fastmode2.Po \
+	./$(DEPDIR)/testfloat_decompress_fastmode3.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -187,18 +185,18 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(sz_SOURCES) $(testfloat_compress_SOURCES) \
-	$(testfloat_compress_fastmode1_SOURCES) \
+SOURCES = $(szx_SOURCES) $(testfloat_compress_fastmode1_SOURCES) \
 	$(testfloat_compress_fastmode2_SOURCES) \
-	$(testfloat_decompress_SOURCES) \
+	$(testfloat_compress_fastmode3_SOURCES) \
 	$(testfloat_decompress_fastmode1_SOURCES) \
-	$(testfloat_decompress_fastmode2_SOURCES)
-DIST_SOURCES = $(sz_SOURCES) $(testfloat_compress_SOURCES) \
-	$(testfloat_compress_fastmode1_SOURCES) \
+	$(testfloat_decompress_fastmode2_SOURCES) \
+	$(testfloat_decompress_fastmode3_SOURCES)
+DIST_SOURCES = $(szx_SOURCES) $(testfloat_compress_fastmode1_SOURCES) \
 	$(testfloat_compress_fastmode2_SOURCES) \
-	$(testfloat_decompress_SOURCES) \
+	$(testfloat_compress_fastmode3_SOURCES) \
 	$(testfloat_decompress_fastmode1_SOURCES) \
-	$(testfloat_decompress_fastmode2_SOURCES)
+	$(testfloat_decompress_fastmode2_SOURCES) \
+	$(testfloat_decompress_fastmode3_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -253,12 +251,6 @@ FC = @FC@
 FCFLAGS = @FCFLAGS@
 FGREP = @FGREP@
 GREP = @GREP@
-GSL_CFLAGS = @GSL_CFLAGS@
-GSL_CONFIG = @GSL_CONFIG@
-GSL_HDR = @GSL_HDR@
-GSL_LIB = @GSL_LIB@
-GSL_LIBS = @GSL_LIBS@
-GSL_STATIC = @GSL_STATIC@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -291,17 +283,13 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
-PASTRI_FLAGS = @PASTRI_FLAGS@
 PATH_SEPARATOR = @PATH_SEPARATOR@
-RANDOMACCESS_FLAGS = @RANDOMACCESS_FLAGS@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
-TIMECMPR_FLAGS = @TIMECMPR_FLAGS@
 VERSION = @VERSION@
-WRITESTATS_FLAGS = @WRITESTATS_FLAGS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -356,22 +344,22 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
-AM_CFLAGS = -I../sz/include -I../zlib -I../zstd $(GSL_CFLAGS) $(GSL_STATIC)
-AM_FCFLAGS = -I../sz/include -I../sz -I../zlib -I../zstd $(GSL_CFLAGS) $(GSL_STATIC)
-sz_SOURCES = sz.c
-sz_LDADD = ../sz/.libs/libSZ.a ../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a -lm
-testfloat_compress_SOURCES = testfloat_compress.c
-testfloat_compress_LDADD = ../sz/.libs/libSZ.a ../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a -lm
-testfloat_decompress_SOURCES = testfloat_decompress.c
-testfloat_decompress_LDADD = ../sz/.libs/libSZ.a ../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a -lm
+AM_CFLAGS = -I../szx/include $(am__append_1)
+AM_FCFLAGS = -I../szx/include -I../szx
 testfloat_compress_fastmode1_SOURCES = testfloat_compress_fastmode1.c
-testfloat_compress_fastmode1_LDADD = ../sz/.libs/libSZ.a ../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a -lm
+testfloat_compress_fastmode1_LDADD = ../szx/.libs/libSZx.a -lm
 testfloat_compress_fastmode2_SOURCES = testfloat_compress_fastmode2.c
-testfloat_compress_fastmode2_LDADD = ../sz/.libs/libSZ.a ../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a -lm
+testfloat_compress_fastmode2_LDADD = ../szx/.libs/libSZx.a -lm
 testfloat_decompress_fastmode1_SOURCES = testfloat_decompress_fastmode1.c
-testfloat_decompress_fastmode1_LDADD = ../sz/.libs/libSZ.a ../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a -lm
+testfloat_decompress_fastmode1_LDADD = ../szx/.libs/libSZx.a -lm
 testfloat_decompress_fastmode2_SOURCES = testfloat_decompress_fastmode2.c
-testfloat_decompress_fastmode2_LDADD = ../sz/.libs/libSZ.a ../zlib/.libs/libzlib.a ../zstd/.libs/libzstd.a -lm
+testfloat_decompress_fastmode2_LDADD = ../szx/.libs/libSZx.a -lm
+testfloat_compress_fastmode3_SOURCES = testfloat_compress_fastmode3.c
+testfloat_compress_fastmode3_LDADD = ../szx/.libs/libSZx.a -lm
+testfloat_decompress_fastmode3_SOURCES = testfloat_decompress_fastmode3.c
+testfloat_decompress_fastmode3_LDADD = ../szx/.libs/libSZx.a -lm
+szx_SOURCES = szx.c
+szx_LDADD = ../szx/.libs/libSZx.a -lm
 all: all-am
 
 .SUFFIXES:
@@ -455,13 +443,9 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-sz$(EXEEXT): $(sz_OBJECTS) $(sz_DEPENDENCIES) $(EXTRA_sz_DEPENDENCIES) 
-	@rm -f sz$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(sz_OBJECTS) $(sz_LDADD) $(LIBS)
-
-testfloat_compress$(EXEEXT): $(testfloat_compress_OBJECTS) $(testfloat_compress_DEPENDENCIES) $(EXTRA_testfloat_compress_DEPENDENCIES) 
-	@rm -f testfloat_compress$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(testfloat_compress_OBJECTS) $(testfloat_compress_LDADD) $(LIBS)
+szx$(EXEEXT): $(szx_OBJECTS) $(szx_DEPENDENCIES) $(EXTRA_szx_DEPENDENCIES) 
+	@rm -f szx$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(szx_OBJECTS) $(szx_LDADD) $(LIBS)
 
 testfloat_compress_fastmode1$(EXEEXT): $(testfloat_compress_fastmode1_OBJECTS) $(testfloat_compress_fastmode1_DEPENDENCIES) $(EXTRA_testfloat_compress_fastmode1_DEPENDENCIES) 
 	@rm -f testfloat_compress_fastmode1$(EXEEXT)
@@ -471,9 +455,9 @@ testfloat_compress_fastmode2$(EXEEXT): $(testfloat_compress_fastmode2_OBJECTS) $
 	@rm -f testfloat_compress_fastmode2$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(testfloat_compress_fastmode2_OBJECTS) $(testfloat_compress_fastmode2_LDADD) $(LIBS)
 
-testfloat_decompress$(EXEEXT): $(testfloat_decompress_OBJECTS) $(testfloat_decompress_DEPENDENCIES) $(EXTRA_testfloat_decompress_DEPENDENCIES) 
-	@rm -f testfloat_decompress$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(testfloat_decompress_OBJECTS) $(testfloat_decompress_LDADD) $(LIBS)
+testfloat_compress_fastmode3$(EXEEXT): $(testfloat_compress_fastmode3_OBJECTS) $(testfloat_compress_fastmode3_DEPENDENCIES) $(EXTRA_testfloat_compress_fastmode3_DEPENDENCIES) 
+	@rm -f testfloat_compress_fastmode3$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(testfloat_compress_fastmode3_OBJECTS) $(testfloat_compress_fastmode3_LDADD) $(LIBS)
 
 testfloat_decompress_fastmode1$(EXEEXT): $(testfloat_decompress_fastmode1_OBJECTS) $(testfloat_decompress_fastmode1_DEPENDENCIES) $(EXTRA_testfloat_decompress_fastmode1_DEPENDENCIES) 
 	@rm -f testfloat_decompress_fastmode1$(EXEEXT)
@@ -483,19 +467,23 @@ testfloat_decompress_fastmode2$(EXEEXT): $(testfloat_decompress_fastmode2_OBJECT
 	@rm -f testfloat_decompress_fastmode2$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(testfloat_decompress_fastmode2_OBJECTS) $(testfloat_decompress_fastmode2_LDADD) $(LIBS)
 
+testfloat_decompress_fastmode3$(EXEEXT): $(testfloat_decompress_fastmode3_OBJECTS) $(testfloat_decompress_fastmode3_DEPENDENCIES) $(EXTRA_testfloat_decompress_fastmode3_DEPENDENCIES) 
+	@rm -f testfloat_decompress_fastmode3$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(testfloat_decompress_fastmode3_OBJECTS) $(testfloat_decompress_fastmode3_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sz.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_compress.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/szx.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_compress_fastmode1.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_compress_fastmode2.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_decompress.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_compress_fastmode3.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_decompress_fastmode1.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_decompress_fastmode2.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_decompress_fastmode3.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -660,13 +648,13 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/sz.Po
-	-rm -f ./$(DEPDIR)/testfloat_compress.Po
+		-rm -f ./$(DEPDIR)/szx.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode1.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode2.Po
-	-rm -f ./$(DEPDIR)/testfloat_decompress.Po
+	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode3.Po
 	-rm -f ./$(DEPDIR)/testfloat_decompress_fastmode1.Po
 	-rm -f ./$(DEPDIR)/testfloat_decompress_fastmode2.Po
+	-rm -f ./$(DEPDIR)/testfloat_decompress_fastmode3.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -712,13 +700,13 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/sz.Po
-	-rm -f ./$(DEPDIR)/testfloat_compress.Po
+		-rm -f ./$(DEPDIR)/szx.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode1.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode2.Po
-	-rm -f ./$(DEPDIR)/testfloat_decompress.Po
+	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode3.Po
 	-rm -f ./$(DEPDIR)/testfloat_decompress_fastmode1.Po
 	-rm -f ./$(DEPDIR)/testfloat_decompress_fastmode2.Po
+	-rm -f ./$(DEPDIR)/testfloat_decompress_fastmode3.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

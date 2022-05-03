@@ -10,8 +10,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "sz.h"
-#include "rw.h"
+#include "szx.h"
+#include "szx_rw.h"
 
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
@@ -38,24 +38,19 @@ void cost_end()
 int main(int argc, char * argv[])
 {
     char oriFilePath[640], outputFilePath[645];
-    char *cfgFile;
     
-    if(argc < 3)
+    if(argc < 2)
     {
-		printf("Usage: testfloat_compress_fastmode1 [config_file] [srcFilePath] [err bound]\n");
-		printf("Example: testfloat_compress_fastmode1 sz.config testfloat_8_8_128.dat 1E-3\n");
+		printf("Usage: testfloat_compress_fastmode1 [srcFilePath] [err bound]\n");
+		printf("Example: testfloat_compress_fastmode1 testfloat_8_8_128.dat 1E-3\n");
 		exit(0);
     }
    
-    cfgFile=argv[1];
-    sprintf(oriFilePath, "%s", argv[2]);
-    float errorBound = atof(argv[3]); 
-    printf("cfgFile=%s\n", cfgFile); 
-    int status = SZ_Init(cfgFile);
-    if(status == SZ_NSCS)
-		exit(0);
-    sprintf(outputFilePath, "%s.sz", oriFilePath);
-   
+    sprintf(oriFilePath, "%s", argv[1]);
+    float errorBound = atof(argv[2]); 
+    sprintf(outputFilePath, "%s.szx", oriFilePath);
+  
+    int status = 0; 
     size_t nbEle;
     float *data = readFloatData(oriFilePath, &nbEle, &status);
     if(status != SZ_SCES)
@@ -66,7 +61,7 @@ int main(int argc, char * argv[])
    
     size_t outSize; 
     cost_start();
-    unsigned char* bytes =  SZ_fast_compress_args(SZ_NO_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errorBound, 0.001, 0, 0, 0, 0, 0, nbEle);
+    unsigned char* bytes =  SZ_fast_compress_args(SZx_NO_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errorBound, 0.001, 0, 0, 0, 0, nbEle);
     cost_end();
     printf("timecost=%f, %d\n",totalCost, bytes[0]); 
     printf("compression size = %zu, CR = %f\n", outSize, 1.0f*nbEle*sizeof(float)/outSize);
@@ -80,7 +75,6 @@ int main(int argc, char * argv[])
     printf("done\n");
     free(bytes); 
     free(data);
-    SZ_Finalize();
     
     return 0;
 }
