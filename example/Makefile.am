@@ -6,16 +6,12 @@ AM_CFLAGS+=-fopenmp
 endif
 
 
-bin_PROGRAMS=testfloat_compress_fastmode1 testfloat_compress_fastmode2 testfloat_decompress_fastmode1 testfloat_decompress_fastmode2 testfloat_compress_fastmode3 testfloat_decompress_fastmode3 szx
+bin_PROGRAMS=testfloat_compress_fastmode1 testfloat_decompress_fastmode1 testfloat_compress_fastmode3 testfloat_decompress_fastmode3 szx
 
 testfloat_compress_fastmode1_SOURCES=testfloat_compress_fastmode1.c
 testfloat_compress_fastmode1_LDADD=../szx/.libs/libSZx.a -lm
-testfloat_compress_fastmode2_SOURCES=testfloat_compress_fastmode2.c
-testfloat_compress_fastmode2_LDADD=../szx/.libs/libSZx.a -lm
 testfloat_decompress_fastmode1_SOURCES=testfloat_decompress_fastmode1.c
 testfloat_decompress_fastmode1_LDADD=../szx/.libs/libSZx.a -lm
-testfloat_decompress_fastmode2_SOURCES=testfloat_decompress_fastmode2.c
-testfloat_decompress_fastmode2_LDADD=../szx/.libs/libSZx.a -lm
 testfloat_compress_fastmode3_SOURCES=testfloat_compress_fastmode3.c
 testfloat_compress_fastmode3_LDADD=../szx/.libs/libSZx.a -lm
 testfloat_decompress_fastmode3_SOURCES=testfloat_decompress_fastmode3.c
