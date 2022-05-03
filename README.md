@@ -9,7 +9,7 @@ SZx: An Ultrafast Error-Bounded Lossy Compressor for Scientific Datasets
 ## Citations
 * SZx: Xiaodong Yu, Sheng Di, Kai Zhao, Jiannan Tian, Dingwen Tao, Xin Liang, and Franck Cappello. "[Ultrafast Error-Bounded Lossy Compression for Scientific Datasets](https:)", In proceedings of the 31st International ACM Symposium on High-Performance Parallel and Distributed Computing (HPDC '22), Minneapolis, Minnesota, USA, 2022.
 
-This document simply introduces how to install and use the SZx compressor.  
+SZx is a novel ultrafast error-bounded lossy compressor that can obtain fairly high compression performance on both CPUs and GPUs and with reasonably high compression ratios. It composes only lightweight operations such as bitwise operations, additions, and subtractions. It also can support strict control of the compression errors within user-specified error bounds. For more details please refer to the HPDC'22 paper. This document simply introduces how to install and use the SZx compressor.  
 
 ## Installation
 
