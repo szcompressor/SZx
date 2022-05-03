@@ -13,55 +13,57 @@ SZx is a novel ultrafast error-bounded lossy compressor that can obtain fairly h
 
 ## Installation
 
-### Installation way 1:
-* ./configure --prefix=[INSTALL_DIR] (Please use --enable-fortran if you need Fortran interface)
-* make
-* make install
+### Prerequisites
+cmake >= 3.19 <br />
+CUDA toolkit >= 10.0 with samples/common/inc
 
-### Installation way 2:
-* mkdir build && cd build
-* cmake .. -DCMAKE_INSTALL_PREFIX:PATH=[INSTALL_DIR]
-* make
-* make install
+## How to install
+Under the SZx directory:
+```bash
+mkdir build
+cd build
+cmake ../
+make -j12
+```
 
-Then, you'll find all the executables in [INSTALL_DIR]/bin and .a and .so libraries in [INSTALL_DIR]/lib
+After the installation, you'll find all the executables in build/bin.
 
 ## Testing Examples
 --------------------------------------
 
-Examples can be found in the [SZ_PACKAGE]/example
-
-You can use the executable 'sz' command to do the compression/decompression. Please see the user guide or run 'sz --help' for details.
-
-Alternatively, you can also also call our API to do the compression/decompressoin. Here are two examples: testfloat_compress.c and testfloat_decompress.c
+Please refer to ```testfloat_compress_fastmode2 --help``` and ```testfloat_decompress_fastmode2 --help``` for more details.
 
 ## Compression
 --------------
-* ./test_compress sz.config testdouble_8_8_8_128.dat 8 8 8 128
-* ./test_compress sz.config testdouble_8_8_128.dat 8 8 128
+```bash
+testfloat_compress_fastmode2 testfloat_8_8_128.dat 64 1E-3 --cuda
+```
 
-`Decription: `
+`Description: `
 
-testdouble_8_8_128.dat and testdouble_8_8_8_128.dat are two binary testing files (small-endian format), which contains a 3d array (128X8X8) and a 4d array (128X8X8X8) respectively. Their data values are shown in the two plain text files, testdouble_8_8_128.txt and testdouble_8_8_8_128.txt. These two data files are from FLASH_Blast2 and FLASH_MacLaurin respectively (both are at time step 100). The compressed data files are namely testdouble_8_8_8_128.dat.sz and testdouble_8_8_128.dat.sz respectively.
+testfloat_8_8_128.dat is the binary testing file (small-endian format), which contains a 3d array (128X8X8). Its data values are shown in the plain text file testdouble_8_8_128.txt. It comes from FLASH_Blast2  at time step 100. 
 
-sz.config is the configuration file. The key settings are errorBoundMode, absErrBound, and relBoundRatio, which are described below.
+64 is the size of each data block. For more information about data blocks, please read our paper.
 
-* absErrBound refers to the absolute error bound, which is to limit the (de)compression errors to be within an absolute error. For example, absErrBound=0.0001 means the decompressed value must be in [V-0.0001,V+0.0001], where V is the original true value.
+1E-3 is the user-specific error-bound. Currently, SZx only supports absolute error-bound.
 
-* relBoundRatio refers to relative bound ratio, which is to limit the (de)compression errors by considering the global data value range size (i.e., taking into account the range size (max_value - min_value)). For example, suppose relBoundRatio is set to 0.01, and the data set is {100,101,102,103,104,...,110}, so the global value range size is 110-100=10, so the error bound will actually be 10*0.01=0.1, from the perspective of "relBoundRatio".
+--cuda is an optional argument. Use it to enable the GPU-based compression (i.e., cuSZx).
 
-* errorBoundMode is to indicate the error-bounding way in the compression, such as based on absolute error bound, relative error bound, etc. 
-The options are shown below.
-	* ABS: take only "absolute error bound" into account. That is, relative bound ratio will be ignored.
-	* REL: take only "relative bound ratio" into account. That is, absolute error bound will be ignored. 
-	* ABS_AND_REL: take both of the two bounds into account. The compression errors will be limited using both absErrBound and relBoundRatio*rangesize. That is, the two bounds must be both met.
-	* ABS_OR_REL: take both of the two bounds into account. The compression errors will be limited using either absErrBound or relBoundRatio*rangesize. That is, only one bound is required to be met.
-	* PW_REL: take "point-wise relative error bound" in the compression. 
+The compressed data files will have a suffix `.szx`. For example, a compressed file named testdfloat_8_8_128.dat.szx will be generated after this compression.
 
 ## Decompression
 
-* ./test_decompress testdouble_8_8_8_128.dat.sz 8 8 8 128
-* ./test_decompress testdouble_8_8_128.dat.sz 8 8 128
+```bash
+testfloat_decompress_fastmode2 testfloat_8_8_128.dat.szx 8192 --cuda
+```
 
-The output files are testdouble_8_8_8_128.dat.sz.out and testdouble_8_8_128.dat.sz.out respectively. You can compare .txt file and .out file for checking the compression errors for each data point. For instance, compare testdouble_8_8_8_128.txt and testdouble_8_8_8_128.dat.sz.out.
+`Description: `
+
+testfloat_8_8_128.dat.szx is the compressed binary file. 
+
+8192 is the number of elements in the original data. The decompressed data should have the same number of elements.
+
+--cuda is an optional argument. Use it to enable the GPU-based decompression (i.e., cuSZx).
+
+The decompressed data files will have a suffix `.szx.out`. For example, a decompressed file named testdfloat_8_8_128.dat.szx.out will be generated after this decompression.
 
