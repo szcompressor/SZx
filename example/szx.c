@@ -91,6 +91,8 @@ int main(int argc, char* argv[])
 	char* relErrBound = NULL;
 	float absErrorBound = 0, relBoundRatio = 0;
 
+	int doLogTransform = 0;
+
 	int fastMode = SZx_WITH_BLOCK_FAST_CMPR; //1: non-blocked+serial, 2: blocked+serial, 3: blocked+openmp, 4: blocked+randomaccess+serial
 	size_t r5 = 0;
 	size_t r4 = 0;
@@ -110,6 +112,9 @@ int main(int argc, char* argv[])
 			usage();
 		switch (argv[i][1])
 		{
+		case 'L':																// Flag to do log transform, specify relative error bound
+			doLogTransform = 1;
+			break;
 		case 'h':
 			usage();
 			exit(0);
@@ -233,7 +238,8 @@ int main(int argc, char* argv[])
 		}
 	}
 	
-	char outputFilePath[256];	
+	char outputFilePath[256];
+	char outputSignPath[256];	
 	unsigned char *bytes = NULL; //the binary data read from "compressed data file"
 	size_t byteLength = 0; 
 	if(isCompression == 1)
@@ -270,7 +276,9 @@ int main(int argc, char* argv[])
 				printf("Error: cannot read the input file: %s\n", inPath);
 				exit(0);
 			}
+			
 			cost_start();
+
 			bytes = SZ_fast_compress_args(fastMode, SZ_FLOAT, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
 			cost_end();
 			if(cmpPath == NULL)
@@ -312,14 +320,36 @@ int main(int argc, char* argv[])
 				printf("Error: cannot read the input file: %s\n", inPath);
 				exit(0);
 			}
+			// Additional variables for log transform
+
+			size_t length = computeDataLength(r5, r4, r3, r2, r1);
+			int *sign_arr = (int *)malloc(sizeof(int)*length);
+			double newAbsError = 0.0;
+			
 			cost_start();
+			
+			// Convert to natural log value, store signs and calculate absolute errorbound in newAbsError
+			if (doLogTransform)
+			{
+				data = SZ_apply_log(data, length, absErrBound, sign_arr, &newAbsError);
+				absErrorBound = (float) newAbsError;
+			}
 			bytes = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
 			cost_end();
 			if(cmpPath == NULL)
 				sprintf(outputFilePath, "%s.szx", inPath);
 			else
 				strcpy(outputFilePath, cmpPath);
-			writeByteData(bytes, outSize, outputFilePath, &status);		
+
+			if (doLogTransform)
+			{
+				sprintf(outputSignPath, "%s.sign", inPath);
+				writeByteData((unsigned char *)sign_arr, sizeof(int)*length, outputSignPath, &status);	
+			}
+			writeByteData(bytes, outSize, outputFilePath, &status);
+			
+			
+			free(sign_arr);
 			free(data);
 			if(status != SZ_SCES)
 			{
@@ -484,9 +514,27 @@ int main(int argc, char* argv[])
 				printf("Error: %s cannot be read!\n", cmpPath);
 				exit(0);
 			}
+
+			size_t length = computeDataLength(r5, r4, r3, r2, r1);
+			int *sign_arr = (int *)malloc(sizeof(int)*length);
+			size_t signSize = sizeof(int)*length ;
+
+			if(doLogTransform){
+				sprintf(outputSignPath, "%s.sign", inPath);
+				sign_arr = (int *) readByteData(outputSignPath, &signSize, &status);
+			}
 			cost_start();
+			
 			double* data = SZ_fast_decompress(fastMode, SZ_DOUBLE, bytes, byteLength, r5, r4, r3, r2, r1);
+			
+			if (doLogTransform)
+			{
+				data = SZ_apply_exp((void*) data, length, sign_arr);
+			}
 			cost_end();
+
+			free(sign_arr);
+
 			if(decPath == NULL)
 				sprintf(outputFilePath, "%s.out", cmpPath);	
 			else

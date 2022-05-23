@@ -14,6 +14,8 @@
 #include <unistd.h>
 #include "szx.h"
 #include "szx_rw.h"
+#include <math.h>
+#include <float.h>
 
 int versionNumber[4] = {SZx_VER_MAJOR,SZx_VER_MINOR,SZx_VER_BUILD,SZx_VER_REVISION};
 
@@ -208,13 +210,54 @@ int filterDimension(size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, size_
 	
 }
 
+unsigned char* SZ_apply_log(void *data, size_t length, double pw_rel_error, int *sign_arr, double* absErrCalculated)
+{
+	double* transformed_data = (double *)malloc(sizeof(double)*length);
+	double* oriData = (double *)data;
+	double max_log = 0;
+	for (size_t i = 0; i < length; i++)
+	{
+		if (oriData[i]<0.0)
+		{
+			sign_arr[i] = -1;
+		}else{
+			sign_arr[i] = 1;
+		}
+		
+		transformed_data[i] = fabs(log(oriData[i]));
+		
+		if (transformed_data[i] > max_log)
+		{
+			max_log = transformed_data[i];
+		}
+		 
+	}
+
+	*absErrCalculated = log(1.0+pw_rel_error) - DBL_EPSILON*max_log;
+	free(oriData);
+	return (unsigned char *) transformed_data;
+}
+
+unsigned char* SZ_apply_exp(void *data, size_t length, int *sign_arr){
+	double* transformed_data = (double *)malloc(sizeof(double)*length);
+	double* oriData = (double *)data;
+
+	for (size_t i = 0; i < length; i++)
+	{		
+		transformed_data[i] = sign_arr[i]*(exp(oriData[i]));
+		 
+	}
+	free(oriData);
+	return (unsigned char *) transformed_data;
+}
+
 unsigned char* SZ_fast_compress_args(int fastMode, int dataType, void *data, size_t *outSize, int errBoundMode, float absErrBound,
 float relBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 {
 	unsigned char*  bytes = NULL;
 	size_t length = computeDataLength(r5, r4, r3, r2, r1);
 	size_t i = 0;
-	
+		
 	if(dataType == SZ_FLOAT)
 	{
 		if(fastMode == SZx_WITH_BLOCK_FAST_CMPR || fastMode == SZx_RANDOMACCESS_FAST_CMPR || fastMode == SZx_OPENMP_FAST_CMPR)
