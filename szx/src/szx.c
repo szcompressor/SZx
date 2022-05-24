@@ -224,7 +224,7 @@ void SZ_apply_log(void *data, size_t length, double pw_rel_error, int32_t *sign_
 	//	printf("first data %f %d\n", oriData[i], i);
 		if (oriData[i]<0.0)
 		{
-			sign_arr[i/32] = sign_arr[i/32] & (1 << (i % 32));
+			sign_arr[i/32] = sign_arr[i/32] | (1 << (i % 32));
 		}
 	//  else{
 	//		sign_arr[i] = 1;
