@@ -210,7 +210,7 @@ int filterDimension(size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, size_
 	
 }
 
-void SZ_apply_log(void *data, size_t length, double pw_rel_error, int *sign_arr, double* absErrCalculated)
+void SZ_apply_log(void *data, size_t length, double pw_rel_error, int32_t *sign_arr, double* absErrCalculated)
 {
 	//double* transformed_data = (double *)malloc(sizeof(double)*length);
 	double* oriData = (double *)data;
@@ -222,10 +222,11 @@ void SZ_apply_log(void *data, size_t length, double pw_rel_error, int *sign_arr,
 	for (size_t i = 0; i < length; i++)
 	{
 	//	printf("first data %f %d\n", oriData[i], i);
-	//	if (oriData[i]<0.0)
-	//	{
-	//		sign_arr[i] = -1;
-	//	}else{
+		if (oriData[i]<0.0)
+		{
+			sign_arr[i/32] = sign_arr[i/32] & (1 << (i % 32));
+		}
+	//  else{
 	//		sign_arr[i] = 1;
 	//	}
 	//	printf("sign done\n");

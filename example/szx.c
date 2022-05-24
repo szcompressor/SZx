@@ -323,8 +323,8 @@ int main(int argc, char* argv[])
 			// Additional variables for log transform
 
 			size_t length = computeDataLength(r5, r4, r3, r2, r1);
-			int *sign_arr = (int *)malloc(sizeof(int)*length);
-			memset((void*)sign_arr, 0,sizeof(int)*length);
+			int32_t *sign_arr = (int32_t *)malloc(sizeof(int32_t)*(length/32)+1);
+			memset((void*)sign_arr, 0,sizeof(int32_t)*(length/32)+1);
 			double newAbsError = 0.0;
 			printf("length %d %f\n", length,absErrorBound);
 			
@@ -521,7 +521,7 @@ int main(int argc, char* argv[])
 			}
 
 			size_t length = computeDataLength(r5, r4, r3, r2, r1);
-			int *sign_arr = (int *)malloc(sizeof(int)*length);
+			int32_t *sign_arr = (int32_t *)malloc(sizeof(int32_t)*(length/32)+1);
 			size_t signSize = sizeof(int)*length ;
 
 			if(doLogTransform){
