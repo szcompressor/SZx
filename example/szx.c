@@ -324,14 +324,18 @@ int main(int argc, char* argv[])
 
 			size_t length = computeDataLength(r5, r4, r3, r2, r1);
 			int *sign_arr = (int *)malloc(sizeof(int)*length);
+			memset((void*)sign_arr, 0,sizeof(int)*length);
 			double newAbsError = 0.0;
+			printf("length %d %f\n", length,absErrorBound);
 			
 			cost_start();
 			
 			// Convert to natural log value, store signs and calculate absolute errorbound in newAbsError
+			//printf("before log\n");
 			if (doLogTransform)
 			{
-				data = SZ_apply_log(data, length, absErrBound, sign_arr, &newAbsError);
+				SZ_apply_log(data, length, absErrorBound, sign_arr, &newAbsError);
+			//	printf("just after\n");
 				absErrorBound = (float) newAbsError;
 			}
 			bytes = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
@@ -341,11 +345,12 @@ int main(int argc, char* argv[])
 			else
 				strcpy(outputFilePath, cmpPath);
 
-			if (doLogTransform)
-			{
-				sprintf(outputSignPath, "%s.sign", inPath);
-				writeByteData((unsigned char *)sign_arr, sizeof(int)*length, outputSignPath, &status);	
-			}
+			printf("done\n");
+		//	if (doLogTransform)
+		//	{
+		//		sprintf(outputSignPath, "%s.sign", inPath);
+		//		writeByteData((unsigned char *)sign_arr, sizeof(int)*length, outputSignPath, &status);	
+		//	}
 			writeByteData(bytes, outSize, outputFilePath, &status);
 			
 			

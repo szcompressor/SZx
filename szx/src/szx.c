@@ -210,32 +210,41 @@ int filterDimension(size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, size_
 	
 }
 
-unsigned char* SZ_apply_log(void *data, size_t length, double pw_rel_error, int *sign_arr, double* absErrCalculated)
+void SZ_apply_log(void *data, size_t length, double pw_rel_error, int *sign_arr, double* absErrCalculated)
 {
-	double* transformed_data = (double *)malloc(sizeof(double)*length);
+	//double* transformed_data = (double *)malloc(sizeof(double)*length);
 	double* oriData = (double *)data;
-	double max_log = 0;
+	double max_log = 0.0;
+	
+//	printf("in log\n");
+	//printf("sign test %d %d\n", sign_arr[926], sign_arr[927]);
+
 	for (size_t i = 0; i < length; i++)
 	{
-		if (oriData[i]<0.0)
-		{
-			sign_arr[i] = -1;
-		}else{
-			sign_arr[i] = 1;
-		}
+	//	printf("first data %f %d\n", oriData[i], i);
+	//	if (oriData[i]<0.0)
+	//	{
+	//		sign_arr[i] = -1;
+	//	}else{
+	//		sign_arr[i] = 1;
+	//	}
+	//	printf("sign done\n");
 		
-		transformed_data[i] = fabs(log(oriData[i]));
+		oriData[i] = log(fabs(oriData[i]));
 		
-		if (transformed_data[i] > max_log)
+	//	printf("data logged %f\n", transformed_data[i]);
+		if (fabs(oriData[i]) > max_log)
 		{
-			max_log = transformed_data[i];
+			max_log = fabs(oriData[i]);
 		}
 		 
 	}
+//	printf("done with transform\n");
 
 	*absErrCalculated = log(1.0+pw_rel_error) - DBL_EPSILON*max_log;
-	free(oriData);
-	return (unsigned char *) transformed_data;
+	printf("abs error %f %f %f\n", *absErrCalculated, max_log, pw_rel_error);	
+	//data = (void *) transformed_data;
+	//return (unsigned char *) transformed_data;
 }
 
 unsigned char* SZ_apply_exp(void *data, size_t length, int *sign_arr){
