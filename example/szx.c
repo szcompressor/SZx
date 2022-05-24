@@ -323,8 +323,8 @@ int main(int argc, char* argv[])
 			// Additional variables for log transform
 
 			size_t length = computeDataLength(r5, r4, r3, r2, r1);
-			int32_t *sign_arr = (int32_t *)malloc(sizeof(int32_t)*(length/32)+1);
-			memset((void*)sign_arr, 0,sizeof(int32_t)*(length/32)+1);
+			int32_t *sign_arr = (int32_t *)malloc(sizeof(int32_t)*((length/32)+1));
+			memset((void*)sign_arr, 0,sizeof(int32_t)*((length/32)+1));
 			double newAbsError = 0.0;
 			printf("length %d %f\n", length,absErrorBound);
 			
@@ -346,11 +346,11 @@ int main(int argc, char* argv[])
 				strcpy(outputFilePath, cmpPath);
 
 			printf("done\n");
-		//	if (doLogTransform)
-		//	{
-		//		sprintf(outputSignPath, "%s.sign", inPath);
-		//		writeByteData((unsigned char *)sign_arr, sizeof(int)*length, outputSignPath, &status);	
-		//	}
+			if (doLogTransform)
+			{
+				sprintf(outputSignPath, "%s.sign", inPath);
+				writeByteData((unsigned char *)sign_arr, sizeof(int32_t)*((length/32)+1), outputSignPath, &status);	
+			}
 			writeByteData(bytes, outSize, outputFilePath, &status);
 			
 			
@@ -521,12 +521,12 @@ int main(int argc, char* argv[])
 			}
 
 			size_t length = computeDataLength(r5, r4, r3, r2, r1);
-			int32_t *sign_arr = (int32_t *)malloc(sizeof(int32_t)*(length/32)+1);
-			size_t signSize = sizeof(int)*length ;
+			int32_t *sign_arr = (int32_t *)malloc(sizeof(int32_t)*((length/32)+1));
+			size_t signSize = sizeof(int32_t)*((length/32)+1) ;
 
 			if(doLogTransform){
 				sprintf(outputSignPath, "%s.sign", inPath);
-				sign_arr = (int *) readByteData(outputSignPath, &signSize, &status);
+				sign_arr = (int32_t *) readByteData(outputSignPath, &signSize, &status);
 			}
 			cost_start();
 			
@@ -534,7 +534,7 @@ int main(int argc, char* argv[])
 			
 			if (doLogTransform)
 			{
-				data = SZ_apply_exp((void*) data, length, sign_arr);
+				SZ_apply_exp((void*) data, length, sign_arr);
 			}
 			cost_end();
 

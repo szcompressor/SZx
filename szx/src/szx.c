@@ -212,53 +212,45 @@ int filterDimension(size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, size_
 
 void SZ_apply_log(void *data, size_t length, double pw_rel_error, int32_t *sign_arr, double* absErrCalculated)
 {
-	//double* transformed_data = (double *)malloc(sizeof(double)*length);
 	double* oriData = (double *)data;
 	double max_log = 0.0;
 	
-//	printf("in log\n");
-	//printf("sign test %d %d\n", sign_arr[926], sign_arr[927]);
-
 	for (size_t i = 0; i < length; i++)
 	{
-	//	printf("first data %f %d\n", oriData[i], i);
+
 		if (oriData[i]<0.0)
 		{
 			sign_arr[i/32] = sign_arr[i/32] | (1 << (i % 32));
 		}
-	//  else{
-	//		sign_arr[i] = 1;
-	//	}
-	//	printf("sign done\n");
 		
 		oriData[i] = log(fabs(oriData[i]));
 		
-	//	printf("data logged %f\n", transformed_data[i]);
+
 		if (fabs(oriData[i]) > max_log)
 		{
 			max_log = fabs(oriData[i]);
 		}
 		 
 	}
-//	printf("done with transform\n");
+
 
 	*absErrCalculated = log(1.0+pw_rel_error) - DBL_EPSILON*max_log;
-	printf("abs error %f %f %f\n", *absErrCalculated, max_log, pw_rel_error);	
-	//data = (void *) transformed_data;
-	//return (unsigned char *) transformed_data;
+
 }
 
-unsigned char* SZ_apply_exp(void *data, size_t length, int *sign_arr){
-	double* transformed_data = (double *)malloc(sizeof(double)*length);
+void SZ_apply_exp(void *data, size_t length, int32_t *sign_arr){
 	double* oriData = (double *)data;
 
 	for (size_t i = 0; i < length; i++)
-	{		
-		transformed_data[i] = sign_arr[i]*(exp(oriData[i]));
-		 
+	{
+		int sign = 1;
+		if ((sign_arr[i/32] >> (i%32)) & 1 == 1)
+		{
+			sign = -1;
+		}
+				
+		oriData[i] = sign*(exp(oriData[i]));
 	}
-	free(oriData);
-	return (unsigned char *) transformed_data;
 }
 
 unsigned char* SZ_fast_compress_args(int fastMode, int dataType, void *data, size_t *outSize, int errBoundMode, float absErrBound,
