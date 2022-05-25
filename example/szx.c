@@ -326,7 +326,7 @@ int main(int argc, char* argv[])
 			int32_t *sign_arr = (int32_t *)malloc(sizeof(int32_t)*((length/32)+1));
 			memset((void*)sign_arr, 0,sizeof(int32_t)*((length/32)+1));
 			double newAbsError = 0.0;
-			printf("length %d %f\n", length,absErrorBound);
+			//printf("length %d %f\n", length,absErrorBound);
 			
 			cost_start();
 			
@@ -345,7 +345,7 @@ int main(int argc, char* argv[])
 			else
 				strcpy(outputFilePath, cmpPath);
 
-			printf("done\n");
+			//printf("done\n");
 			if (doLogTransform)
 			{
 				sprintf(outputSignPath, "%s.sign", inPath);
