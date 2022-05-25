@@ -223,7 +223,7 @@ void SZ_apply_log(void *data, size_t length, double pw_rel_error, int32_t *sign_
 			sign_arr[i/32] = sign_arr[i/32] | (1 << (i % 32));
 		}
 		
-		oriData[i] = log(fabs(oriData[i]));
+		oriData[i] = log2(fabs(oriData[i]));
 		
 
 		if (fabs(oriData[i]) > max_log)
@@ -234,7 +234,7 @@ void SZ_apply_log(void *data, size_t length, double pw_rel_error, int32_t *sign_
 	}
 
 
-	*absErrCalculated = log(1.0+pw_rel_error) - DBL_EPSILON*max_log;
+	*absErrCalculated = log2(1.0+pw_rel_error) - DBL_EPSILON*max_log;
 
 }
 
@@ -249,7 +249,7 @@ void SZ_apply_exp(void *data, size_t length, int32_t *sign_arr){
 			sign = -1;
 		}
 				
-		oriData[i] = sign*(exp(oriData[i]));
+		oriData[i] = sign*(exp2(oriData[i]));
 	}
 }
 
