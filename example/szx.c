@@ -6,6 +6,8 @@
 #include "szx_rw.h"
 //#include "/home/mkshah5/SZ_compressor/zstd/examples/common.h"
 #include "zstd.h"
+#include <sys/stat.h>
+
 //#include <zstd.h>
 #ifdef _OPENMP
 #include "omp.h"
@@ -556,21 +558,33 @@ int main(int argc, char* argv[])
 			int32_t *sign_arr = (int32_t *)malloc(sizeof(int32_t)*((length/32)+1));
 			size_t signSize = sizeof(int32_t)*((length/32)+1) ;
 
+			void *cBuff;
+			size_t cSize;
 			if(doLogTransform){
+				struct stat st;
+				stat(outputSignPath, &st);
+				off_t fileSize = st.st_size;
+				cSize = (size_t) fileSize;
+
+				cBuff = (void *) malloc(cSize);
 				sprintf(outputSignPath, "%s.sign", inPath);
-				sign_arr = (int32_t *) readByteData(outputSignPath, &signSize, &status);
+				cBuff = (void *) readByteData(outputSignPath, &cSize, &status);
 			}
 			cost_start();
 			
+
+
 			double* data = SZ_fast_decompress(fastMode, SZ_DOUBLE, bytes, byteLength, r5, r4, r3, r2, r1);
 			
 			if (doLogTransform)
 			{
+				size_t dSize = ZSTD_decompress((void *)sign_arr, signSize, cBuff, cSize);
 				SZ_apply_exp((void*) data, length, sign_arr);
 			}
 			cost_end();
 
 			free(sign_arr);
+			free(cBuff);
 
 			if(decPath == NULL)
 				sprintf(outputFilePath, "%s.out", cmpPath);	
