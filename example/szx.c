@@ -4,6 +4,9 @@
 #include <math.h>
 #include "szx.h"
 #include "szx_rw.h"
+//#include "/home/mkshah5/SZ_compressor/zstd/examples/common.h"
+#include "zstd.h"
+//#include <zstd.h>
 #ifdef _OPENMP
 #include "omp.h"
 #endif
@@ -12,6 +15,17 @@ struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
 struct timeval costStart; /*only used for recording the cost*/
 double totalCost = 0;
+
+//void compress_signs(const char* oname, const void* src, size_t* src_size){
+//	size_t const cBuffSize = ZSTD_compressBound(*src_size);
+//	void* const cBuff = malloc_orDie(cBuffSize);
+
+//	size_t const cSize = ZSTD_compress(cBuff, cBuffSize, src, *src_size, 1);
+
+//	saveFile_orDie(oname, cBuff, cSize);
+
+//	free(cBuff);
+//}
 
 
 void cost_start()
@@ -325,6 +339,10 @@ int main(int argc, char* argv[])
 			size_t length = computeDataLength(r5, r4, r3, r2, r1);
 			int32_t *sign_arr = (int32_t *)malloc(sizeof(int32_t)*((length/32)+1));
 			memset((void*)sign_arr, 0,sizeof(int32_t)*((length/32)+1));
+			size_t cBuffSize;
+			void * cBuff;
+			size_t cSize;
+
 			double newAbsError = 0.0;
 			//printf("length %d %f\n", length,absErrorBound);
 			
@@ -335,11 +353,23 @@ int main(int argc, char* argv[])
 			if (doLogTransform)
 			{
 				SZ_apply_log(data, length, absErrorBound, sign_arr, &newAbsError);
-			//	printf("just after\n");
+				
+				cBuffSize = ZSTD_compressBound(sizeof(int32_t)*((length/32)+1));
+				
+
+				cBuff = (void *) malloc(cBuffSize);
+
+				cSize = ZSTD_compress(cBuff, cBuffSize, (const void*) sign_arr, sizeof(int32_t)*((length/32)+1), 3);
+
 				absErrorBound = (float) newAbsError;
 			}
+
 			bytes = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
+			
+			
+
 			cost_end();
+
 			if(cmpPath == NULL)
 				sprintf(outputFilePath, "%s.szx", inPath);
 			else
@@ -349,12 +379,14 @@ int main(int argc, char* argv[])
 			if (doLogTransform)
 			{
 				sprintf(outputSignPath, "%s.sign", inPath);
-				writeByteData((unsigned char *)sign_arr, sizeof(int32_t)*((length/32)+1), outputSignPath, &status);	
+				writeByteData((unsigned char *)cBuff, cSize, outputSignPath, &status);	
+//				writeByteData((unsigned char *)sign_arr, sizeof(int32_t)*((length/32)+1), outputSignPath, &status);
 			}
 			writeByteData(bytes, outSize, outputFilePath, &status);
 			
 			
 			free(sign_arr);
+			free(cBuff);
 			free(data);
 			if(status != SZ_SCES)
 			{

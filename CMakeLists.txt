@@ -47,7 +47,7 @@ set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=-Wall")
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/szx/include)
-find_package(CUDAToolkit  REQUIRED)
+find_package(CUDAToolkit REQUIRED)
 include_directories("${CUDAToolkit_INCLUDE_DIRS}")
 include_directories (${CUDAToolkit_LIBRARY_ROOT}/samples/common/inc)
 #include_directories (/usr/local/cuda/samples/common/inc)
@@ -76,8 +76,13 @@ include(GNUInstallDirs)
 find_package(PkgConfig)
 pkg_search_module(ZSTD  IMPORTED_TARGET libzstd)
 
+
 #by default pass no 3rd party exports
 set(thirdparty_export "")
+
+add_subdirectory(zstd)
+set(ZSTD_dep zstd)
+list(APPEND thirdparty_export "zstd")
 
 find_package(OpenMP)
 
