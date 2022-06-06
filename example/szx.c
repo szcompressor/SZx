@@ -7,11 +7,25 @@
 //#include "/home/mkshah5/SZ_compressor/zstd/examples/common.h"
 #include "zstd.h"
 #include <sys/stat.h>
-
+#include "../SZ/sz/include/sz.h"
+#include "../SZ/sz/include/sz_double.h"
 //#include <zstd.h>
 #ifdef _OPENMP
 #include "omp.h"
 #endif
+
+#include "../SZ/sz/include/sz.h"
+#include "../SZ/sz/include/CompressElement.h"
+#include "../SZ/sz/include/DynamicByteArray.h"
+#include "../SZ/sz/include/DynamicIntArray.h"
+#include "../SZ/sz/include/TightDataPointStorageD.h"
+#include "../SZ/sz/include/TightDataPointStorageF.h"
+// #include "zlib.h"
+#include "../SZ/sz/include/rw.h"
+// #include "Huffman.h"
+#include "../SZ/sz/include/conf.h"
+#include "../SZ/sz/include/utility.h"
+#include "../SZ/sz/include/exafelSZ.h"
 
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
@@ -108,6 +122,7 @@ int main(int argc, char* argv[])
 	float absErrorBound = 0, relBoundRatio = 0;
 
 	int doLogTransform = 0;
+	int doPredQuant = 0;
 
 	int fastMode = SZx_WITH_BLOCK_FAST_CMPR; //1: non-blocked+serial, 2: blocked+serial, 3: blocked+openmp, 4: blocked+randomaccess+serial
 	size_t r5 = 0;
@@ -128,6 +143,9 @@ int main(int argc, char* argv[])
 			usage();
 		switch (argv[i][1])
 		{
+		case 'Q':
+			doPredQuant = 1;
+			break;
 		case 'L':																// Flag to do log transform, specify relative error bound
 			doLogTransform = 1;
 			break;
@@ -366,8 +384,192 @@ int main(int argc, char* argv[])
 				absErrorBound = (float) newAbsError;
 			}
 
-			bytes = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
+			if (doPredQuant)
+			{
+				// DATA LENGTH IS R1
+				// pwRelBoundRatio the pointwise relative error bound is realPrecision
+				double valueRangeSize = 0, medianValue = 0;
+				size_t dataLength = length;
+				double pwRelBoundRatio = absErrorBound;
+				unsigned char * signs = NULL;
+				bool positive = true;
+				double nearZero = 0.0;
+				double min = 0;
+				double realPrecision = 0;
+				// if(pwRelBoundRatio < 0.000009999)
+				// 	confparams_cpr->accelerate_pw_rel_compression = 0;
+
+				// if(confparams_cpr->errorBoundMode == PW_REL && confparams_cpr->accelerate_pw_rel_compression == 1)
+				// {
+				signs = (unsigned char *) malloc(dataLength);
+				memset(signs, 0, dataLength);
+				min = computeRangeSize_double_MSST19(data, dataLength, &valueRangeSize, &medianValue, signs, &positive, &nearZero);
+				// }
+				double max = min+valueRangeSize;
+				confparams_cpr->dmin = min;
+				confparams_cpr->dmax = max;
+				double pwrErrRatio = pwRelBoundRatio;
+
+				double multiplier = pow((1+pwrErrRatio), -3.0001);
+				for(int i=0; i<dataLength; i++){
+					if(oriData[i] == 0){
+						oriData[i] = nearZero * multiplier;
+					}
+				}
+
+				double median_log = sqrt(fabs(nearZero * max));
+
+				double* oriData = data;
+				#ifdef HAVE_TIMECMPR
+				double* decData = NULL;
+				if(confparams_cpr->szMode == SZ_TEMPORAL_COMPRESSION)
+					decData = (double*)(multisteps->hist_data);
+				#endif
+
+				//struct ClockPoint clockPointBuild;
+				//TimeDurationStart("build", &clockPointBuild);
+				unsigned int quantization_intervals;
+				// if(exe_params->optQuantMode==1)
+				quantization_intervals = optimize_intervals_double_1D_opt_MSST19(oriData, dataLength, realPrecision);
+				// else
+					// quantization_intervals = exe_params->intvCapacity;
+				//updateQuantizationInfo(quantization_intervals);
+				int intvRadius = quantization_intervals/2;
+
+				double* precisionTable = (double*)malloc(sizeof(double) * quantization_intervals);
+				double inv = 2.0-pow(2, -(confparams_cpr->plus_bits));
+				for(int i=0; i<quantization_intervals; i++){
+					double test = pow((1+realPrecision), inv*(i - intvRadius));
+					precisionTable[i] = test;
+				}
+
+				struct TopLevelTableWideInterval levelTable;
+				MultiLevelCacheTableWideIntervalBuild(&levelTable, precisionTable, quantization_intervals, realPrecision, confparams_cpr->plus_bits);
+
+				size_t i;
+				int reqLength;
+				// double medianValue = medianValue_f;
+				//double medianInverse = 1 / medianValue_f;
+				//short radExpo = getExponent_double(realPrecision);
+
+				reqLength = computeReqLength_double_MSST19(realPrecision);
+
+				int* type = (int*) malloc(dataLength*sizeof(int));
+
+				double* spaceFillingValue = oriData; //
+
+				DynamicIntArray *exactLeadNumArray;
+				new_DIA(&exactLeadNumArray, dataLength/2/8);
+
+				DynamicByteArray *exactMidByteArray;
+				new_DBA(&exactMidByteArray, dataLength/2);
+
+				DynamicIntArray *resiBitArray;
+				new_DIA(&resiBitArray, DynArrayInitLen);
+
+				unsigned char preDataBytes[8];
+				intToBytes_bigEndian(preDataBytes, 0);
+
+				int reqBytesLength = reqLength/8;
+				int resiBitsLength = reqLength%8;
+				double last3CmprsData[3] = {0};
+
+				//size_t miss=0, hit=0;
+
+				DoubleValueCompressElement *vce = (DoubleValueCompressElement*)malloc(sizeof(DoubleValueCompressElement));
+				LossyCompressionElement *lce = (LossyCompressionElement*)malloc(sizeof(LossyCompressionElement));
+
+				//add the first data
+				type[0] = 0;
+				compressSingleDoubleValue_MSST19(vce, spaceFillingValue[0], realPrecision, reqLength, reqBytesLength, resiBitsLength);
+				updateLossyCompElement_Double(vce->curBytes, preDataBytes, reqBytesLength, resiBitsLength, lce);
+				memcpy(preDataBytes,vce->curBytes,8);
+				addExactData(exactMidByteArray, exactLeadNumArray, resiBitArray, lce);
+				listAdd_double(last3CmprsData, vce->data);
+				//miss++;
+			#ifdef HAVE_TIMECMPR
+				if(confparams_cpr->szMode == SZ_TEMPORAL_COMPRESSION)
+					decData[0] = vce->data;
+			#endif
+
+				//add the second data
+				type[1] = 0;
+				compressSingleDoubleValue_MSST19(vce, spaceFillingValue[1], realPrecision, reqLength, reqBytesLength, resiBitsLength);
+				updateLossyCompElement_Double(vce->curBytes, preDataBytes, reqBytesLength, resiBitsLength, lce);
+				memcpy(preDataBytes,vce->curBytes,8);
+				addExactData(exactMidByteArray, exactLeadNumArray, resiBitArray, lce);
+				listAdd_double(last3CmprsData, vce->data);
+				//miss++;
+			#ifdef HAVE_TIMECMPR
+				if(confparams_cpr->szMode == SZ_TEMPORAL_COMPRESSION)
+					decData[1] = vce->data;
+			#endif
+				int state;
+				//double checkRadius;
+				double curData;
+				double pred = vce->data;
+
+				double predRelErrRatio;
+
+				const uint64_t top = levelTable.topIndex, base = levelTable.baseIndex;
+				const uint64_t range = top - base;
+				const int bits = levelTable.bits;
+				uint64_t* const buffer = (uint64_t*)&predRelErrRatio;
+				const int shift = 52-bits;
+				uint64_t expoIndex, mantiIndex;
+				uint16_t* tables[range+1];
+				for(int i=0; i<=range; i++){
+					tables[i] = levelTable.subTables[i].table;
+				}
+
+				for(i=2;i<dataLength;i++)
+				{
+					curData = spaceFillingValue[i];
+					predRelErrRatio = curData / pred;
+
+					expoIndex = ((*buffer & 0x7fffffffffffffff) >> 52) - base;
+					if(expoIndex <= range){
+						mantiIndex = (*buffer & 0x000fffffffffffff) >> shift;
+						state = tables[expoIndex][mantiIndex];
+					}else{
+						state = 0;
+					}
+
+					if(state)
+					{
+						type[i] = state;
+						pred *= precisionTable[state];
+						//hit++;
+						continue;
+					}
+
+					//unpredictable data processing
+					type[i] = 0;
+					compressSingleDoubleValue_MSST19(vce, curData, realPrecision, reqLength, reqBytesLength, resiBitsLength);
+					updateLossyCompElement_Double(vce->curBytes, preDataBytes, reqBytesLength, resiBitsLength, lce);
+					memcpy(preDataBytes,vce->curBytes,8);
+					addExactData(exactMidByteArray, exactLeadNumArray, resiBitArray, lce);
+					pred =  vce->data;
+					//miss++;
+			#ifdef HAVE_TIMECMPR
+					if(confparams_cpr->szMode == SZ_TEMPORAL_COMPRESSION)
+						decData[i] = vce->data;
+			#endif
+
+				}//end of for
+
+			//	printf("miss:%d, hit:%d\n", miss, hit);
+
+				size_t exactDataNum = exactLeadNumArray->size;
+
+				bytes = SZ_fast_compress_args(fastMode, SZ_INT64, exactLeadNumArray, &outSize, ABS, 0, relBoundRatio, r5, r4, r3, r2, r1);
+
+	
+			} else{
 			
+
+				bytes = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
+			}
 			
 
 			cost_end();
