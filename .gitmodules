@@ -1,0 +1,3 @@
+[submodule "SZ"]
+	path = SZ
+	url = https://github.com/szcompressor/SZ.git
