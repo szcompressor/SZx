@@ -36,10 +36,10 @@ extern "C" {
 #include "szx_TypeManager.h"
 
 #include "MultiLevelCacheTableWideInterval.h"
-#include "DynamicByteArray.h"
-#include "DynamicIntArray.h"
-#include "Huffman.h"
-#include "TightDataPointStorageD.h"
+// #include "DynamicByteArray.h"
+// #include "DynamicIntArray.h"
+// #include "Huffman.h"
+// #include "TightDataPointStorageD.h"
 
 typedef union lint16
 {

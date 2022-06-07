@@ -15,170 +15,170 @@ double totalCost = 0;
 
 
 
-typedef struct LossyCompressionElement
-{
-	int leadingZeroBytes; //0,1,2,or 3
-	unsigned char integerMidBytes[8];
-	int integerMidBytes_Length; //they are mid_bits actually
-	//char curBytes[8];
-	//int curBytes_Length; //4 for single_precision or 8 for double_precision
-	int resMidBitsLength;
-	int residualMidBits;
-} LossyCompressionElement;
+// typedef struct LossyCompressionElement
+// {
+// 	int leadingZeroBytes; //0,1,2,or 3
+// 	unsigned char integerMidBytes[8];
+// 	int integerMidBytes_Length; //they are mid_bits actually
+// 	//char curBytes[8];
+// 	//int curBytes_Length; //4 for single_precision or 8 for double_precision
+// 	int resMidBitsLength;
+// 	int residualMidBits;
+// } LossyCompressionElement;
 
-typedef struct DoubleValueCompressElement
-{
-	double data;
-	long curValue;
-	unsigned char curBytes[8]; //big_endian
-	int reqBytesLength;
-	int resiBitsLength;
-} DoubleValueCompressElement;
+// typedef struct DoubleValueCompressElement
+// {
+// 	double data;
+// 	long curValue;
+// 	unsigned char curBytes[8]; //big_endian
+// 	int reqBytesLength;
+// 	int resiBitsLength;
+// } DoubleValueCompressElement;
 
-typedef struct DataCompressLogTransform
-{
-	double data;
-	long curValue;
-	unsigned char curBytes[8]; //big_endian
-	int reqBytesLength;
-	int resiBitsLength;
-} DataCompressLogTransform;
+// typedef struct DataCompressLogTransform
+// {
+// 	double data;
+// 	long curValue;
+// 	unsigned char curBytes[8]; //big_endian
+// 	int reqBytesLength;
+// 	int resiBitsLength;
+// } DataCompressLogTransform;
 
-typedef struct TightDataPointStorageD
-{
-	size_t dataSeriesLength;
-	int allSameData;
-	double realPrecision;
-	double medianValue;
-	char reqLength;	
-	char radExpo; //used to compute reqLength based on segmented precisions in "pw_rel_compression"
+// typedef struct TightDataPointStorageD
+// {
+// 	size_t dataSeriesLength;
+// 	int allSameData;
+// 	double realPrecision;
+// 	double medianValue;
+// 	char reqLength;	
+// 	char radExpo; //used to compute reqLength based on segmented precisions in "pw_rel_compression"
 
-	double minLogValue;
+// 	double minLogValue;
 
-	int stateNum;
-	int allNodes;
+// 	int stateNum;
+// 	int allNodes;
 
-	size_t exactDataNum;
-	double reservedValue;
+// 	size_t exactDataNum;
+// 	double reservedValue;
 	
-	unsigned char* rtypeArray;
-	size_t rtypeArray_size;
+// 	unsigned char* rtypeArray;
+// 	size_t rtypeArray_size;
 	
-	unsigned char* typeArray; //its size is dataSeriesLength/4 (or xxx/4+1) 
-	size_t typeArray_size;
+// 	unsigned char* typeArray; //its size is dataSeriesLength/4 (or xxx/4+1) 
+// 	size_t typeArray_size;
 	
-	unsigned char* leadNumArray; //its size is exactDataNum/4 (or exactDataNum/4+1)
-	size_t leadNumArray_size;
+// 	unsigned char* leadNumArray; //its size is exactDataNum/4 (or exactDataNum/4+1)
+// 	size_t leadNumArray_size;
 	
-	unsigned char* exactMidBytes;
-	size_t exactMidBytes_size;
+// 	unsigned char* exactMidBytes;
+// 	size_t exactMidBytes_size;
 	
-	unsigned char* residualMidBits;
-	size_t residualMidBits_size;
+// 	unsigned char* residualMidBits;
+// 	size_t residualMidBits_size;
 	
-	unsigned int intervals;
+// 	unsigned int intervals;
 	
-	unsigned char isLossless; //a mark to denote whether it's lossless compression (1 is yes, 0 is no)
+// 	unsigned char isLossless; //a mark to denote whether it's lossless compression (1 is yes, 0 is no)
 	
-	size_t segment_size;
+// 	size_t segment_size;
 	
-	unsigned char* pwrErrBoundBytes;
-	int pwrErrBoundBytes_size;
+// 	unsigned char* pwrErrBoundBytes;
+// 	int pwrErrBoundBytes_size;
 		
-	unsigned char* raBytes;
-	size_t raBytes_size;
+// 	unsigned char* raBytes;
+// 	size_t raBytes_size;
 	
-	unsigned char plus_bits;
-	unsigned char max_bits;
+// 	unsigned char plus_bits;
+// 	unsigned char max_bits;
 	
-} TightDataPointStorageD;
+// } TightDataPointStorageD;
 
-size_t convertIntArray2ByteArray_fast_dynamic(unsigned char* timeStepType, unsigned char resiBitLength, size_t nbEle, unsigned char **bytes)
-{
-	size_t i = 0, j = 0, k = 0; 
-	int value;
-	DynamicByteArray* dba;
-	new_DBA(&dba, 1024);
-	int tmp = 0, leftMovSteps = 0;
-	for(j = 0;j<nbEle;j++)
-	{
-		if(resiBitLength==0)
-			continue;
-		value = timeStepType[i];
-		leftMovSteps = getLeftMovingSteps(k, resiBitLength);
-		if(leftMovSteps < 0)
-		{
-			tmp = tmp | (value >> (-leftMovSteps));
-			addDBA_Data(dba, (unsigned char)tmp);
-			tmp = 0 | (value << (8+leftMovSteps));
-		}
-		else if(leftMovSteps > 0)
-		{
-			tmp = tmp | (value << leftMovSteps);
-		}
-		else //==0
-		{
-			tmp = tmp | value;
-			addDBA_Data(dba, (unsigned char)tmp);
-			tmp = 0;
-		}
-		i++;
-		k += resiBitLength;
-	}
-	if(leftMovSteps != 0)
-		addDBA_Data(dba, (unsigned char)tmp);
-	convertDBAtoBytes(dba, bytes);
-	size_t size = dba->size;
-	free_DBA(dba);
-	return size;
-}
+// size_t convertIntArray2ByteArray_fast_dynamic(unsigned char* timeStepType, unsigned char resiBitLength, size_t nbEle, unsigned char **bytes)
+// {
+// 	size_t i = 0, j = 0, k = 0; 
+// 	int value;
+// 	DynamicByteArray* dba;
+// 	new_DBA(&dba, 1024);
+// 	int tmp = 0, leftMovSteps = 0;
+// 	for(j = 0;j<nbEle;j++)
+// 	{
+// 		if(resiBitLength==0)
+// 			continue;
+// 		value = timeStepType[i];
+// 		leftMovSteps = getLeftMovingSteps(k, resiBitLength);
+// 		if(leftMovSteps < 0)
+// 		{
+// 			tmp = tmp | (value >> (-leftMovSteps));
+// 			addDBA_Data(dba, (unsigned char)tmp);
+// 			tmp = 0 | (value << (8+leftMovSteps));
+// 		}
+// 		else if(leftMovSteps > 0)
+// 		{
+// 			tmp = tmp | (value << leftMovSteps);
+// 		}
+// 		else //==0
+// 		{
+// 			tmp = tmp | value;
+// 			addDBA_Data(dba, (unsigned char)tmp);
+// 			tmp = 0;
+// 		}
+// 		i++;
+// 		k += resiBitLength;
+// 	}
+// 	if(leftMovSteps != 0)
+// 		addDBA_Data(dba, (unsigned char)tmp);
+// 	convertDBAtoBytes(dba, bytes);
+// 	size_t size = dba->size;
+// 	free_DBA(dba);
+// 	return size;
+// }
 
-void new_TightDataPointStorageD(TightDataPointStorageD **this, 
-		size_t dataSeriesLength, size_t exactDataNum, 
-		int* type, unsigned char* exactMidBytes, size_t exactMidBytes_size,
-		unsigned char* leadNumIntArray,  //leadNumIntArray contains readable numbers....
-		unsigned char* resiMidBits, size_t resiMidBits_size,
-		unsigned char resiBitLength, 
-		double realPrecision, double medianValue, char reqLength, unsigned int intervals,
-		unsigned char* pwrErrBoundBytes, size_t pwrErrBoundBytes_size, unsigned char radExpo) {
-	//int i = 0;
-	*this = (TightDataPointStorageD *)malloc(sizeof(TightDataPointStorageD));
-	(*this)->allSameData = 0;
-	(*this)->realPrecision = realPrecision;
-	(*this)->medianValue = medianValue;
-	(*this)->reqLength = reqLength;
+// void new_TightDataPointStorageD(TightDataPointStorageD **this, 
+// 		size_t dataSeriesLength, size_t exactDataNum, 
+// 		int* type, unsigned char* exactMidBytes, size_t exactMidBytes_size,
+// 		unsigned char* leadNumIntArray,  //leadNumIntArray contains readable numbers....
+// 		unsigned char* resiMidBits, size_t resiMidBits_size,
+// 		unsigned char resiBitLength, 
+// 		double realPrecision, double medianValue, char reqLength, unsigned int intervals,
+// 		unsigned char* pwrErrBoundBytes, size_t pwrErrBoundBytes_size, unsigned char radExpo) {
+// 	//int i = 0;
+// 	*this = (TightDataPointStorageD *)malloc(sizeof(TightDataPointStorageD));
+// 	(*this)->allSameData = 0;
+// 	(*this)->realPrecision = realPrecision;
+// 	(*this)->medianValue = medianValue;
+// 	(*this)->reqLength = reqLength;
 
-	(*this)->dataSeriesLength = dataSeriesLength;
-	(*this)->exactDataNum = exactDataNum;
+// 	(*this)->dataSeriesLength = dataSeriesLength;
+// 	(*this)->exactDataNum = exactDataNum;
 
-	(*this)->rtypeArray = NULL;
-	(*this)->rtypeArray_size = 0;
+// 	(*this)->rtypeArray = NULL;
+// 	(*this)->rtypeArray_size = 0;
 
-	int stateNum = 2*intervals;
+// 	int stateNum = 2*intervals;
 
-	&(*this)->typeArray = SZ_fast_compress_args(2, SZ_DOUBLE, (void *)type, &(*this)->typeArray_size, ABS, 0, 0, 0, 0, 0, 0, dataSeriesLength);
+// 	&(*this)->typeArray = SZ_fast_compress_args(2, SZ_DOUBLE, (void *)type, &(*this)->typeArray_size, ABS, 0, 0, 0, 0, 0, 0, dataSeriesLength);
 
 		
-	(*this)->exactMidBytes = exactMidBytes;
-	(*this)->exactMidBytes_size = exactMidBytes_size;
+// 	(*this)->exactMidBytes = exactMidBytes;
+// 	(*this)->exactMidBytes_size = exactMidBytes_size;
 
-	(*this)->leadNumArray_size = convertIntArray2ByteArray_fast_2b(leadNumIntArray, exactDataNum, &((*this)->leadNumArray));
+// 	(*this)->leadNumArray_size = convertIntArray2ByteArray_fast_2b(leadNumIntArray, exactDataNum, &((*this)->leadNumArray));
 
-	(*this)->residualMidBits_size = convertIntArray2ByteArray_fast_dynamic(resiMidBits, resiBitLength, exactDataNum, &((*this)->residualMidBits));
+// 	(*this)->residualMidBits_size = convertIntArray2ByteArray_fast_dynamic(resiMidBits, resiBitLength, exactDataNum, &((*this)->residualMidBits));
 	
-	(*this)->intervals = intervals;
+// 	(*this)->intervals = intervals;
 	
-	(*this)->isLossless = 0;
+// 	(*this)->isLossless = 0;
 	
-	if(confparams_cpr->errorBoundMode>=PW_REL)
-		(*this)->pwrErrBoundBytes = pwrErrBoundBytes;
-	else
-		(*this)->pwrErrBoundBytes = NULL;
+// 	if(confparams_cpr->errorBoundMode>=PW_REL)
+// 		(*this)->pwrErrBoundBytes = pwrErrBoundBytes;
+// 	else
+// 		(*this)->pwrErrBoundBytes = NULL;
 		
-	(*this)->radExpo = radExpo;
+// 	(*this)->radExpo = radExpo;
 	
-	(*this)->pwrErrBoundBytes_size = pwrErrBoundBytes_size;
-}
+// 	(*this)->pwrErrBoundBytes_size = pwrErrBoundBytes_size;
+// }
 
 inline void longToBytes_bigEndian(unsigned char *b, unsigned long num) 
 {
@@ -227,40 +227,40 @@ int compIdenticalLeadingBytesCount_double(unsigned char* preBytes, unsigned char
 				// (char)reqLength
 				// unsigned int quantization_intervals
 
-unsigned char* get_bytes_for_compress( size_t dataLength,
-				size_t exactDataNum,
-				int* type,
-				unsigned char* exactMidByteArrayarray,
-				size_t exactMidByteArraysize,
-				unsigned char* exactLeadNumArrayarray,
-				unsigned char* resiBitArrayarray,
-				size_t resiBitArraysize,
-				int resiBitsLength,
-				double realPrecision,
-				double medianValue_1,
-				(char)reqLength,
-				unsigned int quantization_intervals){
-	unsigned char* retBytes = (unsigned char*)malloc(sizeof(double)*(10)+sizeof(unsigned char)*(exactMidByteArraysize+resiBitArraysize));
-}
+// unsigned char* get_bytes_for_compress( size_t dataLength,
+// 				size_t exactDataNum,
+// 				int* type,
+// 				unsigned char* exactMidByteArrayarray,
+// 				size_t exactMidByteArraysize,
+// 				unsigned char* exactLeadNumArrayarray,
+// 				unsigned char* resiBitArrayarray,
+// 				size_t resiBitArraysize,
+// 				int resiBitsLength,
+// 				double realPrecision,
+// 				double medianValue_1,
+// 				(char)reqLength,
+// 				unsigned int quantization_intervals){
+// 	unsigned char* retBytes = (unsigned char*)malloc(sizeof(double)*(10)+sizeof(unsigned char)*(exactMidByteArraysize+resiBitArraysize));
+// }
 
-inline void addExactData(DynamicByteArray *exactMidByteArray, DynamicIntArray *exactLeadNumArray,
-		DynamicIntArray *resiBitArray, LossyCompressionElement *lce)
-{
-	int i;
-	int leadByteLength = lce->leadingZeroBytes;
-	addDIA_Data(exactLeadNumArray, leadByteLength);
-	unsigned char* intMidBytes = lce->integerMidBytes;
-	int integerMidBytesLength = lce->integerMidBytes_Length;
-	int resMidBitsLength = lce->resMidBitsLength;
-	if(intMidBytes!=NULL||resMidBitsLength!=0)
-	{
-		if(intMidBytes!=NULL)
-			for(i = 0;i<integerMidBytesLength;i++)
-				addDBA_Data(exactMidByteArray, intMidBytes[i]);
-		if(resMidBitsLength!=0)
-			addDIA_Data(resiBitArray, lce->residualMidBits);
-	}
-}
+// inline void addExactData(DynamicByteArray *exactMidByteArray, DynamicIntArray *exactLeadNumArray,
+// 		DynamicIntArray *resiBitArray, LossyCompressionElement *lce)
+// {
+// 	int i;
+// 	int leadByteLength = lce->leadingZeroBytes;
+// 	addDIA_Data(exactLeadNumArray, leadByteLength);
+// 	unsigned char* intMidBytes = lce->integerMidBytes;
+// 	int integerMidBytesLength = lce->integerMidBytes_Length;
+// 	int resMidBitsLength = lce->resMidBitsLength;
+// 	if(intMidBytes!=NULL||resMidBitsLength!=0)
+// 	{
+// 		if(intMidBytes!=NULL)
+// 			for(i = 0;i<integerMidBytesLength;i++)
+// 				addDBA_Data(exactMidByteArray, intMidBytes[i]);
+// 		if(resMidBitsLength!=0)
+// 			addDIA_Data(resiBitArray, lce->residualMidBits);
+// 	}
+// }
 
 void updateLossyCompElement_Double(unsigned char* curBytes, unsigned char* preBytes, 
 		int reqBytesLength, int resiBitsLength,  LossyCompressionElement *lce)
