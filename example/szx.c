@@ -9,6 +9,9 @@
 #endif
 
 #define bool _Bool
+#define true 1
+#define false 0
+#define MAXRANGERADIUS 65536
 
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
@@ -264,30 +267,30 @@ int compIdenticalLeadingBytesCount_double(unsigned char* preBytes, unsigned char
 // 	}
 // }
 
-void updateLossyCompElement_Double(unsigned char* curBytes, unsigned char* preBytes, 
-		int reqBytesLength, int resiBitsLength,  LossyCompressionElement *lce)
-{
-	int resiIndex, intMidBytes_Length = 0;
-	int leadingNum = compIdenticalLeadingBytesCount_double(preBytes, curBytes); //in fact, float is enough for both single-precision and double-precisiond ata.
-	int fromByteIndex = leadingNum;
-	int toByteIndex = reqBytesLength; //later on: should use "< toByteIndex" to tarverse....
-	if(fromByteIndex < toByteIndex)
-	{
-		intMidBytes_Length = reqBytesLength - leadingNum;
-		memcpy(lce->integerMidBytes, &(curBytes[fromByteIndex]), intMidBytes_Length);
-	}
-	int resiBits = 0;
-	if(resiBitsLength!=0)
-	{
-		resiIndex = reqBytesLength;
-		if(resiIndex < 8)
-			resiBits = (curBytes[resiIndex] & 0xFF) >> (8-resiBitsLength);
-	}
-	lce->leadingZeroBytes = leadingNum;
-	lce->integerMidBytes_Length = intMidBytes_Length;
-	lce->resMidBitsLength = resiBitsLength;
-	lce->residualMidBits = resiBits;
-}
+// void updateLossyCompElement_Double(unsigned char* curBytes, unsigned char* preBytes, 
+// 		int reqBytesLength, int resiBitsLength,  LossyCompressionElement *lce)
+// {
+// 	int resiIndex, intMidBytes_Length = 0;
+// 	int leadingNum = compIdenticalLeadingBytesCount_double(preBytes, curBytes); //in fact, float is enough for both single-precision and double-precisiond ata.
+// 	int fromByteIndex = leadingNum;
+// 	int toByteIndex = reqBytesLength; //later on: should use "< toByteIndex" to tarverse....
+// 	if(fromByteIndex < toByteIndex)
+// 	{
+// 		intMidBytes_Length = reqBytesLength - leadingNum;
+// 		memcpy(lce->integerMidBytes, &(curBytes[fromByteIndex]), intMidBytes_Length);
+// 	}
+// 	int resiBits = 0;
+// 	if(resiBitsLength!=0)
+// 	{
+// 		resiIndex = reqBytesLength;
+// 		if(resiIndex < 8)
+// 			resiBits = (curBytes[resiIndex] & 0xFF) >> (8-resiBitsLength);
+// 	}
+// 	lce->leadingZeroBytes = leadingNum;
+// 	lce->integerMidBytes_Length = intMidBytes_Length;
+// 	lce->resMidBitsLength = resiBitsLength;
+// 	lce->residualMidBits = resiBits;
+// }
 
 // void compressSingleDoubleValue_MSST19(DoubleValueCompressElement *vce, double tgtValue, double precision, int reqLength, int reqBytesLength, int resiBitsLength)
 // {
@@ -310,6 +313,20 @@ void updateLossyCompElement_Double(unsigned char* curBytes, unsigned char* preBy
 //     vce->reqBytesLength = reqBytesLength;
 //     vce->resiBitsLength = resiBitsLength;
 // }
+
+inline short getPrecisionReqLength_double(double precision)
+{
+	ldouble lbuf;
+	lbuf.value = precision;
+	long lvalue = lbuf.lvalue;
+	
+	int expValue = (int)((lvalue & 0x7FF0000000000000) >> 52);
+	expValue -= 1023;
+//	unsigned char the1stManBit = (unsigned char)((lvalue & 0x0008000000000000) >> 51);
+//	if(the1stManBit==1)
+//		expValue--;
+	return (short)expValue;
+}
 
 inline void intToBytes_bigEndian(unsigned char *b, unsigned int num)
 {
@@ -347,8 +364,8 @@ unsigned int optimize_intervals_double_1D_opt_MSST19(double *oriData, size_t dat
 	size_t i = 0, radiusIndex;
 	double pred_value = 0;
 	double pred_err;
-	size_t *intervals = (size_t*)malloc(confparams_cpr->maxRangeRadius*sizeof(size_t));
-	memset(intervals, 0, confparams_cpr->maxRangeRadius*sizeof(size_t));
+	size_t *intervals = (size_t*)malloc(MAXRANGERADIUS*sizeof(size_t));
+	memset(intervals, 0, MAXRANGERADIUS*sizeof(size_t));
 	size_t totalSampleSize = 0;//dataLength/confparams_cpr->sampleDistance;
 
 	double * data_pos = oriData + 2;
@@ -364,8 +381,8 @@ unsigned int optimize_intervals_double_1D_opt_MSST19(double *oriData, size_t dat
 		pred_value = data_pos[-1];
 		pred_err = fabs((double)*data_pos / pred_value);
 		radiusIndex = (unsigned long)fabs(log2(pred_err)/divider+0.5);
-		if(radiusIndex>=confparams_cpr->maxRangeRadius)
-			radiusIndex = confparams_cpr->maxRangeRadius - 1;
+		if(radiusIndex>=MAXRANGERADIUS)
+			radiusIndex = MAXRANGERADIUS - 1;
 		intervals[radiusIndex]++;
 
 		data_pos += confparams_cpr->sampleDistance;
@@ -373,14 +390,14 @@ unsigned int optimize_intervals_double_1D_opt_MSST19(double *oriData, size_t dat
 	//compute the appropriate number
 	size_t targetCount = totalSampleSize*confparams_cpr->predThreshold;
 	size_t sum = 0;
-	for(i=0;i<confparams_cpr->maxRangeRadius;i++)
+	for(i=0;i<MAXRANGERADIUS;i++)
 	{
 		sum += intervals[i];
 		if(sum>targetCount)
 			break;
 	}
-	if(i>=confparams_cpr->maxRangeRadius)
-		i = confparams_cpr->maxRangeRadius-1;
+	if(i>=MAXRANGERADIUS)
+		i = MAXRANGERADIUS-1;
 
 	unsigned int accIntervals = 2*(i+1);
 	unsigned int powerOf2 = roundUpToPowerOf2(accIntervals);
@@ -843,11 +860,13 @@ int main(int argc, char* argv[])
 
 				double *unpredData = (double *)malloc(sizeof(double)*unpred_count);
 
-				for (size_t i = 0; i < unpred_count; i++)
+				int unpred_ind = 0;
+				for (size_t i = 0; i < dataLength; i++)
 				{
 					if (type[i] == 0)
 					{
-						unpredData = spaceFillingValue[i];
+						unpredData[unpred_ind] = spaceFillingValue[i];
+						unpred_ind++;
 					}
 					
 				}
