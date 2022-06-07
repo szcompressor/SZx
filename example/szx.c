@@ -8,6 +8,8 @@
 #include "omp.h"
 #endif
 
+#define bool _Bool
+
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
 struct timeval costStart; /*only used for recording the cost*/
@@ -287,27 +289,27 @@ void updateLossyCompElement_Double(unsigned char* curBytes, unsigned char* preBy
 	lce->residualMidBits = resiBits;
 }
 
-void compressSingleDoubleValue_MSST19(DoubleValueCompressElement *vce, double tgtValue, double precision, int reqLength, int reqBytesLength, int resiBitsLength)
-{
-    ldouble lfBuf;
-    lfBuf.value = tgtValue;
+// void compressSingleDoubleValue_MSST19(DoubleValueCompressElement *vce, double tgtValue, double precision, int reqLength, int reqBytesLength, int resiBitsLength)
+// {
+//     ldouble lfBuf;
+//     lfBuf.value = tgtValue;
 
-    int ignBytesLength = 64 - reqLength;
-    if(ignBytesLength<0)
-        ignBytesLength = 0;
+//     int ignBytesLength = 64 - reqLength;
+//     if(ignBytesLength<0)
+//         ignBytesLength = 0;
 
-    long tmp_long = lfBuf.lvalue;
-    longToBytes_bigEndian(vce->curBytes, tmp_long);
+//     long tmp_long = lfBuf.lvalue;
+//     longToBytes_bigEndian(vce->curBytes, tmp_long);
 
-    lfBuf.lvalue = (lfBuf.lvalue >> ignBytesLength) << ignBytesLength;
+//     lfBuf.lvalue = (lfBuf.lvalue >> ignBytesLength) << ignBytesLength;
 
-    //float tmpValue = lfBuf.value;
+//     //float tmpValue = lfBuf.value;
 
-    vce->data = lfBuf.value;
-    vce->curValue = tmp_long;
-    vce->reqBytesLength = reqBytesLength;
-    vce->resiBitsLength = resiBitsLength;
-}
+//     vce->data = lfBuf.value;
+//     vce->curValue = tmp_long;
+//     vce->reqBytesLength = reqBytesLength;
+//     vce->resiBitsLength = resiBitsLength;
+// }
 
 inline void intToBytes_bigEndian(unsigned char *b, unsigned int num)
 {
@@ -736,7 +738,7 @@ int main(int argc, char* argv[])
 				
 
 				int plus_bits = 3;
-				double* oriData = (double *) data;
+				// double* oriData = (double *) data;
 				double valueRangeSize = 0, medianValue = 0;
 
 				double pwrErrRatio = (double) absErrorBound;
