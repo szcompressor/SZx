@@ -59,17 +59,17 @@ inline void listAdd_double(double last3CmprsData[3], double value)
 	last3CmprsData[0] = value;
 }
 
-int compIdenticalLeadingBytesCount_double(unsigned char* preBytes, unsigned char* curBytes)
-{
-	int i, n = 0;
-	for(i=0;i<8;i++)
-		if(preBytes[i]==curBytes[i])
-			n++;
-		else
-			break;
-	if(n>3) n = 3;
-	return n;
-}
+// int compIdenticalLeadingBytesCount_double(unsigned char* preBytes, unsigned char* curBytes)
+// {
+// 	int i, n = 0;
+// 	for(i=0;i<8;i++)
+// 		if(preBytes[i]==curBytes[i])
+// 			n++;
+// 		else
+// 			break;
+// 	if(n>3) n = 3;
+// 	return n;
+// }
 
 void freeTopLevelTableWideInterval(struct TopLevelTableWideInterval* topTable)
 {
