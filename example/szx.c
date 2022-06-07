@@ -22,170 +22,21 @@ double totalCost = 0;
 
 
 
-// typedef struct LossyCompressionElement
-// {
-// 	int leadingZeroBytes; //0,1,2,or 3
-// 	unsigned char integerMidBytes[8];
-// 	int integerMidBytes_Length; //they are mid_bits actually
-// 	//char curBytes[8];
-// 	//int curBytes_Length; //4 for single_precision or 8 for double_precision
-// 	int resMidBitsLength;
-// 	int residualMidBits;
-// } LossyCompressionElement;
+typedef struct SubLevelTableWideInterval{
+    uint64_t baseIndex;
+    uint64_t topIndex;
+    uint16_t* table;
+    uint16_t expoIndex;
+} SubLevelTableWideInterval;
 
-// typedef struct DoubleValueCompressElement
-// {
-// 	double data;
-// 	long curValue;
-// 	unsigned char curBytes[8]; //big_endian
-// 	int reqBytesLength;
-// 	int resiBitsLength;
-// } DoubleValueCompressElement;
-
-// typedef struct DataCompressLogTransform
-// {
-// 	double data;
-// 	long curValue;
-// 	unsigned char curBytes[8]; //big_endian
-// 	int reqBytesLength;
-// 	int resiBitsLength;
-// } DataCompressLogTransform;
-
-// typedef struct TightDataPointStorageD
-// {
-// 	size_t dataSeriesLength;
-// 	int allSameData;
-// 	double realPrecision;
-// 	double medianValue;
-// 	char reqLength;	
-// 	char radExpo; //used to compute reqLength based on segmented precisions in "pw_rel_compression"
-
-// 	double minLogValue;
-
-// 	int stateNum;
-// 	int allNodes;
-
-// 	size_t exactDataNum;
-// 	double reservedValue;
-	
-// 	unsigned char* rtypeArray;
-// 	size_t rtypeArray_size;
-	
-// 	unsigned char* typeArray; //its size is dataSeriesLength/4 (or xxx/4+1) 
-// 	size_t typeArray_size;
-	
-// 	unsigned char* leadNumArray; //its size is exactDataNum/4 (or exactDataNum/4+1)
-// 	size_t leadNumArray_size;
-	
-// 	unsigned char* exactMidBytes;
-// 	size_t exactMidBytes_size;
-	
-// 	unsigned char* residualMidBits;
-// 	size_t residualMidBits_size;
-	
-// 	unsigned int intervals;
-	
-// 	unsigned char isLossless; //a mark to denote whether it's lossless compression (1 is yes, 0 is no)
-	
-// 	size_t segment_size;
-	
-// 	unsigned char* pwrErrBoundBytes;
-// 	int pwrErrBoundBytes_size;
-		
-// 	unsigned char* raBytes;
-// 	size_t raBytes_size;
-	
-// 	unsigned char plus_bits;
-// 	unsigned char max_bits;
-	
-// } TightDataPointStorageD;
-
-// size_t convertIntArray2ByteArray_fast_dynamic(unsigned char* timeStepType, unsigned char resiBitLength, size_t nbEle, unsigned char **bytes)
-// {
-// 	size_t i = 0, j = 0, k = 0; 
-// 	int value;
-// 	DynamicByteArray* dba;
-// 	new_DBA(&dba, 1024);
-// 	int tmp = 0, leftMovSteps = 0;
-// 	for(j = 0;j<nbEle;j++)
-// 	{
-// 		if(resiBitLength==0)
-// 			continue;
-// 		value = timeStepType[i];
-// 		leftMovSteps = getLeftMovingSteps(k, resiBitLength);
-// 		if(leftMovSteps < 0)
-// 		{
-// 			tmp = tmp | (value >> (-leftMovSteps));
-// 			addDBA_Data(dba, (unsigned char)tmp);
-// 			tmp = 0 | (value << (8+leftMovSteps));
-// 		}
-// 		else if(leftMovSteps > 0)
-// 		{
-// 			tmp = tmp | (value << leftMovSteps);
-// 		}
-// 		else //==0
-// 		{
-// 			tmp = tmp | value;
-// 			addDBA_Data(dba, (unsigned char)tmp);
-// 			tmp = 0;
-// 		}
-// 		i++;
-// 		k += resiBitLength;
-// 	}
-// 	if(leftMovSteps != 0)
-// 		addDBA_Data(dba, (unsigned char)tmp);
-// 	convertDBAtoBytes(dba, bytes);
-// 	size_t size = dba->size;
-// 	free_DBA(dba);
-// 	return size;
-// }
-
-// void new_TightDataPointStorageD(TightDataPointStorageD **this, 
-// 		size_t dataSeriesLength, size_t exactDataNum, 
-// 		int* type, unsigned char* exactMidBytes, size_t exactMidBytes_size,
-// 		unsigned char* leadNumIntArray,  //leadNumIntArray contains readable numbers....
-// 		unsigned char* resiMidBits, size_t resiMidBits_size,
-// 		unsigned char resiBitLength, 
-// 		double realPrecision, double medianValue, char reqLength, unsigned int intervals,
-// 		unsigned char* pwrErrBoundBytes, size_t pwrErrBoundBytes_size, unsigned char radExpo) {
-// 	//int i = 0;
-// 	*this = (TightDataPointStorageD *)malloc(sizeof(TightDataPointStorageD));
-// 	(*this)->allSameData = 0;
-// 	(*this)->realPrecision = realPrecision;
-// 	(*this)->medianValue = medianValue;
-// 	(*this)->reqLength = reqLength;
-
-// 	(*this)->dataSeriesLength = dataSeriesLength;
-// 	(*this)->exactDataNum = exactDataNum;
-
-// 	(*this)->rtypeArray = NULL;
-// 	(*this)->rtypeArray_size = 0;
-
-// 	int stateNum = 2*intervals;
-
-// 	&(*this)->typeArray = SZ_fast_compress_args(2, SZ_DOUBLE, (void *)type, &(*this)->typeArray_size, ABS, 0, 0, 0, 0, 0, 0, dataSeriesLength);
-
-		
-// 	(*this)->exactMidBytes = exactMidBytes;
-// 	(*this)->exactMidBytes_size = exactMidBytes_size;
-
-// 	(*this)->leadNumArray_size = convertIntArray2ByteArray_fast_2b(leadNumIntArray, exactDataNum, &((*this)->leadNumArray));
-
-// 	(*this)->residualMidBits_size = convertIntArray2ByteArray_fast_dynamic(resiMidBits, resiBitLength, exactDataNum, &((*this)->residualMidBits));
-	
-// 	(*this)->intervals = intervals;
-	
-// 	(*this)->isLossless = 0;
-	
-// 	if(confparams_cpr->errorBoundMode>=PW_REL)
-// 		(*this)->pwrErrBoundBytes = pwrErrBoundBytes;
-// 	else
-// 		(*this)->pwrErrBoundBytes = NULL;
-		
-// 	(*this)->radExpo = radExpo;
-	
-// 	(*this)->pwrErrBoundBytes_size = pwrErrBoundBytes_size;
-// }
+typedef struct TopLevelTableWideInterval{
+    uint16_t bits;
+    uint16_t baseIndex;
+    uint16_t topIndex;
+    struct SubLevelTableWideInterval* subTables;
+    double bottomBoundary;
+    double topBoundary;
+} TopLevelTableWideInterval;
 
 inline void longToBytes_bigEndian(unsigned char *b, unsigned long num) 
 {
@@ -220,101 +71,118 @@ int compIdenticalLeadingBytesCount_double(unsigned char* preBytes, unsigned char
 	return n;
 }
 
-// size_t dataLength
-				// size_t exactDataNum
-				// int* type
-				// unsigned char* exactMidByteArray->array
-				// size_t exactMidByteArray->size
-				// unsigned char* exactLeadNumArray->array
-				// unsigned char* resiBitArray->array
-				// size_t resiBitArray->size,
-				// int resiBitsLength,
-				// double realPrecision,
-				// double medianValue_1
-				// (char)reqLength
-				// unsigned int quantization_intervals
+void freeTopLevelTableWideInterval(struct TopLevelTableWideInterval* topTable)
+{
+	for(int i=topTable->topIndex-topTable->baseIndex; i>=0; i--)
+	{
+		struct SubLevelTableWideInterval* processingSubTable = &topTable->subTables[i];
+		free(processingSubTable->table);
+	}
+	free(topTable->subTables);
+}
 
-// unsigned char* get_bytes_for_compress( size_t dataLength,
-// 				size_t exactDataNum,
-// 				int* type,
-// 				unsigned char* exactMidByteArrayarray,
-// 				size_t exactMidByteArraysize,
-// 				unsigned char* exactLeadNumArrayarray,
-// 				unsigned char* resiBitArrayarray,
-// 				size_t resiBitArraysize,
-// 				int resiBitsLength,
-// 				double realPrecision,
-// 				double medianValue_1,
-// 				(char)reqLength,
-// 				unsigned int quantization_intervals){
-// 	unsigned char* retBytes = (unsigned char*)malloc(sizeof(double)*(10)+sizeof(unsigned char)*(exactMidByteArraysize+resiBitArraysize));
-// }
+uint16_t MLCTWI_GetExpoIndex(double value){
+    uint64_t* ptr = (uint64_t*)&value;
+    return (*ptr) >> 52;
+}
 
-// inline void addExactData(DynamicByteArray *exactMidByteArray, DynamicIntArray *exactLeadNumArray,
-// 		DynamicIntArray *resiBitArray, LossyCompressionElement *lce)
-// {
-// 	int i;
-// 	int leadByteLength = lce->leadingZeroBytes;
-// 	addDIA_Data(exactLeadNumArray, leadByteLength);
-// 	unsigned char* intMidBytes = lce->integerMidBytes;
-// 	int integerMidBytesLength = lce->integerMidBytes_Length;
-// 	int resMidBitsLength = lce->resMidBitsLength;
-// 	if(intMidBytes!=NULL||resMidBitsLength!=0)
-// 	{
-// 		if(intMidBytes!=NULL)
-// 			for(i = 0;i<integerMidBytesLength;i++)
-// 				addDBA_Data(exactMidByteArray, intMidBytes[i]);
-// 		if(resMidBitsLength!=0)
-// 			addDIA_Data(resiBitArray, lce->residualMidBits);
-// 	}
-// }
+uint16_t MLCTWI_GetRequiredBits(double precision){
+    uint64_t* ptr = (uint64_t*)&precision;
+    return -(((*ptr) >> 52) - 1023);
+}
 
-// void updateLossyCompElement_Double(unsigned char* curBytes, unsigned char* preBytes, 
-// 		int reqBytesLength, int resiBitsLength,  LossyCompressionElement *lce)
-// {
-// 	int resiIndex, intMidBytes_Length = 0;
-// 	int leadingNum = compIdenticalLeadingBytesCount_double(preBytes, curBytes); //in fact, float is enough for both single-precision and double-precisiond ata.
-// 	int fromByteIndex = leadingNum;
-// 	int toByteIndex = reqBytesLength; //later on: should use "< toByteIndex" to tarverse....
-// 	if(fromByteIndex < toByteIndex)
-// 	{
-// 		intMidBytes_Length = reqBytesLength - leadingNum;
-// 		memcpy(lce->integerMidBytes, &(curBytes[fromByteIndex]), intMidBytes_Length);
-// 	}
-// 	int resiBits = 0;
-// 	if(resiBitsLength!=0)
-// 	{
-// 		resiIndex = reqBytesLength;
-// 		if(resiIndex < 8)
-// 			resiBits = (curBytes[resiIndex] & 0xFF) >> (8-resiBitsLength);
-// 	}
-// 	lce->leadingZeroBytes = leadingNum;
-// 	lce->integerMidBytes_Length = intMidBytes_Length;
-// 	lce->resMidBitsLength = resiBitsLength;
-// 	lce->residualMidBits = resiBits;
-// }
+uint64_t MLCTWI_GetMantiIndex(double value, int bits){
+    uint64_t* ptr = (uint64_t*)&value;
+    (*ptr) = (*ptr) << 12 >> 12;
+    int shift = 64 - 12 - bits;
+    if(shift > 0){
+        return (*ptr) >> shift;
+    }else{
+        return (*ptr);
+    }
+}
 
-// void compressSingleDoubleValue_MSST19(DoubleValueCompressElement *vce, double tgtValue, double precision, int reqLength, int reqBytesLength, int resiBitsLength)
-// {
-//     ldouble lfBuf;
-//     lfBuf.value = tgtValue;
+double MLTCWI_RebuildDouble(uint16_t expo, uint64_t manti, int bits){
+    double result = 0;
+    uint64_t *ptr = (uint64_t*)&result;
+    *ptr = expo;
+    (*ptr) = (*ptr) << 52;
+    (*ptr) += (manti << (52-bits));
+    return result;
+}
 
-//     int ignBytesLength = 64 - reqLength;
-//     if(ignBytesLength<0)
-//         ignBytesLength = 0;
+void MultiLevelCacheTableWideIntervalBuild(struct TopLevelTableWideInterval* topTable, double* precisionTable, int count, double precision, int plus_bits){
+    uint16_t bits = MLCTWI_GetRequiredBits(precision) + plus_bits;
+    topTable->bits = bits;
+    topTable->bottomBoundary = precisionTable[1]/(1+precision);
+    topTable->topBoundary = precisionTable[count-1]/(1-precision);
+    topTable->baseIndex = MLCTWI_GetExpoIndex(topTable->bottomBoundary);
+    topTable->topIndex = MLCTWI_GetExpoIndex(topTable->topBoundary);
+    int subTableCount = topTable->topIndex - topTable->baseIndex + 1;
+    topTable->subTables = (struct SubLevelTableWideInterval*)malloc(sizeof(struct SubLevelTableWideInterval) * subTableCount);
+    memset(topTable->subTables, 0, sizeof(struct SubLevelTableWideInterval) * subTableCount);
 
-//     long tmp_long = lfBuf.lvalue;
-//     longToBytes_bigEndian(vce->curBytes, tmp_long);
+    for(int i=topTable->topIndex-topTable->baseIndex; i>=0; i--){
+        struct SubLevelTableWideInterval* processingSubTable = &topTable->subTables[i];
 
-//     lfBuf.lvalue = (lfBuf.lvalue >> ignBytesLength) << ignBytesLength;
+        uint32_t maxIndex = 0;
+        for(int j=0; j<bits; j++){
+            maxIndex += 1 << j;
+        }
+        processingSubTable->topIndex = maxIndex;
+        processingSubTable->baseIndex = 0;
 
-//     //float tmpValue = lfBuf.value;
+        uint64_t subTableLength = processingSubTable->topIndex - processingSubTable-> baseIndex+ 1;
+        processingSubTable->table = (uint16_t*)malloc(sizeof(uint16_t) * subTableLength);
+        memset(processingSubTable->table, 0, sizeof(uint16_t) * subTableLength);
+        processingSubTable->expoIndex = topTable->baseIndex + i;
+    }
 
-//     vce->data = lfBuf.value;
-//     vce->curValue = tmp_long;
-//     vce->reqBytesLength = reqBytesLength;
-//     vce->resiBitsLength = resiBitsLength;
-// }
+
+    uint32_t index = 0;
+    bool flag = false;
+    for(uint16_t i = 0; i<=topTable->topIndex-topTable->baseIndex; i++){
+        struct SubLevelTableWideInterval* processingSubTable = &topTable->subTables[i];
+        uint16_t expoIndex = i+topTable->baseIndex;
+        for(uint32_t j = 0; j<=processingSubTable->topIndex - processingSubTable->baseIndex; j++){
+            uint64_t mantiIndex = j + processingSubTable->baseIndex;
+            double sampleBottom = MLTCWI_RebuildDouble(expoIndex, mantiIndex, topTable->bits);
+            double sampleTop = MLTCWI_RebuildDouble(expoIndex, mantiIndex+1, topTable->bits);
+            double bottomBoundary = precisionTable[index] / (1+precision);
+            double topBoundary = precisionTable[index] / (1-precision);
+            if(sampleTop < topBoundary && sampleBottom > bottomBoundary){
+                processingSubTable->table[j] = index;
+                flag = true;
+            }else{
+                if(flag && index < count-1){
+                    index++;
+                    processingSubTable->table[j] = index;
+                }else{
+                    processingSubTable->table[j] = 0;
+                }
+            }
+        }
+    }
+
+}
+
+uint32_t MultiLevelCacheTableWideIntervalGetIndex(double value, struct TopLevelTableWideInterval* topLevelTable){
+    uint16_t expoIndex = MLCTWI_GetExpoIndex(value);
+    if(expoIndex <= topLevelTable->topIndex && expoIndex >= topLevelTable->baseIndex){
+        struct SubLevelTableWideInterval* subLevelTable = &topLevelTable->subTables[expoIndex-topLevelTable->baseIndex];
+        uint64_t mantiIndex = MLCTWI_GetMantiIndex(value, topLevelTable->bits);
+        return subLevelTable->table[mantiIndex - subLevelTable->baseIndex];
+
+    }
+    return 0;
+}
+
+void MultiLevelCacheTableWideIntervalFree(struct TopLevelTableWideInterval* table){
+    for(int i=0; i<table->topIndex - table->baseIndex + 1; i++){
+        free(table->subTables[i].table);
+    }
+    free(table->subTables);
+}
 
 inline short getPrecisionReqLength_double(double precision)
 {
