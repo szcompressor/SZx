@@ -12,6 +12,8 @@
 #define true 1
 #define false 0
 #define MAXRANGERADIUS 65536
+#define SAMPLEDISTANCE 64
+#define PREDTHRESHOLD 0.1
 
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
@@ -373,7 +375,7 @@ unsigned int optimize_intervals_double_1D_opt_MSST19(double *oriData, size_t dat
 	int tempIndex = 0;
 	while(data_pos - oriData < dataLength){
 		if(*data_pos == 0){
-        		data_pos += confparams_cpr->sampleDistance;
+        		data_pos += SAMPLEDISTANCE;
         		continue;
 		}
 		tempIndex++;
@@ -385,10 +387,10 @@ unsigned int optimize_intervals_double_1D_opt_MSST19(double *oriData, size_t dat
 			radiusIndex = MAXRANGERADIUS - 1;
 		intervals[radiusIndex]++;
 
-		data_pos += confparams_cpr->sampleDistance;
+		data_pos += SAMPLEDISTANCE;
 	}
 	//compute the appropriate number
-	size_t targetCount = totalSampleSize*confparams_cpr->predThreshold;
+	size_t targetCount = totalSampleSize*PREDTHRESHOLD;
 	size_t sum = 0;
 	for(i=0;i<MAXRANGERADIUS;i++)
 	{
