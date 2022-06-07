@@ -14,6 +14,410 @@ struct timeval costStart; /*only used for recording the cost*/
 double totalCost = 0;
 
 
+
+typedef struct LossyCompressionElement
+{
+	int leadingZeroBytes; //0,1,2,or 3
+	unsigned char integerMidBytes[8];
+	int integerMidBytes_Length; //they are mid_bits actually
+	//char curBytes[8];
+	//int curBytes_Length; //4 for single_precision or 8 for double_precision
+	int resMidBitsLength;
+	int residualMidBits;
+} LossyCompressionElement;
+
+typedef struct DoubleValueCompressElement
+{
+	double data;
+	long curValue;
+	unsigned char curBytes[8]; //big_endian
+	int reqBytesLength;
+	int resiBitsLength;
+} DoubleValueCompressElement;
+
+typedef struct DataCompressLogTransform
+{
+	double data;
+	long curValue;
+	unsigned char curBytes[8]; //big_endian
+	int reqBytesLength;
+	int resiBitsLength;
+} DataCompressLogTransform;
+
+typedef struct TightDataPointStorageD
+{
+	size_t dataSeriesLength;
+	int allSameData;
+	double realPrecision;
+	double medianValue;
+	char reqLength;	
+	char radExpo; //used to compute reqLength based on segmented precisions in "pw_rel_compression"
+
+	double minLogValue;
+
+	int stateNum;
+	int allNodes;
+
+	size_t exactDataNum;
+	double reservedValue;
+	
+	unsigned char* rtypeArray;
+	size_t rtypeArray_size;
+	
+	unsigned char* typeArray; //its size is dataSeriesLength/4 (or xxx/4+1) 
+	size_t typeArray_size;
+	
+	unsigned char* leadNumArray; //its size is exactDataNum/4 (or exactDataNum/4+1)
+	size_t leadNumArray_size;
+	
+	unsigned char* exactMidBytes;
+	size_t exactMidBytes_size;
+	
+	unsigned char* residualMidBits;
+	size_t residualMidBits_size;
+	
+	unsigned int intervals;
+	
+	unsigned char isLossless; //a mark to denote whether it's lossless compression (1 is yes, 0 is no)
+	
+	size_t segment_size;
+	
+	unsigned char* pwrErrBoundBytes;
+	int pwrErrBoundBytes_size;
+		
+	unsigned char* raBytes;
+	size_t raBytes_size;
+	
+	unsigned char plus_bits;
+	unsigned char max_bits;
+	
+} TightDataPointStorageD;
+
+size_t convertIntArray2ByteArray_fast_dynamic(unsigned char* timeStepType, unsigned char resiBitLength, size_t nbEle, unsigned char **bytes)
+{
+	size_t i = 0, j = 0, k = 0; 
+	int value;
+	DynamicByteArray* dba;
+	new_DBA(&dba, 1024);
+	int tmp = 0, leftMovSteps = 0;
+	for(j = 0;j<nbEle;j++)
+	{
+		if(resiBitLength==0)
+			continue;
+		value = timeStepType[i];
+		leftMovSteps = getLeftMovingSteps(k, resiBitLength);
+		if(leftMovSteps < 0)
+		{
+			tmp = tmp | (value >> (-leftMovSteps));
+			addDBA_Data(dba, (unsigned char)tmp);
+			tmp = 0 | (value << (8+leftMovSteps));
+		}
+		else if(leftMovSteps > 0)
+		{
+			tmp = tmp | (value << leftMovSteps);
+		}
+		else //==0
+		{
+			tmp = tmp | value;
+			addDBA_Data(dba, (unsigned char)tmp);
+			tmp = 0;
+		}
+		i++;
+		k += resiBitLength;
+	}
+	if(leftMovSteps != 0)
+		addDBA_Data(dba, (unsigned char)tmp);
+	convertDBAtoBytes(dba, bytes);
+	size_t size = dba->size;
+	free_DBA(dba);
+	return size;
+}
+
+void new_TightDataPointStorageD(TightDataPointStorageD **this, 
+		size_t dataSeriesLength, size_t exactDataNum, 
+		int* type, unsigned char* exactMidBytes, size_t exactMidBytes_size,
+		unsigned char* leadNumIntArray,  //leadNumIntArray contains readable numbers....
+		unsigned char* resiMidBits, size_t resiMidBits_size,
+		unsigned char resiBitLength, 
+		double realPrecision, double medianValue, char reqLength, unsigned int intervals,
+		unsigned char* pwrErrBoundBytes, size_t pwrErrBoundBytes_size, unsigned char radExpo) {
+	//int i = 0;
+	*this = (TightDataPointStorageD *)malloc(sizeof(TightDataPointStorageD));
+	(*this)->allSameData = 0;
+	(*this)->realPrecision = realPrecision;
+	(*this)->medianValue = medianValue;
+	(*this)->reqLength = reqLength;
+
+	(*this)->dataSeriesLength = dataSeriesLength;
+	(*this)->exactDataNum = exactDataNum;
+
+	(*this)->rtypeArray = NULL;
+	(*this)->rtypeArray_size = 0;
+
+	int stateNum = 2*intervals;
+
+	&(*this)->typeArray = SZ_fast_compress_args(2, SZ_DOUBLE, (void *)type, &(*this)->typeArray_size, ABS, 0, 0, 0, 0, 0, 0, dataSeriesLength);
+
+		
+	(*this)->exactMidBytes = exactMidBytes;
+	(*this)->exactMidBytes_size = exactMidBytes_size;
+
+	(*this)->leadNumArray_size = convertIntArray2ByteArray_fast_2b(leadNumIntArray, exactDataNum, &((*this)->leadNumArray));
+
+	(*this)->residualMidBits_size = convertIntArray2ByteArray_fast_dynamic(resiMidBits, resiBitLength, exactDataNum, &((*this)->residualMidBits));
+	
+	(*this)->intervals = intervals;
+	
+	(*this)->isLossless = 0;
+	
+	if(confparams_cpr->errorBoundMode>=PW_REL)
+		(*this)->pwrErrBoundBytes = pwrErrBoundBytes;
+	else
+		(*this)->pwrErrBoundBytes = NULL;
+		
+	(*this)->radExpo = radExpo;
+	
+	(*this)->pwrErrBoundBytes_size = pwrErrBoundBytes_size;
+}
+
+inline void longToBytes_bigEndian(unsigned char *b, unsigned long num) 
+{
+	b[0] = (unsigned char)(num>>56);
+	b[1] = (unsigned char)(num>>48);
+	b[2] = (unsigned char)(num>>40);
+	b[3] = (unsigned char)(num>>32);
+	b[4] = (unsigned char)(num>>24);
+	b[5] = (unsigned char)(num>>16);
+	b[6] = (unsigned char)(num>>8);
+	b[7] = (unsigned char)(num);
+//	if(dataEndianType==LITTLE_ENDIAN_DATA)
+//		symTransform_8bytes(*b);
+}
+
+inline void listAdd_double(double last3CmprsData[3], double value)
+{
+	last3CmprsData[2] = last3CmprsData[1];
+	last3CmprsData[1] = last3CmprsData[0];
+	last3CmprsData[0] = value;
+}
+
+int compIdenticalLeadingBytesCount_double(unsigned char* preBytes, unsigned char* curBytes)
+{
+	int i, n = 0;
+	for(i=0;i<8;i++)
+		if(preBytes[i]==curBytes[i])
+			n++;
+		else
+			break;
+	if(n>3) n = 3;
+	return n;
+}
+
+// size_t dataLength
+				// size_t exactDataNum
+				// int* type
+				// unsigned char* exactMidByteArray->array
+				// size_t exactMidByteArray->size
+				// unsigned char* exactLeadNumArray->array
+				// unsigned char* resiBitArray->array
+				// size_t resiBitArray->size,
+				// int resiBitsLength,
+				// double realPrecision,
+				// double medianValue_1
+				// (char)reqLength
+				// unsigned int quantization_intervals
+
+unsigned char* get_bytes_for_compress( size_t dataLength,
+				size_t exactDataNum,
+				int* type,
+				unsigned char* exactMidByteArrayarray,
+				size_t exactMidByteArraysize,
+				unsigned char* exactLeadNumArrayarray,
+				unsigned char* resiBitArrayarray,
+				size_t resiBitArraysize,
+				int resiBitsLength,
+				double realPrecision,
+				double medianValue_1,
+				(char)reqLength,
+				unsigned int quantization_intervals){
+	unsigned char* retBytes = (unsigned char*)malloc(sizeof(double)*(10)+sizeof(unsigned char)*(exactMidByteArraysize+resiBitArraysize));
+}
+
+inline void addExactData(DynamicByteArray *exactMidByteArray, DynamicIntArray *exactLeadNumArray,
+		DynamicIntArray *resiBitArray, LossyCompressionElement *lce)
+{
+	int i;
+	int leadByteLength = lce->leadingZeroBytes;
+	addDIA_Data(exactLeadNumArray, leadByteLength);
+	unsigned char* intMidBytes = lce->integerMidBytes;
+	int integerMidBytesLength = lce->integerMidBytes_Length;
+	int resMidBitsLength = lce->resMidBitsLength;
+	if(intMidBytes!=NULL||resMidBitsLength!=0)
+	{
+		if(intMidBytes!=NULL)
+			for(i = 0;i<integerMidBytesLength;i++)
+				addDBA_Data(exactMidByteArray, intMidBytes[i]);
+		if(resMidBitsLength!=0)
+			addDIA_Data(resiBitArray, lce->residualMidBits);
+	}
+}
+
+void updateLossyCompElement_Double(unsigned char* curBytes, unsigned char* preBytes, 
+		int reqBytesLength, int resiBitsLength,  LossyCompressionElement *lce)
+{
+	int resiIndex, intMidBytes_Length = 0;
+	int leadingNum = compIdenticalLeadingBytesCount_double(preBytes, curBytes); //in fact, float is enough for both single-precision and double-precisiond ata.
+	int fromByteIndex = leadingNum;
+	int toByteIndex = reqBytesLength; //later on: should use "< toByteIndex" to tarverse....
+	if(fromByteIndex < toByteIndex)
+	{
+		intMidBytes_Length = reqBytesLength - leadingNum;
+		memcpy(lce->integerMidBytes, &(curBytes[fromByteIndex]), intMidBytes_Length);
+	}
+	int resiBits = 0;
+	if(resiBitsLength!=0)
+	{
+		resiIndex = reqBytesLength;
+		if(resiIndex < 8)
+			resiBits = (curBytes[resiIndex] & 0xFF) >> (8-resiBitsLength);
+	}
+	lce->leadingZeroBytes = leadingNum;
+	lce->integerMidBytes_Length = intMidBytes_Length;
+	lce->resMidBitsLength = resiBitsLength;
+	lce->residualMidBits = resiBits;
+}
+
+void compressSingleDoubleValue_MSST19(DoubleValueCompressElement *vce, double tgtValue, double precision, int reqLength, int reqBytesLength, int resiBitsLength)
+{
+    ldouble lfBuf;
+    lfBuf.value = tgtValue;
+
+    int ignBytesLength = 64 - reqLength;
+    if(ignBytesLength<0)
+        ignBytesLength = 0;
+
+    long tmp_long = lfBuf.lvalue;
+    longToBytes_bigEndian(vce->curBytes, tmp_long);
+
+    lfBuf.lvalue = (lfBuf.lvalue >> ignBytesLength) << ignBytesLength;
+
+    //float tmpValue = lfBuf.value;
+
+    vce->data = lfBuf.value;
+    vce->curValue = tmp_long;
+    vce->reqBytesLength = reqBytesLength;
+    vce->resiBitsLength = resiBitsLength;
+}
+
+inline void intToBytes_bigEndian(unsigned char *b, unsigned int num)
+{
+	b[0] = (unsigned char)(num >> 24);	
+	b[1] = (unsigned char)(num >> 16);	
+	b[2] = (unsigned char)(num >> 8);	
+	b[3] = (unsigned char)(num);	
+	
+	//note: num >> xxx already considered endian_type...
+//if(dataEndianType==LITTLE_ENDIAN_DATA)
+//		symTransform_4bytes(*b); //change to BIG_ENDIAN_DATA
+}
+
+inline short computeReqLength_double_MSST19(double realPrecision)
+{
+	short reqExpo = getPrecisionReqLength_double(realPrecision);
+	return 12-reqExpo;
+}
+
+unsigned int roundUpToPowerOf2(unsigned int base)
+{
+  base -= 1;
+
+  base = base | (base >> 1);
+  base = base | (base >> 2);
+  base = base | (base >> 4);
+  base = base | (base >> 8);
+  base = base | (base >> 16);
+
+  return base + 1;
+}
+
+unsigned int optimize_intervals_double_1D_opt_MSST19(double *oriData, size_t dataLength, double realPrecision)
+{
+	size_t i = 0, radiusIndex;
+	double pred_value = 0;
+	double pred_err;
+	size_t *intervals = (size_t*)malloc(confparams_cpr->maxRangeRadius*sizeof(size_t));
+	memset(intervals, 0, confparams_cpr->maxRangeRadius*sizeof(size_t));
+	size_t totalSampleSize = 0;//dataLength/confparams_cpr->sampleDistance;
+
+	double * data_pos = oriData + 2;
+	double divider = log2(1+realPrecision)*2;
+	int tempIndex = 0;
+	while(data_pos - oriData < dataLength){
+		if(*data_pos == 0){
+        		data_pos += confparams_cpr->sampleDistance;
+        		continue;
+		}
+		tempIndex++;
+		totalSampleSize++;
+		pred_value = data_pos[-1];
+		pred_err = fabs((double)*data_pos / pred_value);
+		radiusIndex = (unsigned long)fabs(log2(pred_err)/divider+0.5);
+		if(radiusIndex>=confparams_cpr->maxRangeRadius)
+			radiusIndex = confparams_cpr->maxRangeRadius - 1;
+		intervals[radiusIndex]++;
+
+		data_pos += confparams_cpr->sampleDistance;
+	}
+	//compute the appropriate number
+	size_t targetCount = totalSampleSize*confparams_cpr->predThreshold;
+	size_t sum = 0;
+	for(i=0;i<confparams_cpr->maxRangeRadius;i++)
+	{
+		sum += intervals[i];
+		if(sum>targetCount)
+			break;
+	}
+	if(i>=confparams_cpr->maxRangeRadius)
+		i = confparams_cpr->maxRangeRadius-1;
+
+	unsigned int accIntervals = 2*(i+1);
+	unsigned int powerOf2 = roundUpToPowerOf2(accIntervals);
+
+	if(powerOf2<64)
+		powerOf2 = 64;
+
+	free(intervals);
+	return powerOf2;
+}
+
+double computeRangeSize_double_MSST19(double* oriData, size_t size, double* valueRangeSize, double* medianValue, unsigned char * signs, bool* positive, double* nearZero)
+{
+    size_t i = 0;
+    double min = oriData[0];
+    double max = min;
+    *nearZero = min;
+
+    for(i=1;i<size;i++)
+    {
+        double data = oriData[i];
+        if(data <0){
+            signs[i] = 1;
+            *positive = false;
+        }
+        if(oriData[i] != 0 && fabs(oriData[i]) < fabs(*nearZero)){
+            *nearZero = oriData[i];
+        }
+        if(min>data)
+            min = data;
+        else if(max<data)
+            max = data;
+    }
+
+    *valueRangeSize = max - min;
+    *medianValue = min + *valueRangeSize/2;
+    return min;
+}
+
 void cost_start()
 {
 	totalCost = 0;
@@ -91,6 +495,8 @@ int main(int argc, char* argv[])
 	char* relErrBound = NULL;
 	float absErrorBound = 0, relBoundRatio = 0;
 
+	int doPredQuant = 0;
+
 	int fastMode = SZx_WITH_BLOCK_FAST_CMPR; //1: non-blocked+serial, 2: blocked+serial, 3: blocked+openmp, 4: blocked+randomaccess+serial
 	size_t r5 = 0;
 	size_t r4 = 0;
@@ -110,6 +516,9 @@ int main(int argc, char* argv[])
 			usage();
 		switch (argv[i][1])
 		{
+		case 'Q':
+			doPredQuant = 1;
+			break;
 		case 'h':
 			usage();
 			exit(0);
@@ -313,21 +722,371 @@ int main(int argc, char* argv[])
 				exit(0);
 			}
 			cost_start();
-			bytes = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
-			cost_end();
-			if(cmpPath == NULL)
-				sprintf(outputFilePath, "%s.szx", inPath);
-			else
-				strcpy(outputFilePath, cmpPath);
-			writeByteData(bytes, outSize, outputFilePath, &status);		
-			free(data);
-			if(status != SZ_SCES)
-			{
-				printf("Error: data file %s cannot be written!\n", outputFilePath);
-				exit(0);
-			}		
-			printf("compression time = %f\n", totalCost);
-			printf("compressed data file: %s\n", outputFilePath);
+
+			if(doPredQuant){
+				size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
+
+				int plus_bits = 3;
+				double* oriData = (double *) data;
+				double valueRangeSize = 0, medianValue = 0;
+
+				double pwrErrRatio = (double) absErrorBound;
+
+				unsigned char * signs = NULL;
+				bool positive = true;
+				double nearZero = 0.0;
+				double min = 0;
+
+				signs = (unsigned char *) malloc(dataLength);
+				memset(signs, 0, dataLength);
+				min = computeRangeSize_double_MSST19(oriData, dataLength, &valueRangeSize, &medianValue, signs, &positive, &nearZero);
+			
+				double max = min+valueRangeSize;
+				// confparams_cpr->dmin = min;
+				// confparams_cpr->dmax = max;
+
+
+				double realPrecision = 0;
+				// realPrecision = getRealPrecision_double(valueRangeSize, errBoundMode, absErr_Bound, relBoundRatio, &status);
+				size_t outSize = 0;
+				unsigned char* newByteData;
+
+				double multiplier = pow((1+pwrErrRatio), -3.0001);
+				for(int i=0; i<dataLength; i++){
+					if(oriData[i] == 0){
+						oriData[i] = nearZero * multiplier;
+					}
+				}
+
+				double median_log = sqrt(fabs(nearZero * max));
+
+				unsigned int quantization_intervals;
+				quantization_intervals = optimize_intervals_double_1D_opt_MSST19(oriData, dataLength, realPrecision);
+
+				int intvRadius = quantization_intervals/2;
+
+				double* precisionTable = (double*)malloc(sizeof(double) * quantization_intervals);
+				double inv = 2.0-pow(2, -(plus_bits));
+				for(int i=0; i<quantization_intervals; i++){
+					double test = pow((1+realPrecision), inv*(i - intvRadius));
+					precisionTable[i] = test;
+				}
+				struct TopLevelTableWideInterval levelTable;
+   				MultiLevelCacheTableWideIntervalBuild(&levelTable, precisionTable, quantization_intervals, realPrecision, plus_bits);
+
+				size_t i;
+				int reqLength;
+				double medianValue_1 = median_log;
+				//double medianInverse = 1 / medianValue_f;
+				//short radExpo = getExponent_double(realPrecision);
+
+				reqLength = computeReqLength_double_MSST19(realPrecision);
+
+				int* type = (int*) malloc(dataLength*sizeof(int));
+
+				double* spaceFillingValue = oriData;
+
+				DynamicIntArray *exactLeadNumArray;
+				new_DIA(&exactLeadNumArray, dataLength/2/8);
+
+				DynamicByteArray *exactMidByteArray;
+				new_DBA(&exactMidByteArray, dataLength/2);
+
+				DynamicIntArray *resiBitArray;
+				new_DIA(&resiBitArray, 1024);
+
+				unsigned char preDataBytes[8];
+				intToBytes_bigEndian(preDataBytes, 0);
+
+				int reqBytesLength = reqLength/8;
+				int resiBitsLength = reqLength%8;
+				double last3CmprsData[3] = {0};
+
+				DoubleValueCompressElement *vce = (DoubleValueCompressElement*)malloc(sizeof(DoubleValueCompressElement));
+				LossyCompressionElement *lce = (LossyCompressionElement*)malloc(sizeof(LossyCompressionElement));
+
+				type[0] = 0;
+				compressSingleDoubleValue_MSST19(vce, spaceFillingValue[0], realPrecision, reqLength, reqBytesLength, resiBitsLength);
+				updateLossyCompElement_Double(vce->curBytes, preDataBytes, reqBytesLength, resiBitsLength, lce);
+				memcpy(preDataBytes,vce->curBytes,8);
+				addExactData(exactMidByteArray, exactLeadNumArray, resiBitArray, lce);
+				listAdd_double(last3CmprsData, vce->data);
+
+				type[1] = 0;
+				compressSingleDoubleValue_MSST19(vce, spaceFillingValue[1], realPrecision, reqLength, reqBytesLength, resiBitsLength);
+				updateLossyCompElement_Double(vce->curBytes, preDataBytes, reqBytesLength, resiBitsLength, lce);
+				memcpy(preDataBytes,vce->curBytes,8);
+				addExactData(exactMidByteArray, exactLeadNumArray, resiBitArray, lce);
+				listAdd_double(last3CmprsData, vce->data);
+
+				int state;
+				//double checkRadius;
+				double curData;
+				double pred = vce->data;
+
+				double predRelErrRatio;
+
+				const uint64_t top = levelTable.topIndex, base = levelTable.baseIndex;
+				const uint64_t range = top - base;
+				const int bits = levelTable.bits;
+				uint64_t* const buffer = (uint64_t*)&predRelErrRatio;
+				const int shift = 52-bits;
+				uint64_t expoIndex, mantiIndex;
+				uint16_t* tables[range+1];
+				for(int i=0; i<=range; i++){
+					tables[i] = levelTable.subTables[i].table;
+				}
+
+				for(i=2;i<dataLength;i++)
+				{
+					curData = spaceFillingValue[i];
+					predRelErrRatio = curData / pred;
+
+					expoIndex = ((*buffer & 0x7fffffffffffffff) >> 52) - base;
+					if(expoIndex <= range){
+						mantiIndex = (*buffer & 0x000fffffffffffff) >> shift;
+						state = tables[expoIndex][mantiIndex];
+					}else{
+						state = 0;
+					}
+
+					if(state)
+					{
+						type[i] = state;
+						pred *= precisionTable[state];
+						//hit++;
+						continue;
+					}
+
+					//unpredictable data processing
+					type[i] = 0;
+					compressSingleDoubleValue_MSST19(vce, curData, realPrecision, reqLength, reqBytesLength, resiBitsLength);
+					updateLossyCompElement_Double(vce->curBytes, preDataBytes, reqBytesLength, resiBitsLength, lce);
+					memcpy(preDataBytes,vce->curBytes,8);
+					addExactData(exactMidByteArray, exactLeadNumArray, resiBitArray, lce);
+					pred =  vce->data;
+					//miss++;
+				}//end of for
+
+			//	printf("miss:%d, hit:%d\n", miss, hit);
+
+				size_t exactDataNum = exactLeadNumArray->size;
+
+				TightDataPointStorageD* tdps;
+
+				new_TightDataPointStorageD(&tdps, dataLength, exactDataNum,
+						type, exactMidByteArray->array, exactMidByteArray->size,
+						exactLeadNumArray->array,
+						resiBitArray->array, resiBitArray->size,
+						resiBitsLength,
+						realPrecision, medianValue, (char)reqLength, quantization_intervals, NULL, 0, 0);
+				
+				free_DIA(exactLeadNumArray);
+				free_DIA(resiBitArray);
+				free(type);
+				free(vce);
+				free(lce);
+				free(exactMidByteArray); //exactMidByteArray->array has been released in free_TightDataPointStorageF(tdps);
+				free(precisionTable);
+				freeTopLevelTableWideInterval(&levelTable);
+				tdps->minLogValue = nearZero / ((1+pwrErrRatio)*(1+pwrErrRatio));
+				// if(!(*positive)){
+				// 	unsigned char * comp_signs;
+				// 	// compress signs
+				// 	unsigned long signSize = sz_lossless_compress(ZSTD_COMPRESSOR, 3, signs, dataLength, &comp_signs);
+				// 	tdps->pwrErrBoundBytes = comp_signs;
+				// 	tdps->pwrErrBoundBytes_size = signSize;
+				// }
+				// else{
+				tdps->pwrErrBoundBytes = NULL;
+				tdps->pwrErrBoundBytes_size = 0;
+				// }
+				// free(signs);
+
+				convertTDPStoFlatBytes_double(tdps, newByteData, outSize);
+
+
+				free_TightDataPointStorageD(tdps);
+			}
+
+			if(doPredQuant){
+
+				unsigned char *bytesInt = NULL;
+				unsigned char *bytesUnpred = NULL;
+				size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
+
+				double *oriData = (double *)data;
+				double prediction = oriData[0];
+
+				
+
+				int plus_bits = 3;
+				double* oriData = (double *) data;
+				double valueRangeSize = 0, medianValue = 0;
+
+				double pwrErrRatio = (double) absErrorBound;
+
+				unsigned char * signs = NULL;
+				bool positive = true;
+				double nearZero = 0.0;
+				double min = 0;
+
+				signs = (unsigned char *) malloc(dataLength);
+				memset(signs, 0, dataLength);
+				min = computeRangeSize_double_MSST19(oriData, dataLength, &valueRangeSize, &medianValue, signs, &positive, &nearZero);
+			
+				double max = min+valueRangeSize;
+				// confparams_cpr->dmin = min;
+				// confparams_cpr->dmax = max;
+
+
+				double realPrecision = 0;
+				// realPrecision = getRealPrecision_double(valueRangeSize, errBoundMode, absErr_Bound, relBoundRatio, &status);
+				size_t outSize = 0;
+				unsigned char* newByteData;
+
+				double multiplier = pow((1+pwrErrRatio), -3.0001);
+				for(int i=0; i<dataLength; i++){
+					if(oriData[i] == 0){
+						oriData[i] = nearZero * multiplier;
+					}
+				}
+
+				double median_log = sqrt(fabs(nearZero * max));
+
+				unsigned int quantization_intervals;
+				quantization_intervals = optimize_intervals_double_1D_opt_MSST19(oriData, dataLength, realPrecision);
+
+				int intvRadius = quantization_intervals/2;
+
+				double* precisionTable = (double*)malloc(sizeof(double) * quantization_intervals);
+				double inv = 2.0-pow(2, -(plus_bits));
+				for(int i=0; i<quantization_intervals; i++){
+					double test = pow((1+realPrecision), inv*(i - intvRadius));
+					precisionTable[i] = test;
+				}
+				struct TopLevelTableWideInterval levelTable;
+   				MultiLevelCacheTableWideIntervalBuild(&levelTable, precisionTable, quantization_intervals, realPrecision, plus_bits);
+
+				int* type = (int*) malloc(dataLength*sizeof(int));
+				int state;
+				//double checkRadius;
+				double curData;
+				double pred = prediction;
+
+				double* spaceFillingValue = oriData;
+
+				double predRelErrRatio;
+
+				const uint64_t top = levelTable.topIndex, base = levelTable.baseIndex;
+				const uint64_t range = top - base;
+				const int bits = levelTable.bits;
+				uint64_t* const buffer = (uint64_t*)&predRelErrRatio;
+				const int shift = 52-bits;
+				uint64_t expoIndex, mantiIndex;
+				uint16_t* tables[range+1];
+				for(int i=0; i<=range; i++){
+					tables[i] = levelTable.subTables[i].table;
+				}
+
+				size_t unpred_count = 1;
+				type[0] = 0;
+
+				for(i=1;i<dataLength;i++)
+				{
+					curData = spaceFillingValue[i];
+					predRelErrRatio = curData / pred;
+
+					expoIndex = ((*buffer & 0x7fffffffffffffff) >> 52) - base;
+					if(expoIndex <= range){
+						mantiIndex = (*buffer & 0x000fffffffffffff) >> shift;
+						state = tables[expoIndex][mantiIndex];
+					}else{
+						state = 0;
+					}
+
+					if(state)
+					{
+						type[i] = state;
+						pred *= precisionTable[state];
+						//hit++;
+						continue;
+					}
+
+					// //unpredictable data processing
+					type[i] = 0;
+					// compressSingleDoubleValue_MSST19(vce, curData, realPrecision, reqLength, reqBytesLength, resiBitsLength);
+					// updateLossyCompElement_Double(vce->curBytes, preDataBytes, reqBytesLength, resiBitsLength, lce);
+					// memcpy(preDataBytes,vce->curBytes,8);
+					// addExactData(exactMidByteArray, exactLeadNumArray, resiBitArray, lce);
+					// pred =  vce->data;
+					unpred_count++;
+
+				}
+
+				double *unpredData = (double *)malloc(sizeof(double)*unpred_count);
+
+				for (size_t i = 0; i < unpred_count; i++)
+				{
+					if (type[i] == 0)
+					{
+						unpredData = spaceFillingValue[i];
+					}
+					
+				}
+				
+				size_t sizeUnpred, sizeType;
+
+				bytesInt = SZ_fast_compress_args(fastMode, SZ_DOUBLE, (void *)unpredData, &sizeUnpred, ABS, 0.0, 0.0, 0, 0, 0, 0, unpred_count);
+				bytesUnpred = SZ_fast_compress_args(fastMode, SZ_FLOAT, (void *)type, &sizeType, ABS, 0.0, 0.0, 0, 0, 0, 0, dataLength);
+
+				cost_end();
+				if(cmpPath == NULL)
+					sprintf(outputFilePath, "%s-unpred.szx", inPath);
+				else
+					strcpy(outputFilePath, cmpPath);
+				writeByteData(bytesUnpred, sizeType, outputFilePath, &status);		
+				free(data);
+				if(status != SZ_SCES)
+				{
+					printf("Error: data file %s cannot be written!\n", outputFilePath);
+					exit(0);
+				}
+
+				if(cmpPath == NULL)
+					sprintf(outputFilePath, "%s-quants.szx", inPath);
+				else
+					strcpy(outputFilePath, cmpPath);
+				writeByteData(bytesUnpred, sizeUnpred, outputFilePath, &status);		
+				free(data);
+				if(status != SZ_SCES)
+				{
+					printf("Error: data file %s cannot be written!\n", outputFilePath);
+					exit(0);
+				}
+
+				printf("compression time = %f\n", totalCost);
+				printf("compressed data file: %s\n", outputFilePath);
+
+				freeTopLevelTableWideInterval(&levelTable);
+			}else{
+
+				bytes = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
+				cost_end();
+				if(cmpPath == NULL)
+					sprintf(outputFilePath, "%s.szx", inPath);
+				else
+					strcpy(outputFilePath, cmpPath);
+				writeByteData(bytes, outSize, outputFilePath, &status);		
+				free(data);
+				if(status != SZ_SCES)
+				{
+					printf("Error: data file %s cannot be written!\n", outputFilePath);
+					exit(0);
+				}		
+				printf("compression time = %f\n", totalCost);
+				printf("compressed data file: %s\n", outputFilePath);
+			}
 		}
 
 		if (printCmpResults == 1)

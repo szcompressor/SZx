@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "compare": "c",
+        "functional": "c",
+        "memory": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "xmemory": "c",
+        "xstring": "c",
+        "xtr1common": "c",
+        "xutility": "c"
+    }
+}

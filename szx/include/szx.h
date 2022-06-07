@@ -35,6 +35,12 @@ extern "C" {
 #include "szxd_float.h"
 #include "szx_TypeManager.h"
 
+#include "MultiLevelCacheTableWideInterval.h"
+#include "DynamicByteArray.h"
+#include "DynamicIntArray.h"
+#include "Huffman.h"
+#include "TightDataPointStorageD.h"
+
 typedef union lint16
 {
 	unsigned short usvalue;
