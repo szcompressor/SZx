@@ -11,9 +11,9 @@
 #define bool _Bool
 #define true 1
 #define false 0
-#define MAXRANGERADIUS 65536
-#define SAMPLEDISTANCE 64
-#define PREDTHRESHOLD 0.1
+#define MAXRANGERADIUS 65536/2
+#define SAMPLEDISTANCE 100
+#define PREDTHRESHOLD 0.99
 
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
