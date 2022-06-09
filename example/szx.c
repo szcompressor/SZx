@@ -383,8 +383,10 @@ int main(int argc, char* argv[])
 	char* absErrBound = NULL;
 	char* relErrBound = NULL;
 	float absErrorBound = 0, relBoundRatio = 0;
+	double threshold = 0.0;
 
 	int doPredQuant = 0;
+	int doThresholdAbs = 0;
 
 	int fastMode = SZx_WITH_BLOCK_FAST_CMPR; //1: non-blocked+serial, 2: blocked+serial, 3: blocked+openmp, 4: blocked+randomaccess+serial
 	size_t r5 = 0;
@@ -405,6 +407,12 @@ int main(int argc, char* argv[])
 			usage();
 		switch (argv[i][1])
 		{
+		case 'T':
+			doThresholdAbs = 1;
+			if (++i == argc)
+				usage();
+			threshold = argv[i];
+			break;
 		case 'Q':
 			doPredQuant = 1;
 			break;
@@ -743,15 +751,15 @@ int main(int argc, char* argv[])
 				
 				size_t sizeUnpred, sizeType;
 
-				bytesInt = SZ_fast_compress_args(fastMode, SZ_DOUBLE, (void *)unpredData, &sizeUnpred, ABS, 0.0, 0.0, 0, 0, 0, 0, unpred_count);
-				bytesUnpred = SZ_fast_compress_args(fastMode, SZ_FLOAT, (void *)type, &sizeType, ABS, 0.0, 0.0, 0, 0, 0, 0, dataLength);
+				bytesUnpred = SZ_fast_compress_args(fastMode, SZ_DOUBLE, (void *)unpredData, &sizeUnpred, ABS, 0.0, 0.0, 0, 0, 0, 0, unpred_count);
+				bytesInt = SZ_fast_compress_args(fastMode, SZ_FLOAT, (void *)type, &sizeType, ABS, 0.0, 0.0, 0, 0, 0, 0, dataLength);
 
 				cost_end();
 				if(cmpPath == NULL)
 					sprintf(outputFilePath, "%s-unpred.szx", inPath);
 				else
 					strcpy(outputFilePath, cmpPath);
-				writeByteData(bytesUnpred, sizeType, outputFilePath, &status);		
+				writeByteData(bytesUnpred, sizeUnpred, outputFilePath, &status);		
 				free(data);
 				if(status != SZ_SCES)
 				{
@@ -763,7 +771,7 @@ int main(int argc, char* argv[])
 					sprintf(outputFilePath, "%s-quants.szx", inPath);
 				else
 					strcpy(outputFilePath, cmpPath);
-				writeByteData(bytesUnpred, sizeUnpred, outputFilePath, &status);		
+				writeByteData(bytesInt, sizeType, outputFilePath, &status);		
 				free(data);
 				if(status != SZ_SCES)
 				{
@@ -776,7 +784,21 @@ int main(int argc, char* argv[])
 
 				freeTopLevelTableWideInterval(&levelTable);
 			}else{
-
+				
+				if (doThresholdAbs)
+				{
+					size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
+					for (int i = 0; i < dataLength; i++)
+					{
+						if (fabs(data[i]) <= threshold)
+						{
+							data[i] = 0.0;
+						}
+						
+					}
+					
+				}
+				
 				bytes = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
 				cost_end();
 				if(cmpPath == NULL)
@@ -943,6 +965,15 @@ int main(int argc, char* argv[])
 		}
 		else //double-data
 		{
+			if(doPredQuant){
+				// Read both files
+				bytesInt = readByteData(cmpPath, &byteLength, &status);
+				bytesUnpred = readByteData(cmpPath, &byteLength, &status);
+
+				// Do SZx decompression
+				// Reverse log
+			}
+
 			bytes = readByteData(cmpPath, &byteLength, &status);
 			if(status!=SZ_SCES)
 			{
@@ -950,6 +981,9 @@ int main(int argc, char* argv[])
 				exit(0);
 			}
 			cost_start();
+
+			
+
 			double* data = SZ_fast_decompress(fastMode, SZ_DOUBLE, bytes, byteLength, r5, r4, r3, r2, r1);
 			cost_end();
 			if(decPath == NULL)
