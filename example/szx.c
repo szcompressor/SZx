@@ -411,7 +411,7 @@ int main(int argc, char* argv[])
 			doThresholdAbs = 1;
 			if (++i == argc)
 				usage();
-			threshold = argv[i];
+			threshold = atof(argv[i]);
 			break;
 		case 'Q':
 			doPredQuant = 1;
