@@ -802,7 +802,9 @@ int main(int argc, char* argv[])
 					{
 						tmpData[i] = data[(i/periods)+((i%periods)*dataPeriod)];
 					}
-					
+					double *oldData = data;
+					data = tmpData;
+					free(oldData);
 				}
 				
 
