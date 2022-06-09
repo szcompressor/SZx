@@ -1008,6 +1008,21 @@ int main(int argc, char* argv[])
 			
 
 			double* data = SZ_fast_decompress(fastMode, SZ_DOUBLE, bytes, byteLength, r5, r4, r3, r2, r1);
+
+			if (doDataShuffle)
+			{
+				size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
+				double *tmpData = (double *)malloc(dataLength*sizeof(double));
+				int periods = (int)dataLength/dataPeriod;
+				for (int i = 0; i < dataLength; i++)
+				{
+					tmpData[i] = data[(i/periods)+((i%periods)*dataPeriod)];
+				}
+				double *oldData = data;
+				data = tmpData;
+				free(oldData);
+			}
+
 			cost_end();
 			if(decPath == NULL)
 				sprintf(outputFilePath, "%s.out", cmpPath);	
