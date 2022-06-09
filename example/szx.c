@@ -965,14 +965,14 @@ int main(int argc, char* argv[])
 		}
 		else //double-data
 		{
-			if(doPredQuant){
-				// Read both files
-				bytesInt = readByteData(cmpPath, &byteLength, &status);
-				bytesUnpred = readByteData(cmpPath, &byteLength, &status);
+			// if(doPredQuant){
+			// 	// Read both files
+			// 	bytesInt = readByteData(cmpPath, &byteLength, &status);
+			// 	bytesUnpred = readByteData(cmpPath, &byteLength, &status);
 
-				// Do SZx decompression
-				// Reverse log
-			}
+			// 	// Do SZx decompression
+			// 	// Reverse log
+			// }
 
 			bytes = readByteData(cmpPath, &byteLength, &status);
 			if(status!=SZ_SCES)
