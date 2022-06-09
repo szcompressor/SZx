@@ -387,6 +387,9 @@ int main(int argc, char* argv[])
 
 	int doPredQuant = 0;
 	int doThresholdAbs = 0;
+	int doDataShuffle = 0;
+
+	int dataPeriod = 0;
 
 	int fastMode = SZx_WITH_BLOCK_FAST_CMPR; //1: non-blocked+serial, 2: blocked+serial, 3: blocked+openmp, 4: blocked+randomaccess+serial
 	size_t r5 = 0;
@@ -407,6 +410,12 @@ int main(int argc, char* argv[])
 			usage();
 		switch (argv[i][1])
 		{
+		case 'S':
+			doDataShuffle = 1;
+			if (++i == argc)
+				usage();
+			dataPeriod = atoi(argv[i]);
+			break;
 		case 'T':
 			doThresholdAbs = 1;
 			if (++i == argc)
@@ -784,10 +793,22 @@ int main(int argc, char* argv[])
 
 				freeTopLevelTableWideInterval(&levelTable);
 			}else{
+				size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
+				if (doDataShuffle)
+				{
+					double *tmpData = (double *)malloc(dataLength*sizeof(double));
+					int periods = (int)dataLength/dataPeriod;
+					for (int i = 0; i < dataLength; i++)
+					{
+						tmpData[i] = data[(i/periods)+((i%periods)*dataPeriod)];
+					}
+					
+				}
 				
+
 				if (doThresholdAbs)
 				{
-					size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
+					
 					for (int i = 0; i < dataLength; i++)
 					{
 						if (fabs(data[i]) <= threshold)
