@@ -798,9 +798,16 @@ int main(int argc, char* argv[])
 				{
 					double *tmpData = (double *)malloc(dataLength*sizeof(double));
 					int periods = (int)dataLength/dataPeriod;
+
+					int curr_cutoff = periods;
+					int curr_quotient = 0;
 					for (int i = 0; i < dataLength; i++)
 					{
-						tmpData[i] = data[(i/periods)+((i%periods)*dataPeriod)];
+						if(i >=curr_cutoff){
+							curr_cutoff+=periods;
+							curr_quotient++;
+						}
+						tmpData[i] = data[(curr_quotient)+((i-(curr_cutoff-periods))*dataPeriod)];
 					}
 					double *oldData = data;
 					data = tmpData;
@@ -1016,7 +1023,7 @@ int main(int argc, char* argv[])
 				int periods = (int)dataLength/dataPeriod;
 				for (int i = 0; i < dataLength; i++)
 				{
-					tmpData[i] = data[(i/periods)+((i%periods)*dataPeriod)];
+					tmpData[(i/periods)+((i%periods)*dataPeriod)] = data[i];
 				}
 				double *oldData = data;
 				data = tmpData;
