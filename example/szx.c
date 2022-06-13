@@ -388,6 +388,7 @@ int main(int argc, char* argv[])
 	int doPredQuant = 0;
 	int doThresholdAbs = 0;
 	int doDataShuffle = 0;
+	int doSparseThreshold = 0;
 
 	int dataPeriod = 0;
 
@@ -410,6 +411,9 @@ int main(int argc, char* argv[])
 			usage();
 		switch (argv[i][1])
 		{
+		case 'X':
+			doSparseThreshold = 1;
+			break;
 		case 'S':
 			doDataShuffle = 1;
 			if (++i == argc)
@@ -627,11 +631,10 @@ int main(int argc, char* argv[])
 				printf("Error: cannot read the input file: %s\n", inPath);
 				exit(0);
 			}
-			cost_start();
-
+			
 
 			if(doPredQuant){
-
+				cost_start();
 				unsigned char *bytesInt = NULL;
 				unsigned char *bytesUnpred = NULL;
 				size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
@@ -792,7 +795,59 @@ int main(int argc, char* argv[])
 				printf("compressed data file: %s\n", outputFilePath);
 
 				freeTopLevelTableWideInterval(&levelTable);
-			}else{
+			}
+			else if (doSparseThreshold)
+			{
+				unsigned char *bytesSig = NULL;
+				unsigned char *bytesMap = NULL;
+				size_t sigSize;
+				size_t mapSize;
+
+				cost_start();
+				size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
+				int32_t *sparse_map = (int32_t *)malloc(sizeof(int32_t)*((int)(dataLength/32)+1));
+				double *sig_values = (double *)malloc(sizeof(double)*dataLength);
+
+				int sig_ind = 0;
+				for(int i = 0; i<dataLength;i++){
+					if (fabs(data[i]) > threshold)
+					{
+						sparse_map[i/32] = sparse_map[i/32] | (1 << (i%32));
+						sig_values[sig_ind] = data[i];
+						sig_ind++;
+					}
+				}
+				free(data);
+				data = (double *)malloc(sizeof(double)*(sig_ind+1));
+
+				memcpy(data, sig_values, (sig_ind+1)*sizeof(double));
+				free(sig_values);
+				bytesSig = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &sigSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, sig_ind+1);
+				bytesMap = SZ_fast_compress_args(fastMode, SZ_FLOAT, (float *)sparse_map, &mapSize, ABS, 0, relBoundRatio, r5, r4, r3, r2, ((int)(dataLength/32)+1));
+				cost_end();
+				if(cmpPath == NULL)
+					sprintf(outputFilePath, "%s.values-szx", inPath);
+				else
+					strcpy(outputFilePath, cmpPath);
+				writeByteData(bytesSig, sigSize, outputFilePath, &status);		
+				free(data);
+
+				if(cmpPath == NULL)
+					sprintf(outputFilePath, "%s.map-szx", inPath);
+				else
+					strcpy(outputFilePath, cmpPath);
+				writeByteData(bytesMap, mapSize, outputFilePath, &status);		
+				free(sparse_map);
+				if(status != SZ_SCES)
+				{
+					printf("Error: data file %s cannot be written!\n", outputFilePath);
+					exit(0);
+				}		
+				printf("compression time = %f\n", totalCost);
+				printf("compressed data file: %s\n", outputFilePath);
+						
+			} else{
+				cost_start();
 				size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
 				if (doDataShuffle)
 				{
@@ -818,6 +873,7 @@ int main(int argc, char* argv[])
 				if (doThresholdAbs)
 				{
 					
+					
 					for (int i = 0; i < dataLength; i++)
 					{
 						if (fabs(data[i]) <= threshold)
@@ -826,6 +882,8 @@ int main(int argc, char* argv[])
 						}
 						
 					}
+					
+					
 					
 				}
 				
@@ -1004,6 +1062,11 @@ int main(int argc, char* argv[])
 			// 	// Reverse log
 			// }
 
+			// if (doSparseThreshold)
+			// {
+			// 	/* code */
+			// }
+			
 			bytes = readByteData(cmpPath, &byteLength, &status);
 			if(status!=SZ_SCES)
 			{
