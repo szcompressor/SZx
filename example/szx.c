@@ -829,7 +829,7 @@ int main(int argc, char* argv[])
 				memcpy(data, sig_values, (sig_ind+1)*sizeof(double));
 				free(sig_values);
 				bytesSig = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &sigSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, sig_ind+1);
-				bytesMap = SZ_fast_compress_args(fastMode, SZ_FLOAT, (float *)sparse_map, &mapSize, ABS, 0, relBoundRatio, r5, r4, r3, r2, ((int)(dataLength/32)+1));
+				// bytesMap = SZ_fast_compress_args(fastMode, SZ_FLOAT, (float *)sparse_map, &mapSize, ABS, 0, relBoundRatio, r5, r4, r3, r2, ((int)(dataLength/32)+1));
 				cost_end();
 				printf("Number of significant values: %d\n", sig_ind+1);
 				if(cmpPath == NULL)
@@ -843,7 +843,7 @@ int main(int argc, char* argv[])
 					sprintf(outputFilePath, "%s.szx.map", inPath);
 				else
 					strcpy(outputFilePath, cmpPath);
-				writeByteData(bytesMap, mapSize, outputFilePath, &status);		
+				writeByteData((unsigned char *)sparse_map, sizeof(int32_t)*((int)(dataLength/32)+1), outputFilePath, &status);		
 				free(sparse_map);
 				if(status != SZ_SCES)
 				{
@@ -1081,7 +1081,7 @@ int main(int argc, char* argv[])
 
 				sprintf(inFileSparse, "%s.values", cmpPath);
 
-				bytesSig = readByteData(cmpPath, &lengthSig, &status);
+				bytesSig = readByteData(inFileSparse, &lengthSig, &status);
 				if(status!=SZ_SCES)
 				{
 					printf("Error: %s cannot be read!\n", cmpPath);
@@ -1090,18 +1090,19 @@ int main(int argc, char* argv[])
 
 				sprintf(inFileSparse, "%s.map", cmpPath);
 
-				bytesMap = readByteData(cmpPath, &lengthMap, &status);
+				bytesMap = readByteData(inFileSparse, &lengthMap, &status);
 				if(status!=SZ_SCES)
 				{
 					printf("Error: %s cannot be read!\n", cmpPath);
 					exit(0);
 				}
+				
 				cost_start();
 
 				
-
+				uint32_t* dataMap = (uint32_t *)bytesMap;
 				double* dataSig = SZ_fast_decompress(fastMode, SZ_DOUBLE, bytesSig, lengthSig, r5, r4, r3, r2, sigValues);
-				double* dataMap = SZ_fast_decompress(fastMode, SZ_FLOAT, bytesMap, lengthMap, r5, r4, r3, r2, (r1/32)+1);
+				// double* dataMap = SZ_fast_decompress(fastMode, SZ_FLOAT, bytesMap, lengthMap, r5, r4, r3, r2, (r1/32)+1);
 
 				// if (doDataShuffle)
 				// {
@@ -1131,7 +1132,7 @@ int main(int argc, char* argv[])
 				cost_end();
 				free(dataSig);
 				free(dataMap);
-				byteLength = lengthMap + lengthSig;
+				byteLength = sizeof(int32_t)*((int)(r1/32)+1) + lengthSig;
 			}else{
 				bytes = readByteData(cmpPath, &byteLength, &status);
 				if(status!=SZ_SCES)
