@@ -391,6 +391,7 @@ int main(int argc, char* argv[])
 	int doSparseThreshold = 0;
 
 	int dataPeriod = 0;
+	int sigValues = 0;
 
 	int fastMode = SZx_WITH_BLOCK_FAST_CMPR; //1: non-blocked+serial, 2: blocked+serial, 3: blocked+openmp, 4: blocked+randomaccess+serial
 	size_t r5 = 0;
@@ -413,6 +414,9 @@ int main(int argc, char* argv[])
 		{
 		case 'X':
 			doSparseThreshold = 1;
+			if (++i == argc)
+				usage();
+			sigValues = atoi(argv[i]);
 			break;
 		case 'S':
 			doDataShuffle = 1;
@@ -802,11 +806,13 @@ int main(int argc, char* argv[])
 				unsigned char *bytesMap = NULL;
 				size_t sigSize;
 				size_t mapSize;
-
-				cost_start();
 				size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
 				int32_t *sparse_map = (int32_t *)malloc(sizeof(int32_t)*((int)(dataLength/32)+1));
 				double *sig_values = (double *)malloc(sizeof(double)*dataLength);
+
+				memset(sparse_map, 0, sizeof(int32_t)*((int)(dataLength/32)+1));
+				cost_start();
+				
 
 				int sig_ind = 0;
 				for(int i = 0; i<dataLength;i++){
@@ -825,15 +831,16 @@ int main(int argc, char* argv[])
 				bytesSig = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &sigSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, sig_ind+1);
 				bytesMap = SZ_fast_compress_args(fastMode, SZ_FLOAT, (float *)sparse_map, &mapSize, ABS, 0, relBoundRatio, r5, r4, r3, r2, ((int)(dataLength/32)+1));
 				cost_end();
+				printf("Number of significant values: %d\n", sig_ind+1);
 				if(cmpPath == NULL)
-					sprintf(outputFilePath, "%s.values-szx", inPath);
+					sprintf(outputFilePath, "%s.szx.values", inPath);
 				else
 					strcpy(outputFilePath, cmpPath);
 				writeByteData(bytesSig, sigSize, outputFilePath, &status);		
 				free(data);
 
 				if(cmpPath == NULL)
-					sprintf(outputFilePath, "%s.map-szx", inPath);
+					sprintf(outputFilePath, "%s.szx.map", inPath);
 				else
 					strcpy(outputFilePath, cmpPath);
 				writeByteData(bytesMap, mapSize, outputFilePath, &status);		
@@ -1061,39 +1068,101 @@ int main(int argc, char* argv[])
 			// 	// Do SZx decompression
 			// 	// Reverse log
 			// }
+			double *data = NULL;
 
-			// if (doSparseThreshold)
-			// {
-			// 	/* code */
-			// }
-			
-			bytes = readByteData(cmpPath, &byteLength, &status);
-			if(status!=SZ_SCES)
+			if (doSparseThreshold)
 			{
-				printf("Error: %s cannot be read!\n", cmpPath);
-				exit(0);
-			}
-			cost_start();
+				char inFileSparse[256];
+				unsigned char *bytesSig = NULL;
+				unsigned char *bytesMap = NULL;
+				size_t lengthSig;
+				size_t lengthMap;
+				data = (double *)malloc(sizeof(double)*r1);
 
-			
+				sprintf(inFileSparse, "%s.values", cmpPath);
 
-			double* data = SZ_fast_decompress(fastMode, SZ_DOUBLE, bytes, byteLength, r5, r4, r3, r2, r1);
-
-			if (doDataShuffle)
-			{
-				size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
-				double *tmpData = (double *)malloc(dataLength*sizeof(double));
-				int periods = (int)dataLength/dataPeriod;
-				for (int i = 0; i < dataLength; i++)
+				bytesSig = readByteData(cmpPath, &lengthSig, &status);
+				if(status!=SZ_SCES)
 				{
-					tmpData[(i/periods)+((i%periods)*dataPeriod)] = data[i];
+					printf("Error: %s cannot be read!\n", cmpPath);
+					exit(0);
 				}
-				double *oldData = data;
-				data = tmpData;
-				free(oldData);
-			}
 
-			cost_end();
+				sprintf(inFileSparse, "%s.map", cmpPath);
+
+				bytesMap = readByteData(cmpPath, &lengthMap, &status);
+				if(status!=SZ_SCES)
+				{
+					printf("Error: %s cannot be read!\n", cmpPath);
+					exit(0);
+				}
+				cost_start();
+
+				
+
+				double* dataSig = SZ_fast_decompress(fastMode, SZ_DOUBLE, bytesSig, lengthSig, r5, r4, r3, r2, sigValues);
+				double* dataMap = SZ_fast_decompress(fastMode, SZ_FLOAT, bytesMap, lengthMap, r5, r4, r3, r2, (r1/32)+1);
+
+				// if (doDataShuffle)
+				// {
+				// 	size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
+				// 	double *tmpData = (double *)malloc(dataLength*sizeof(double));
+				// 	int periods = (int)dataLength/dataPeriod;
+				// 	for (int i = 0; i < dataLength; i++)
+				// 	{
+				// 		tmpData[(i/periods)+((i%periods)*dataPeriod)] = data[i];
+				// 	}
+				// 	double *oldData = data;
+				// 	data = tmpData;
+				// 	free(oldData);
+				// }
+				int sig_ind = 0;
+				for (int i = 0; i < r1; i++)
+				{
+					if ((dataMap[i/32] >> (i%32)) & 1 == 1)
+					{
+						data[i] = dataSig[sig_ind];
+						sig_ind++;
+					}else{
+						data[i] = 0.0;
+					}
+				}
+
+				cost_end();
+				free(dataSig);
+				free(dataMap);
+				byteLength = lengthMap + lengthSig;
+			}else{
+				bytes = readByteData(cmpPath, &byteLength, &status);
+				if(status!=SZ_SCES)
+				{
+					printf("Error: %s cannot be read!\n", cmpPath);
+					exit(0);
+				}
+				cost_start();
+
+				
+
+				data = SZ_fast_decompress(fastMode, SZ_DOUBLE, bytes, byteLength, r5, r4, r3, r2, r1);
+
+				if (doDataShuffle)
+				{
+					size_t dataLength = computeDataLength(r5,r4,r3,r2,r1);
+					double *tmpData = (double *)malloc(dataLength*sizeof(double));
+					int periods = (int)dataLength/dataPeriod;
+					for (int i = 0; i < dataLength; i++)
+					{
+						tmpData[(i/periods)+((i%periods)*dataPeriod)] = data[i];
+					}
+					double *oldData = data;
+					data = tmpData;
+					free(oldData);
+				}
+
+				cost_end();
+			}
+			
+			
 			if(decPath == NULL)
 				sprintf(outputFilePath, "%s.out", cmpPath);	
 			else
