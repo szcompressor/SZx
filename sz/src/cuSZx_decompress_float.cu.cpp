@@ -1,8 +1,10 @@
+
+#include <hip/hip_runtime.h>
 #include <stdio.h>
 #include <math.h>
 #include "cuSZx_decompress_float.h"
 
-#include <cooperative_groups.h>
+#include <hip/hip_cooperative_groups.h>
 
 namespace cg = cooperative_groups;
 

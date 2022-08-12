@@ -2,10 +2,10 @@ cmake_minimum_required (VERSION 3.10.2)
 project (cuSZx)
 
 include(CheckLanguage)
-check_language(CUDA)
-if(CMAKE_CUDA_COMPILER)
-    enable_language(CUDA)
-endif()
+#check_language(CUDA)
+#if(CMAKE_CUDA_COMPILER)
+#    enable_language(CUDA)
+#endif()
 
 #disable in-source builds
 set (CMAKE_DISABLE_SOURCE_CHANGES ON)
@@ -48,9 +48,9 @@ set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=-Wall")
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/sz/include)
-find_package(CUDAToolkit  REQUIRED)
-include_directories("${CUDAToolkit_INCLUDE_DIRS}")
-include_directories (${CUDAToolkit_LIBRARY_ROOT}/samples/common/inc)
+#find_package(CUDAToolkit  REQUIRED)
+#include_directories("${CUDAToolkit_INCLUDE_DIRS}")
+#include_directories (${CUDAToolkit_LIBRARY_ROOT}/samples/common/inc)
 #include_directories (/usr/local/cuda/samples/common/inc)
 
 if (NOT DEFINED CMAKE_CUDA_STANDARD)

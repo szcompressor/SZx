@@ -57,10 +57,9 @@ add_library (SZ
   src/utility.c
   src/VarSet.c
   src/sz_stats.c
-  src/cuSZx_entry.cu
-  src/cuSZx_compress_float.cu
-  src/cuSZx_decompress_float.cu
-  src/timingGPU.cu
+  src/cuSZx_entry.cu.cpp
+  src/cuSZx_compress_float.cu.cpp
+  src/cuSZx_decompress_float.cu.cpp
 )
 
 target_include_directories(SZ
