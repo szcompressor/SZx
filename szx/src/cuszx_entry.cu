@@ -138,7 +138,7 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     uint64_t *num_sig, *d_num_sig;
 
     checkCudaErrors(cudaMalloc((void **)&d_num_sig, sizeof(uint64_t)));
-
+    num_sig = (uint64_t *)malloc(sizeof(uint64_t));
     checkCudaErrors(cudaMalloc((void **)&d_blk_idx, nbBlocks*sizeof(uint32_t)));
     // blk_idx = malloc()
     checkCudaErrors(cudaMalloc((void **)&d_blk_subidx, nbEle*sizeof(uint8_t)));
@@ -166,10 +166,17 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     cudaDeviceSynchronize();
     get_numsig<<<1,1>>>(d_num_sig);
     cudaDeviceSynchronize();
+
+    checkCudaErrors(cudaMemcpy(num_sig, d_num_sig, sizeof(uint64_t), cudaMemcpyDeviceToHost));
+
+    blk_idx = (uint32_t *)malloc(nbBlocks*sizeof(uint32_t));
+    blk_vals= (float *)malloc((*num_sig)*sizeof(float));
+    blk_subidx = (uint8_t *)malloc((*num_sig)*sizeof(uint8_t));
+
     checkCudaErrors(cudaMemcpy(meta, d_meta, msz, cudaMemcpyDeviceToHost)); 
     checkCudaErrors(cudaMemcpy(offsets, d_offsets, nbBlocks*sizeof(short), cudaMemcpyDeviceToHost)); 
     checkCudaErrors(cudaMemcpy(midBytes, d_midBytes, mbsz, cudaMemcpyDeviceToHost)); 
-    checkCudaErrors(cudaMemcpy(num_sig, d_num_sig, sizeof(uint64_t), cudaMemcpyDeviceToHost));
+    
     
     checkCudaErrors(cudaMemcpy(blk_idx, d_blk_idx, nbBlocks*sizeof(uint32_t), cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaMemcpy(blk_vals,d_blk_vals, (*num_sig)*sizeof(float), cudaMemcpyDeviceToHost));
@@ -181,6 +188,9 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
 
     *outSize = _post_proc(oriData, meta, offsets, midBytes, outBytes, nbEle, blockSize, *num_sig, blk_idx, blk_vals, blk_subidx);
 
+    free(blk_idx);
+    free(blk_subidx);
+    free(blk_vals);
     free(meta);
     free(offsets);
     free(midBytes);
