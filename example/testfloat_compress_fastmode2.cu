@@ -75,6 +75,7 @@ int main(int argc, char * argv[])
     }
     
     float threshold = r2rThreshold*(max-min);
+    errBound = errBound*(max-min);
     //float *revValue = (float *)malloc(sizeof(float));
     //*revValue = 1.0E36;
 
