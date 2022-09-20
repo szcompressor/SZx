@@ -4,6 +4,8 @@
 #include "szx_TypeManager.h"
 #include "timingGPU.h"
 
+#define SPARSITY_LEVEL 0.25
+
 TimingGPU timer_GPU;
 void bin(unsigned n)
 {
@@ -12,9 +14,47 @@ void bin(unsigned n)
         (n & i) ? printf("1") : printf("0");
 }
 
-int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, unsigned char *outBytes, size_t nbEle, int blockSize)
+size_t convert_state_to_out(unsigned char* meta, size_t length, unsigned char *result){
+    size_t out_length;
+
+    if(length%4==0)
+		out_length = length/4;
+	else
+		out_length = length/4+1;
+
+    for (size_t i = 0; i < out_length; i++)
+    {
+        uint8_t tmp = 0;
+
+        for (size_t j = 0; j < 4; j++)
+        {
+            if (i*4 + j < length)
+            {
+                tmp |= (0x03 & meta[i*4+j]) << 2*j;
+            }
+            
+        }
+        result[i] = tmp;
+    }
+    return out_length;
+}
+
+size_t convert_block2_to_out(unsigned char *result, uint32_t numBlocks, uint64_t num_sig, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx){
+    size_t out_length = 0;
+    memcpy(result, blk_idx, numBlocks*sizeof(uint32_t));
+    out_length += numBlocks*4;
+    memcpy(result+out_length, blk_vals, num_sig*sizeof(float));
+    out_length += num_sig*sizeof(float);
+    memcpy(result+out_length, blk_subidx, num_sig*sizeof(uint8_t));
+    out_length += num_sig*sizeof(uint8_t);
+    
+    return out_length;
+}
+
+int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, unsigned char *outBytes, size_t nbEle, int blockSize, uint64_t num_sig, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx)
 {
     int out_size = 0;
+
     size_t nbConstantBlocks = 0;
     size_t nbBlocks = nbEle/blockSize;
     size_t ncBytes = blockSize/4;
@@ -31,7 +71,8 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
     out_size += (nbBlocks-nbConstantBlocks)*sizeof(short)+(nbEle%blockSize)*sizeof(float);
 
     //outBytes = (unsigned char*)malloc(out_size);
-	unsigned char* r = outBytes; 
+	unsigned char* r = outBytes;
+    unsigned char* r_old = outBytes; 
 	r[0] = SZx_VER_MAJOR;
 	r[1] = SZx_VER_MINOR;
 	r[2] = 1;
@@ -40,7 +81,8 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
 	r=r+5; //1 byte
 	sizeToBytes(r, nbConstantBlocks);
 	r += sizeof(size_t); 
-	r += convertIntArray2ByteArray_fast_1b_args(meta, nbBlocks, r);
+	r += convert_state_to_out(meta, nbBlocks, r);
+    r += convert_block2_to_out(r, nbBlocks,num_sig, blk_idx, blk_vals, blk_subidx);
     memcpy(r, oriData+nbBlocks*blockSize, (nbEle%blockSize)*sizeof(float));
     r += (nbEle%blockSize)*sizeof(float);
     unsigned char* c = r;
@@ -61,12 +103,13 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
         } 
     }
 
-    return out_size;
+    // return out_size;
+    return (uint32_t) (r-r_old);
 }
 
-unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize)
+unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, float threshold)
 {
-
+    float sparsity_level = SPARSITY_LEVEL;
 	float* d_oriData;
     cudaMalloc((void**)&d_oriData, sizeof(float)*nbEle); 
     cudaMemcpy(d_oriData, oriData, sizeof(float)*nbEle, cudaMemcpyHostToDevice); 
@@ -88,6 +131,20 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
 	unsigned char* d_meta;
 	unsigned char* d_midBytes;
 	short* d_offsets;
+
+    uint32_t *blk_idx, *d_blk_idx;
+    uint8_t *blk_subidx, *d_blk_subidx;
+    float *blk_vals, *d_blk_vals;
+    uint64_t *num_sig, *d_num_sig;
+
+    checkCudaErrors(cudaMalloc((void **)&d_num_sig, sizeof(uint64_t)));
+
+    checkCudaErrors(cudaMalloc((void **)&d_blk_idx, nbBlocks*sizeof(uint32_t)));
+    // blk_idx = malloc()
+    checkCudaErrors(cudaMalloc((void **)&d_blk_subidx, nbEle*sizeof(uint8_t)));
+
+    checkCudaErrors(cudaMalloc((void **)&d_blk_vals, nbEle*sizeof(float)));
+
     checkCudaErrors(cudaMalloc((void**)&d_meta, msz)); 
     //checkCudaErrors(cudaMemcpy(d_meta, meta, msz, cudaMemcpyHostToDevice)); 
     checkCudaErrors(cudaMemset(d_meta, 0, msz));
@@ -97,22 +154,30 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     checkCudaErrors(cudaMemset(d_midBytes, 0, mbsz));
 
     timer_GPU.StartCounter();
+    apply_threshold<<<80,256>>>(d_oriData, threshold, nbEle);
+    cudaDeviceSynchronize();
     dim3 dimBlock(32, blockSize/32);
     dim3 dimGrid(65536, 1);
     const int sMemsize = blockSize * sizeof(float) + dimBlock.y * sizeof(int);
-    compress_float<<<dimGrid, dimBlock, sMemsize>>>(d_oriData, d_meta, d_offsets, d_midBytes, absErrBound, blockSize, nbBlocks, mSize);
+    compress_float<<<dimGrid, dimBlock, sMemsize>>>(d_oriData, d_meta, d_offsets, d_midBytes, absErrBound, blockSize, nbBlocks, mSize, sparsity_level, d_blk_idx, d_blk_subidx,d_blk_vals);
     cudaError_t err = cudaGetLastError();        // Get error code
     printf("CUDA Error: %s\n", cudaGetErrorString(err));
     printf("GPU compression timing: %f ms\n", timer_GPU.GetCounter());
+    get_numsig<<<1,1>>>(d_num_sig);
     checkCudaErrors(cudaMemcpy(meta, d_meta, msz, cudaMemcpyDeviceToHost)); 
     checkCudaErrors(cudaMemcpy(offsets, d_offsets, nbBlocks*sizeof(short), cudaMemcpyDeviceToHost)); 
     checkCudaErrors(cudaMemcpy(midBytes, d_midBytes, mbsz, cudaMemcpyDeviceToHost)); 
+    checkCudaErrors(cudaMemcpy(num_sig, d_num_sig, sizeof(uint64_t), cudaMemcpyDeviceToHost));
+    
+    checkCudaErrors(cudaMemcpy(blk_idx, d_blk_idx, nbBlocks*sizeof(uint32_t), cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(blk_vals,d_blk_vals, (*num_sig)*sizeof(float), cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(blk_subidx,d_blk_subidx, (*num_sig)*sizeof(uint8_t), cudaMemcpyDeviceToHost));
 
     size_t maxPreservedBufferSize = sizeof(float)*nbEle;
     unsigned char* outBytes = (unsigned char*)malloc(maxPreservedBufferSize);
     memset(outBytes, 0, maxPreservedBufferSize);
 
-    *outSize = _post_proc(oriData, meta, offsets, midBytes, outBytes, nbEle, blockSize);
+    *outSize = _post_proc(oriData, meta, offsets, midBytes, outBytes, nbEle, blockSize, *num_sig, blk_idx, blk_vals, blk_subidx);
 
     free(meta);
     free(offsets);

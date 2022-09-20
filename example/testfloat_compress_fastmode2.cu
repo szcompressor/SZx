@@ -42,16 +42,17 @@ int main(int argc, char * argv[])
     char oriFilePath[640], outputFilePath[645];
     if(argc < 3)
     {
-		printf("Usage: testfloat_compress_fastmode2 [srcFilePath] [block size] [err bound] [--cuda]\n");
-		printf("Example: testfloat_compress_fastmode2 testfloat_8_8_128.dat 64 1E-3 --cuda\n");
+		printf("Usage: testfloat_compress_fastmode2 [srcFilePath] [block size] [err bound] [r2rThreshold] [--cuda]\n");
+		printf("Example: testfloat_compress_fastmode2 testfloat_8_8_128.dat 64 1E-3 1E-2 --cuda\n");
 		exit(0);
     }
 
     sprintf(oriFilePath, "%s", argv[1]);
     int blockSize = atoi(argv[2]);
     float errBound = atof(argv[3]);
+    float r2rThreshold = atof(argv[4]);
     bool withGPU = false;
-    if (argc > 4 && !strcmp(argv[4], "--cuda")) withGPU = true;
+    if (argc > 5 && !strcmp(argv[5], "--cuda")) withGPU = true;
 
     sprintf(outputFilePath, "%s.szx", oriFilePath);
 
@@ -63,6 +64,17 @@ int main(int argc, char * argv[])
 		printf("Error: data file %s cannot be read!\n", oriFilePath);
 		exit(0);
     }
+
+    float max,min;
+    max = data[0];
+    min = data[0];
+    for (size_t i = 0; i < nbEle; i++)
+    {
+        if(data[i] > max) max = data[i];
+        if(data[i] < min) min = data[i];
+    }
+    
+    float threshold = r2rThreshold*(max-min);
     //float *revValue = (float *)malloc(sizeof(float));
     //*revValue = 1.0E36;
 
@@ -70,7 +82,7 @@ int main(int argc, char * argv[])
     unsigned char* bytes = NULL;
     if (withGPU)
     {
-        bytes = cuSZx_fast_compress_args_unpredictable_blocked_float(data, &outSize, errBound, nbEle, blockSize);
+        bytes = cuSZx_fast_compress_args_unpredictable_blocked_float(data, &outSize, errBound, nbEle, blockSize, threshold);
     }else{
         cost_start();
         bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, &outSize, errBound, nbEle, blockSize);
