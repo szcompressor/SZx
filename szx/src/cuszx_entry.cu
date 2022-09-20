@@ -163,7 +163,9 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     cudaError_t err = cudaGetLastError();        // Get error code
     printf("CUDA Error: %s\n", cudaGetErrorString(err));
     printf("GPU compression timing: %f ms\n", timer_GPU.GetCounter());
+    cudaDeviceSynchronize();
     get_numsig<<<1,1>>>(d_num_sig);
+    cudaDeviceSynchronize();
     checkCudaErrors(cudaMemcpy(meta, d_meta, msz, cudaMemcpyDeviceToHost)); 
     checkCudaErrors(cudaMemcpy(offsets, d_offsets, nbBlocks*sizeof(short), cudaMemcpyDeviceToHost)); 
     checkCudaErrors(cudaMemcpy(midBytes, d_midBytes, mbsz, cudaMemcpyDeviceToHost)); 
