@@ -65,7 +65,7 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
     else
         out_size += nbBlocks/8+1;
     for (int i=0; i<nbBlocks; i++){
-        if (meta[i]==0) nbConstantBlocks++;
+        if (meta[i]==0 || meta[i]==1) nbConstantBlocks++;
         else out_size += 1+(blockSize/4)+offsets[i];
     }
     out_size += (nbBlocks-nbConstantBlocks)*sizeof(short)+(nbEle%blockSize)*sizeof(float);
@@ -104,7 +104,7 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
     }
 
     // return out_size;
-    return (uint32_t) (r-r_old);
+    return (uint32_t) (nc-r_old);
 }
 
 unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, float threshold)
