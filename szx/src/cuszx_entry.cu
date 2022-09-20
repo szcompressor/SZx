@@ -90,10 +90,10 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
     unsigned char* nc = o+(nbBlocks-nbConstantBlocks)*sizeof(short);
     for (int i=0; i<nbBlocks; i++){
         
-        if (meta[i]==0){
+        if (meta[i]==0 || meta[i] == 1){
             memcpy(c, meta+(nbBlocks+i*mSize), sizeof(float));
             c += sizeof(float);
-        }else{
+        }else if(meta[i] == 3){
             shortToBytes(o, offsets[i]);
             o += sizeof(short);
             memcpy(nc, meta+(nbBlocks+i*mSize), mSize);
