@@ -8,7 +8,7 @@ namespace cg = cooperative_groups;
 
 #define MAX_BLK_SIZE 256
 
-__device__ uint64_t num_state2;
+__device__ uint32_t num_state2;
 __device__ uint64_t total_sig;
 
 __device__
@@ -342,7 +342,7 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
             int idx = 0;
             if (tidx ==0 && tidy == 0)
             {
-                idx = atomicAdd(&num_state2, (uint64_t)num_sig);
+                idx = atomicAdd(&num_state2, (uint32_t)num_sig);
                 blk_idx[b] = idx;    // Store the index of where this block has values and indices within block
             }
             __syncthreads();
@@ -368,5 +368,5 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
 }
 
 __global__ void get_numsig(uint64_t *num_sig){
-    *num_sig = num_state2;
+    *num_sig = (uint64_t)num_state2;
 }
