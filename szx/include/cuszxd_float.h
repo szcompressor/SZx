@@ -9,4 +9,6 @@
 
 __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t mSize); 
 
+__global__ void decompress_state2(float *out, unsigned char* stateArray, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx,uint32_t blockSize);
+
 #endif /* ----- #ifndef CUSZX_DECOMPRESS_FLOAT_H  ----- */
