@@ -155,7 +155,7 @@ __device__ int _retrieve_leading(int pos, int reqBytesLength, int* sums)
     return pos;
 }
 
-#define MAX_BLK_SIZE 64
+#define MAX_BLK_SIZE 256
 
 __global__ void decompress_state2(float *out, unsigned char* stateArray, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx,uint32_t blockSize){
     int bid = blockIdx.x;
