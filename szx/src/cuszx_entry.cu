@@ -53,7 +53,7 @@ size_t convert_out_to_state(size_t nbBlocks, unsigned char* cmp, unsigned char* 
         {
             if (4*i + j < nbBlocks)
             {
-                out_state[4*i + j]= (cmp >> 2*j) & 0x03;
+                out_state[4*i + j]= (cmp[i] >> 2*j) & 0x03;
             }
             
         }
