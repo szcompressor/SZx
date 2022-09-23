@@ -4,7 +4,7 @@
 #include "szx_TypeManager.h"
 #include "timingGPU.h"
 
-#define SPARSITY_LEVEL 0.25
+#define SPARSITY_LEVEL 0.5
 
 TimingGPU timer_GPU;
 void bin(unsigned n)
