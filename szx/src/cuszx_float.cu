@@ -6,7 +6,7 @@
 
 namespace cg = cooperative_groups;
 
-#define MAX_BLK_SIZE 64
+#define MAX_BLK_SIZE 256
 
 __device__ uint32_t num_state2;
 __device__ uint64_t total_sig;
