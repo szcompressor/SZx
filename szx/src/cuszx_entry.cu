@@ -260,6 +260,7 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 	unsigned char* r = cmpBytes;
 	r += 4;
 	int blockSize = r[0];  //get block size
+	if(blockSize == 0)blockSize = 256;
 	r++;
 	size_t nbConstantBlocks = bytesToLong_bigEndian(r); //get number of constant blocks
 	r += sizeof(size_t);
