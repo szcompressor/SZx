@@ -266,7 +266,7 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
         for (size_t i = b*bs+(tidx + blockDim.x*tidy); i < b*bs +bs; i+=blockDim.x*blockDim.y)
         {
             // fabs(data[tid]) <= threshold
-            if (fabs(oriData[i] > threshold))
+            if (fabs(oriData[i]) > threshold)
             {
                 int idx = atomicAdd(&num_sig, 1);
                 block_vals[idx] = oriData[i];
