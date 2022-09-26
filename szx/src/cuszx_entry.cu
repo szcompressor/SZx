@@ -49,7 +49,7 @@ size_t convert_out_to_state(size_t nbBlocks, unsigned char* cmp, unsigned char* 
 
     for (size_t i = 0; i < state_length; i++)
     {
-        for (size_t j = 0; i < 4; j++)
+        for (size_t j = 0; j < 4; j++)
         {
             if (4*i + j < nbBlocks)
             {
@@ -61,7 +61,7 @@ size_t convert_out_to_state(size_t nbBlocks, unsigned char* cmp, unsigned char* 
     return nbBlocks;
 }
 
-size_t convert_block2_to_out(unsigned char *result, uint32_t numBlocks, uint64_t num_sig, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx){
+size_t convert_block2_to_out(unsigned char *result, uint32_t numBlocks, uint64_t num_sig, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx, uint8_t *blk_sig){
     size_t out_length = 0;
     memcpy(result, blk_idx, numBlocks*sizeof(uint32_t));
     out_length += numBlocks*4;
@@ -69,11 +69,13 @@ size_t convert_block2_to_out(unsigned char *result, uint32_t numBlocks, uint64_t
     out_length += num_sig*sizeof(float);
     memcpy(result+out_length, blk_subidx, num_sig*sizeof(uint8_t));
     out_length += num_sig*sizeof(uint8_t);
-    
+    memcpy(result+out_length, blk_sig, numBlocks*sizeof(uint8_t));
+    out_length+= numBlocks*sizeof(uint8_t);
+
     return out_length;
 }
 
-size_t convert_out_to_block2(unsigned char *in_cmp, uint32_t numBlocks, uint64_t num_sig, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx){
+size_t convert_out_to_block2(unsigned char *in_cmp, uint32_t numBlocks, uint64_t num_sig, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx, uint8_t *blk_sig){
     size_t out_length = 0;
     memcpy(blk_idx, in_cmp, numBlocks*sizeof(uint32_t));
     out_length += numBlocks*4;
@@ -81,10 +83,13 @@ size_t convert_out_to_block2(unsigned char *in_cmp, uint32_t numBlocks, uint64_t
     out_length += num_sig*sizeof(float);
     memcpy(blk_subidx, in_cmp+out_length, num_sig*sizeof(uint8_t));
     out_length += num_sig*sizeof(uint8_t);
+    memcpy(blk_sig, in_cmp+out_length, numBlocks*sizeof(uint8_t));
+    out_length += numBlocks*sizeof(uint8_t);
+
     return out_length;
 }
 
-int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, unsigned char *outBytes, size_t nbEle, int blockSize, uint64_t num_sig, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx)
+int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, unsigned char *outBytes, size_t nbEle, int blockSize, uint64_t num_sig, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx, uint8_t *blk_sig)
 {
     int out_size = 0;
 
@@ -117,7 +122,7 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
     sizeToBytes(r, (size_t) num_sig);
     r += sizeof(size_t); 
 	r += convert_state_to_out(meta, nbBlocks, r);
-    r += convert_block2_to_out(r, nbBlocks,num_sig, blk_idx, blk_vals, blk_subidx);
+    r += convert_block2_to_out(r, nbBlocks,num_sig, blk_idx, blk_vals, blk_subidx, blk_sig);
     memcpy(r, oriData+nbBlocks*blockSize, (nbEle%blockSize)*sizeof(float));
     r += (nbEle%blockSize)*sizeof(float);
     unsigned char* c = r;
@@ -168,6 +173,7 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
 	short* d_offsets;
 
     uint32_t *blk_idx, *d_blk_idx;
+    uint8_t *blk_sig, *d_blk_sig;
     uint8_t *blk_subidx, *d_blk_subidx;
     float *blk_vals, *d_blk_vals;
     uint64_t *num_sig, *d_num_sig;
@@ -180,6 +186,8 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
 
     checkCudaErrors(cudaMalloc((void **)&d_blk_vals, nbEle*sizeof(float)));
 
+    checkCudaErrors(cudaMalloc((void **)&d_blk_sig, nbBlocks*sizeof(uint8_t)));
+
     checkCudaErrors(cudaMalloc((void**)&d_meta, msz)); 
     //checkCudaErrors(cudaMemcpy(d_meta, meta, msz, cudaMemcpyHostToDevice)); 
     checkCudaErrors(cudaMemset(d_meta, 0, msz));
@@ -189,12 +197,12 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     checkCudaErrors(cudaMemset(d_midBytes, 0, mbsz));
 
     timer_GPU.StartCounter();
-    apply_threshold<<<80,256>>>(d_oriData, threshold, nbEle);
-    cudaDeviceSynchronize();
+    // apply_threshold<<<80,256>>>(d_oriData, threshold, nbEle);
+    // cudaDeviceSynchronize();
     dim3 dimBlock(32, blockSize/32);
     dim3 dimGrid(65536, 1);
     const int sMemsize = blockSize * sizeof(float) + dimBlock.y * sizeof(int);
-    compress_float<<<dimGrid, dimBlock, sMemsize>>>(d_oriData, d_meta, d_offsets, d_midBytes, absErrBound, blockSize, nbBlocks, mSize, sparsity_level, d_blk_idx, d_blk_subidx,d_blk_vals);
+    compress_float<<<dimGrid, dimBlock, sMemsize>>>(d_oriData, d_meta, d_offsets, d_midBytes, absErrBound, blockSize, nbBlocks, mSize, sparsity_level, d_blk_idx, d_blk_subidx,d_blk_vals, threshold, d_blk_sig);
     cudaError_t err = cudaGetLastError();        // Get error code
     printf("CUDA Error: %s\n", cudaGetErrorString(err));
     printf("GPU compression timing: %f ms\n", timer_GPU.GetCounter());
@@ -207,6 +215,7 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     blk_idx = (uint32_t *)malloc(nbBlocks*sizeof(uint32_t));
     blk_vals= (float *)malloc((*num_sig)*sizeof(float));
     blk_subidx = (uint8_t *)malloc((*num_sig)*sizeof(uint8_t));
+    blk_sig = (uint8_t *)malloc(nbBlocks*sizeof(uint8_t));
 
     checkCudaErrors(cudaMemcpy(meta, d_meta, msz, cudaMemcpyDeviceToHost)); 
     checkCudaErrors(cudaMemcpy(offsets, d_offsets, nbBlocks*sizeof(short), cudaMemcpyDeviceToHost)); 
@@ -216,12 +225,14 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     checkCudaErrors(cudaMemcpy(blk_idx, d_blk_idx, nbBlocks*sizeof(uint32_t), cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaMemcpy(blk_vals,d_blk_vals, (*num_sig)*sizeof(float), cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaMemcpy(blk_subidx,d_blk_subidx, (*num_sig)*sizeof(uint8_t), cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(blk_sig,d_blk_sig, (nbBlocks)*sizeof(uint8_t), cudaMemcpyDeviceToHost));
+
 
     size_t maxPreservedBufferSize = sizeof(float)*nbEle;
     unsigned char* outBytes = (unsigned char*)malloc(maxPreservedBufferSize);
     memset(outBytes, 0, maxPreservedBufferSize);
 
-    *outSize = _post_proc(oriData, meta, offsets, midBytes, outBytes, nbEle, blockSize, *num_sig, blk_idx, blk_vals, blk_subidx);
+    *outSize = _post_proc(oriData, meta, offsets, midBytes, outBytes, nbEle, blockSize, *num_sig, blk_idx, blk_vals, blk_subidx, blk_sig);
 
     free(blk_idx);
     free(blk_subidx);
@@ -239,6 +250,7 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 {
     uint32_t *blk_idx, *d_blk_idx;
     uint8_t *blk_subidx, *d_blk_subidx;
+    uint8_t *blk_sig, *d_blk_sig;
     float *blk_vals, *d_blk_vals;
     size_t num_sig, *d_num_sig;
 
@@ -270,7 +282,9 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
     blk_idx = (uint32_t *)malloc(nbBlocks*sizeof(uint32_t));
     blk_vals= (float *)malloc((num_sig)*sizeof(float));
     blk_subidx = (uint8_t *)malloc((num_sig)*sizeof(uint8_t));
-		
+    blk_sig = (uint8_t *)malloc(nbBlocks*sizeof(uint8_t));
+
+	printf("Converting state array\n");
     convert_out_to_state(nbBlocks, r, stateArray);
 	// convertByteArray2IntArray_fast_1b_args(nbBlocks, r, stateNBBytes, stateArray); //get the stateArray
 	for (size_t i = 0; i < nbBlocks; i++)
@@ -286,8 +300,8 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 	r += stateNBBytes;
     unsigned char* data = (unsigned char*)malloc(ncBlocks*blockSize*sizeof(float));
     memset(data, 0, ncBlocks*blockSize*sizeof(float));
-
-    size_t to_add = convert_out_to_block2(r, nbBlocks, (uint64_t)num_sig, blk_idx, blk_vals, blk_subidx);
+    printf("converting block vals\n");
+    size_t to_add = convert_out_to_block2(r, nbBlocks, (uint64_t)num_sig, blk_idx, blk_vals, blk_subidx, blk_sig);
     r+= to_add;
     // checkCudaErrors(cudaMalloc((void **)&d_num_sig, sizeof(uint64_t)));
     // num_sig = (uint64_t *)malloc(sizeof(uint64_t));
@@ -297,10 +311,14 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 
     checkCudaErrors(cudaMalloc((void **)&d_blk_vals, num_sig*sizeof(float)));
 
+    checkCudaErrors(cudaMalloc((void **)&d_blk_sig, nbBlocks*sizeof(uint8_t)));
+
     checkCudaErrors(cudaMemcpy(d_blk_idx, blk_idx, nbBlocks*sizeof(uint32_t), cudaMemcpyHostToDevice));
     checkCudaErrors(cudaMemcpy(d_blk_vals, blk_vals, (num_sig)*sizeof(float), cudaMemcpyHostToDevice));
     checkCudaErrors(cudaMemcpy(d_blk_subidx, blk_subidx, (num_sig)*sizeof(uint8_t), cudaMemcpyHostToDevice));
     checkCudaErrors(cudaMemcpy(d_stateArray, stateArray, nbBlocks, cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_blk_sig, blk_sig, nbBlocks*sizeof(uint8_t), cudaMemcpyHostToDevice));
+
 
 	size_t i = 0, j = 0, k = 0; //k is used to keep track of constant block index
     memcpy((*newData)+nbBlocks*blockSize, r, (nbEle%blockSize)*sizeof(float));
@@ -332,7 +350,7 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
     dim3 dimBlock(32, blockSize/32);
     dim3 dimGrid(65536, 1);
     const int sMemsize = blockSize * sizeof(float) + dimBlock.y * sizeof(int);
-    decompress_state2<<<nbBlocks, 256>>>(d_newdata, d_stateArray,d_blk_idx, d_blk_vals, d_blk_subidx,blockSize);
+    decompress_state2<<<nbBlocks, 64>>>(d_newdata, d_stateArray,d_blk_idx, d_blk_vals, d_blk_subidx,blockSize, d_blk_sig);
     decompress_float<<<dimGrid, dimBlock, sMemsize>>>(d_data, blockSize, ncBlocks, mSize);
     cudaError_t err = cudaGetLastError();        // Get error code
     printf("CUDA Error: %s\n", cudaGetErrorString(err));

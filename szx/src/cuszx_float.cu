@@ -6,7 +6,7 @@
 
 namespace cg = cooperative_groups;
 
-#define MAX_BLK_SIZE 256
+#define MAX_BLK_SIZE 64
 
 __device__ uint32_t num_state2;
 __device__ uint64_t total_sig;
@@ -234,7 +234,7 @@ __global__ void apply_threshold(float *data, float threshold, size_t length){
     }
 }
 
-__global__ void compress_float(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, float absErrBound, int bs, size_t nb, size_t mSize, float sparsity_level, uint32_t *blk_idx, uint8_t *blk_subidx,float *blk_vals) 
+__global__ void compress_float(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, float absErrBound, int bs, size_t nb, size_t mSize, float sparsity_level, uint32_t *blk_idx, uint8_t *blk_subidx,float *blk_vals, float threshold, uint8_t *blk_sig) 
 {
     int tidx = threadIdx.x;
     int tidy = threadIdx.y;
@@ -265,11 +265,14 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
 
         for (size_t i = b*bs+(tidx + blockDim.x*tidy); i < b*bs +bs; i+=blockDim.x*blockDim.y)
         {
-            if (oriData[i] != 0.0)
+            // fabs(data[tid]) <= threshold
+            if (fabs(oriData[i] > threshold))
             {
                 int idx = atomicAdd(&num_sig, 1);
                 block_vals[idx] = oriData[i];
                 block_idxs[idx] = (uint8_t) (0xff & (i - (b*bs)));
+            }else{
+                oriData[i] = 0.0;
             }
             
         }
@@ -344,6 +347,7 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
             {
                 idx = atomicAdd(&num_state2, (uint32_t)num_sig);
                 blk_idx[b] = idx;    // Store the index of where this block has values and indices within block
+                blk_sig[b] = (uint8_t) 0xff & num_sig;
             }
             __syncthreads();
             for (int i = tid; i < num_sig; i+=blockDim.x*blockDim.y)

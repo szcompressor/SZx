@@ -157,13 +157,13 @@ __device__ int _retrieve_leading(int pos, int reqBytesLength, int* sums)
 
 #define MAX_BLK_SIZE 256
 
-__global__ void decompress_state2(float *out, unsigned char* stateArray, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx,uint32_t blockSize){
+__global__ void decompress_state2(float *out, unsigned char* stateArray, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx,uint32_t blockSize, uint8_t *blk_sig){
     int bid = blockIdx.x;
     uint8_t state = stateArray[bid];
 
     __shared__ float block_vals[MAX_BLK_SIZE];
     __shared__ uint8_t block_subidx[MAX_BLK_SIZE];
-    __shared__ char idx_taken[MAX_BLK_SIZE];
+    // __shared__ char idx_taken[MAX_BLK_SIZE];
     __shared__ float s_out[MAX_BLK_SIZE];
     __shared__ int sig_count;
     if (state != 2)
@@ -171,19 +171,16 @@ __global__ void decompress_state2(float *out, unsigned char* stateArray, uint32_
         return;
     }
 
+    int local_sig = blk_sig[bid];
     int idx = blk_idx[bid];
     
-    for (size_t i = threadIdx.x; i < blockSize; i+=blockDim.x)
+    for (size_t i = threadIdx.x; i < local_sig; i+=blockDim.x)
     {
-        if (idx_taken[i] == 1)
-        {
-            continue;
-        }else{
-            block_vals[i] = blk_vals[idx+i];
-            block_subidx[i]=blk_subidx[idx+i];
-            idx_taken[block_subidx[i]] = 1;
-            atomicAdd(&sig_count, 1);
-        }
+        block_vals[i] = blk_vals[idx+i];
+        block_subidx[i]=blk_subidx[idx+i];
+        // idx_taken[block_subidx[i]] = 1;
+        atomicAdd(&sig_count, 1);
+        
     }
     
     __syncthreads();
