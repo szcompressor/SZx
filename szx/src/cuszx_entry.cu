@@ -103,7 +103,7 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
     else
         out_size += nbBlocks/8+1;
     for (int i=0; i<nbBlocks; i++){
-        if (meta[i]==0 || meta[i]==1) nbConstantBlocks++;
+        if (meta[i]==0 || meta[i]==1 || meta[i] == 2) nbConstantBlocks++;
         else out_size += 1+(blockSize/4)+offsets[i];
     }
     out_size += (nbBlocks-nbConstantBlocks)*sizeof(short)+(nbEle%blockSize)*sizeof(float);

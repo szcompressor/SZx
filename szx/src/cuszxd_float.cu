@@ -191,7 +191,7 @@ __global__ void decompress_state2(float *out, unsigned char* stateArray, uint32_
     }
 
     __syncthreads();
-    for (size_t i = threadIdx.x; i < sig_count; i+=blockDim.x)
+    for (size_t i = threadIdx.x; i < local_sig; i+=blockDim.x)
     {
         s_out[block_subidx[i]] = block_vals[i];
     }
