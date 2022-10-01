@@ -234,6 +234,144 @@ __global__ void apply_threshold(float *data, float threshold, size_t length){
     }
 }
 
+__global__ void compress_float_largeblk(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, float absErrBound, int bs, size_t nb, size_t mSize, float sparsity_level, uint32_t *blk_idx, uint16_t *blk_subidx,float *blk_vals, float threshold, uint8_t *blk_sig) 
+{
+    int tidx = threadIdx.x;
+    int tidy = threadIdx.y;
+    int bid = blockIdx.x;
+
+    float data, radius, medianValue;
+    unsigned mask;
+    unsigned char state;
+    extern __shared__ float shared[];
+
+    __shared__ float block_vals[MAX_BLK_SIZE];
+    __shared__ uint16_t block_idxs[MAX_BLK_SIZE];
+    __shared__ int num_sig;
+    __shared__ int index;
+    float* value = shared;
+    int* ivalue = (int*)shared;
+    uchar4* cvalue = (uchar4*)shared;
+    int* sums = &ivalue[bs];
+
+
+    for (unsigned long b=bid; b<nb; b+=gridDim.x){
+        if (tidx ==0 && tidy ==0)
+        {
+            num_sig = 0;
+        }
+        __syncthreads();
+
+
+        for (size_t i = b*bs+(tidx + blockDim.x*tidy); i < b*bs +bs; i+=blockDim.x*blockDim.y)
+        {
+            // fabs(data[tid]) <= threshold
+            if (fabs(oriData[i]) > threshold)
+            {
+                int idx = atomicAdd(&num_sig, 1);
+                block_vals[idx] = oriData[i];
+                block_idxs[idx] = (uint16_t) (0xffff & (i - (b*bs)));
+            }else{
+                oriData[i] = 0.0;
+            }
+            
+        }
+        __syncthreads();
+
+        data = oriData[b*bs+tidy*warpSize+tidx];
+        float Min = data;
+        float Max = data;
+
+        for (int offset = warpSize/2; offset > 0; offset /= 2) 
+        {
+            Min = min(Min, __shfl_xor_sync(FULL_MASK, Min, offset));
+            Max = max(Max, __shfl_xor_sync(FULL_MASK, Max, offset));
+        }
+        if (tidx==0){
+            value[tidy] = Min;
+            value[blockDim.y+tidy] = Max;
+        }
+        __syncthreads();                  
+
+        if (tidy==0){
+            if (tidx < blockDim.y){
+                Min = value[tidx];
+                Max = value[blockDim.y+tidx];
+            }
+
+            mask = __ballot_sync(FULL_MASK, tidx < blockDim.y);
+            for (int offset = blockDim.y/2; offset > 0; offset /= 2) 
+            {
+                Min = min(Min, __shfl_xor_sync(mask, Min, offset));
+                Max = max(Max, __shfl_xor_sync(mask, Max, offset));
+            }
+            
+            if (tidx==0){
+                radius = (Max - Min)/2;
+                value[0] = radius;
+                value[1] = Min + radius;
+                value[2] = absErrBound;
+            }
+        }
+        __syncthreads();                  
+
+        radius = value[0];
+        medianValue = value[1];
+
+        if (num_sig==0)
+        {
+            state = 1; // All zeros
+        }else if( num_sig > 0 && radius <= absErrBound){
+            state = 0; // Constant block with non zeros
+        } else if( ((float) num_sig/(float)bs) <= sparsity_level && num_sig > 0){
+            state = 2; // Do grouping, store as-is with bitmap/index
+        } else{
+            state = 3; // Do normal non-constant block
+        }
+        
+
+        // state = radius <= absErrBound ? 0 : 1;
+        if (tidx==0){
+            meta[b] = state;
+            meta[nb+b*mSize] = cvalue[1].x;
+            meta[nb+b*mSize+1] = cvalue[1].y;
+            meta[nb+b*mSize+2] = cvalue[1].z;
+            meta[nb+b*mSize+3] = cvalue[1].w;
+        } 
+        __syncthreads();                  
+        int tid = tidx + tidy*blockDim.x;
+        if (state==2)
+        {
+            int idx = 0;
+            if (tidx ==0 && tidy == 0)
+            {
+                idx = atomicAdd(&num_state2, (uint32_t)num_sig);
+                blk_idx[b] = idx;    // Store the index of where this block has values and indices within block
+                blk_sig[b] = (uint16_t) 0xffff & num_sig;
+            }
+            __syncthreads();
+            for (int i = tid; i < num_sig; i+=blockDim.x*blockDim.y)
+            {
+                blk_vals[idx+i] = block_vals[i];   // Store the value of the significant data point in the block
+                blk_subidx[idx+i] = block_idxs[i]; // Store the byte value of index within block of significant data point
+            }
+            
+        }
+        
+
+        if (state==3){
+            int reqLength = _compute_reqLength(ivalue[0], ivalue[2]);
+            __syncthreads();                  
+            value[tidy*blockDim.x+tidx] = data - medianValue;
+            __syncthreads();                  
+            _compute_oneBlock(b*bs*sizeof(float), nb+b*mSize+4, b, reqLength, value, ivalue, cvalue, sums, meta, offsets, midBytes);
+        }
+
+    }
+
+}
+
+
 __global__ void compress_float(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, float absErrBound, int bs, size_t nb, size_t mSize, float sparsity_level, uint32_t *blk_idx, uint8_t *blk_subidx,float *blk_vals, float threshold, uint8_t *blk_sig) 
 {
     int tidx = threadIdx.x;
