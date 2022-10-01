@@ -226,6 +226,18 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     checkCudaErrors(cudaMemcpy(blk_vals,d_blk_vals, (*num_sig)*sizeof(float), cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaMemcpy(blk_subidx,d_blk_subidx, (*num_sig)*sizeof(uint8_t), cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaMemcpy(blk_sig,d_blk_sig, (nbBlocks)*sizeof(uint8_t), cudaMemcpyDeviceToHost));
+    int c0=0, c1=0, c2=0, c3=0;
+    for(int i = 0; i < nbBlocks; i++){
+        if(meta[i]==0) c0++;
+
+        if(meta[i]==1) c1++;
+
+        if(meta[i]==2) c2++;
+
+        if(meta[i]==3) c3++;
+    }
+
+    printf("s0: %d s1: %d s2: %d s3: %d\n",c0,c1,c2,c3);
 
 
     size_t maxPreservedBufferSize = sizeof(float)*nbEle;
