@@ -234,7 +234,7 @@ __global__ void apply_threshold(float *data, float threshold, size_t length){
     }
 }
 
-__global__ void compress_float_largeblk(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, float absErrBound, int bs, size_t nb, size_t mSize, float sparsity_level, uint32_t *blk_idx, uint16_t *blk_subidx,float *blk_vals, float threshold, uint16_t *blk_sig) 
+__global__ void compress_float_largeblk(float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, float absErrBound, int bs, size_t nb, size_t mSize, float sparsity_level, uint32_t *blk_idx, uint16_t *blk_subidx,float *blk_vals, float threshold, uint8_t *blk_sig) 
 {
     int tidx = threadIdx.x;
     int tidy = threadIdx.y;
