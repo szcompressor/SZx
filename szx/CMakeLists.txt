@@ -1,5 +1,5 @@
 file(GLOB source_files "src/*.c")
-if (CMAKE_CUDA_COMPILER)
+if (CUDAToolkit_FOUND)
     file(GLOB cuda_source_files "src/*.cu")
     list(APPEND source_files ${cuda_source_files})
 endif ()

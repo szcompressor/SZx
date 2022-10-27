@@ -10,7 +10,7 @@ foreach (SZX_TARGET IN LISTS SZX_TARGETS)
 	target_link_libraries (${SZX_TARGET} SZx)
 endforeach ()
 
-if (CMAKE_CUDA_COMPILER)
+if (CUDAToolkit_FOUND)
 	set(SZX_TARGETS ${SZX_TARGETS}
 			testfloat_compress_fastmode2
 			testfloat_decompress_fastmode2
