@@ -1,4 +1,9 @@
 cmake_minimum_required (VERSION 3.10.2)
+#define the project
+project (szx
+        VERSION 1.0.0
+        DESCRIPTION "SZx Error Bounded Lossy Compressor"
+        )
 
 include(CheckLanguage)
 check_language(CUDA)
@@ -10,11 +15,6 @@ endif()
 set (CMAKE_DISABLE_SOURCE_CHANGES ON)
 set (CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-#define the project
-project (szx
-  VERSION 1.0.0
-  DESCRIPTION "SZx Error Bounded Lossy Compressor"
-  )
 enable_testing()
 
 #correct was to set a default build type
