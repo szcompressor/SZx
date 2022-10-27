@@ -1,4 +1,9 @@
 cmake_minimum_required (VERSION 3.10.2)
+#define the project
+project (szx
+        VERSION 1.0.0
+        DESCRIPTION "SZx Error Bounded Lossy Compressor"
+        )
 
 include(CheckLanguage)
 check_language(CUDA)
@@ -10,12 +15,6 @@ endif()
 set (CMAKE_DISABLE_SOURCE_CHANGES ON)
 set (CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-#define the project
-project (szx
-  VERSION 1.0.0
-  DESCRIPTION "SZx Error Bounded Lossy Compressor"
-  LANGUAGES C CXX CUDA
-  )
 enable_testing()
 
 #correct was to set a default build type
@@ -47,10 +46,12 @@ set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=-Wall")
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/szx/include)
-find_package(CUDAToolkit  REQUIRED)
-include_directories("${CUDAToolkit_INCLUDE_DIRS}")
-include_directories (${CUDAToolkit_LIBRARY_ROOT}/samples/common/inc)
-#include_directories (/usr/local/cuda/samples/common/inc)
+if (CMAKE_CUDA_COMPILER)
+  find_package(CUDAToolkit  REQUIRED)
+  include_directories("${CUDAToolkit_INCLUDE_DIRS}")
+  include_directories (${CUDAToolkit_LIBRARY_ROOT}/samples/common/inc)
+  include_directories (/usr/local/cuda/samples/common/inc)
+endif()
 
 if (NOT DEFINED CMAKE_CUDA_STANDARD)
     set(CMAKE_CUDA_STANDARD 11)
