@@ -227,9 +227,9 @@ float relBoundRatio, float compressionRatio, size_t r5, size_t r4, size_t r3, si
 		if(errBoundMode==FIX_RATE)
 		{
 			//estimate error bound
-			float realPrecision = estimateErrorBoundbasedonCR_float(compressionRatio, data, blockSize, r5, r4, r3, r2, r1);
+			//float realPrecision = estimateErrorBoundbasedonCR_float(compressionRatio, data, blockSize, r5, r4, r3, r2, r1);
 			//perform fix-error compression
-			bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, blockSize);
+			//bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, blockSize);
 		}
 		else //not fix rate mode
 		{

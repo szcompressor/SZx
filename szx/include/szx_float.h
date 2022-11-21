@@ -35,8 +35,7 @@ void computeStateMedianRadius_float2(float *oriData, size_t nbEle, float absErrB
 float computeValueRange_float(float* oriData, size_t length, float* radius, float* medianValue);
 
 float estimateCRbasedonErrorBound_float(float errorBound, float* data, int blockSize, size_t nbEle);                                     
-float estimateErrorBoundbasedonCR_float(float compressionRatio, float* data, int blockSize, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);                                     
-                                     
+float estimateErrorBoundbasedonCR_float(float targetCompressionRatio, float tolerance, float* data, float initErrorBound, int blockSize, size_t nbEle);
 unsigned char *
 SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle,
                                                   int blockSize) ;

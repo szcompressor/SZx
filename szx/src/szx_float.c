@@ -486,7 +486,7 @@ float estimateCRbasedonErrorBound_float(float errorBound, float* data, int block
 			register lfloat lfBuf_cur;
 			lfBuf_pre.ivalue = 0;
 			register unsigned char leadingNum = 0;			
-			int leadingNum_Array[128];
+			//int leadingNum_Array[128];
 			int s_actual_leadNumbers = 0;
 			for(j=0;j<blockSize;j++)
 			{
@@ -504,7 +504,7 @@ float estimateCRbasedonErrorBound_float(float errorBound, float* data, int block
                 else if (lfBuf_pre.ivalue >> 24 == 0)
                     leadingNum = 1;
                    
-                leadingNum_Array[j] = leadingNum;    
+               // leadingNum_Array[j] = leadingNum;    
 				if(leadingNum >= reqBytesLength)
 					s_actual_leadNumbers += reqBytesLength;
 				else
@@ -527,9 +527,91 @@ float estimateCRbasedonErrorBound_float(float errorBound, float* data, int block
 	return estimatedCR;
 }
 
-float estimateErrorBoundbasedonCR_float(float compressionRatio, float* data, int blockSize, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
+float estimateErrorBoundbasedonCR_float(float targetCompressionRatio, float tolerance, float* data, float initErrorBound, int blockSize, size_t nbEle)
 {
-	return 0;
+	float errorBound = initErrorBound;
+	//search for a valid range for error bounds
+	int i = 0;
+	float CR = estimateCRbasedonErrorBound_float(errorBound, data, blockSize, nbEle);	
+	int nbIterations = 15;
+	if(fabs(targetCompressionRatio-CR) < tolerance)
+		return errorBound;
+	float left_error = 0, right_error = 0;	
+	int foundFlag = 0;
+	float result_error = 0;
+	float targetTolerance = targetCompressionRatio*tolerance;
+	float preCR = CR;
+
+	//leftward search
+	if(targetCompressionRatio<CR)
+	{
+		printf("targetCompressionRatio<CR\n");
+		left_error = errorBound/8;
+		right_error = errorBound;				
+		for(i=0;i<nbIterations;i++)
+		{
+			CR = estimateCRbasedonErrorBound_float(left_error, data, blockSize, nbEle);
+			printf("errorBound=%.30G, CR=%f\n", left_error, CR);
+			if(fabs(CR-targetCompressionRatio) < targetTolerance || fabs(CR-preCR)<targetTolerance/2)
+			{
+				foundFlag = 1;
+				result_error = left_error;
+				break;
+			}	
+			if(targetCompressionRatio > CR)	
+				break;
+			right_error = left_error;
+			left_error = left_error/8;
+			preCR = CR;
+		}
+	}
+	else if(targetCompressionRatio>CR) //rightward search
+	{
+		printf("targetCompressionRatio>CR\n");
+		left_error = errorBound;
+		right_error = errorBound*8;				
+		for(i=0;i<nbIterations;i++)
+		{
+			CR = estimateCRbasedonErrorBound_float(right_error, data, blockSize, nbEle);
+			printf("errorBound=%.30G, CR=%f\n", right_error, CR);			
+			if(fabs(targetCompressionRatio-CR) < targetTolerance || fabs(CR-preCR)<targetTolerance/2)
+			{
+				foundFlag = 1;
+				result_error = right_error;
+				break;
+			}
+			if(targetCompressionRatio < CR)	
+				break;
+			left_error = right_error;
+			right_error = right_error*8;
+		}
+		preCR = CR;
+	}
+	
+	printf("foundFlag=%d, stage 1 iterations = %d\n", foundFlag, i);	
+	//binary search
+	if(foundFlag==0)
+	{
+		for(i=0;i<nbIterations;i++)
+		{
+			errorBound = (left_error+right_error)/2;
+			CR = estimateCRbasedonErrorBound_float(errorBound, data, blockSize, nbEle);
+			printf("errorBound=%.30G, CR=%f\n", errorBound, CR);			
+			if(fabs(CR-targetCompressionRatio) < targetTolerance || fabs(CR-preCR)<targetTolerance/2)
+			{
+				foundFlag = 1;
+				result_error = errorBound;
+				break;
+			} 
+			if(targetCompressionRatio > CR)
+				left_error = errorBound;
+			else
+				right_error = errorBound;
+			preCR = CR;	
+		}
+		printf("foundFlag=%d, stage 2 iterations = %d\n", foundFlag, i);					
+	}
+	return result_error;
 }
 
 unsigned char *
