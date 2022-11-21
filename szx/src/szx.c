@@ -15,6 +15,12 @@
 #include "szx.h"
 #include "szx_rw.h"
 
+int sumReqNbBits = 0;
+int sumReqNbBytes = 0;
+int sum_leadNumberArray_size = 0;
+int sum_residualMidBytes_size = 0;
+int sum_actual_leadNumbers = 0;
+
 int versionNumber[4] = {SZx_VER_MAJOR,SZx_VER_MINOR,SZx_VER_BUILD,SZx_VER_REVISION};
 
 int dataEndianType = LITTLE_ENDIAN_DATA; //*endian type of the data read from disk
@@ -209,79 +215,70 @@ int filterDimension(size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, size_
 }
 
 unsigned char* SZ_fast_compress_args(int fastMode, int dataType, void *data, size_t *outSize, int errBoundMode, float absErrBound,
-float relBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
+float relBoundRatio, float compressionRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 {
+	int blockSize = 128;	
 	unsigned char*  bytes = NULL;
 	size_t length = computeDataLength(r5, r4, r3, r2, r1);
 	size_t i = 0;
 	
 	if(dataType == SZ_FLOAT)
 	{
-		if(fastMode == SZx_WITH_BLOCK_FAST_CMPR || fastMode == SZx_RANDOMACCESS_FAST_CMPR || fastMode == SZx_OPENMP_FAST_CMPR)
+		if(errBoundMode==FIX_RATE)
 		{
-			float realPrecision = absErrBound;
-			if(errBoundMode==REL)
+			//estimate error bound
+			float realPrecision = estimateErrorBoundbasedonCR_float(compressionRatio, data, blockSize, r5, r4, r3, r2, r1);
+			//perform fix-error compression
+			bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, blockSize);
+		}
+		else //not fix rate mode
+		{
+			if(fastMode == SZx_WITH_BLOCK_FAST_CMPR || fastMode == SZx_RANDOMACCESS_FAST_CMPR || fastMode == SZx_OPENMP_FAST_CMPR)
 			{
-				float* oriData = (float*)data;
-				float min = oriData[0];
-				float max = oriData[0];
-				for(i=0;i<length;i++)
+				float realPrecision = absErrBound;
+				if(errBoundMode==REL)
 				{
-					float v = oriData[i];
-					if(min>v)
-						min = v;
-					else if(max<v)
-						max = v;
+					float valueRange = computeValueRange_float(data, length, NULL, NULL);
+					realPrecision = valueRange*relBoundRatio;
 				}
-				float valueRange = max - min;
-				realPrecision = valueRange*relBoundRatio;
-			}
 
-			int blockSize = 128;
-			if (fastMode == SZx_RANDOMACCESS_FAST_CMPR) {
-				bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, outSize, realPrecision, length, blockSize);
-			} 
-			else if(fastMode == SZx_OPENMP_FAST_CMPR)
+				if (fastMode == SZx_RANDOMACCESS_FAST_CMPR) {
+					bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, outSize, realPrecision, length, blockSize);
+				} 
+				else if(fastMode == SZx_OPENMP_FAST_CMPR)
+				{
+					#ifdef _OPENMP
+					bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(data, outSize, realPrecision, length,
+																								  blockSize);
+					#else
+					bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, outSize, realPrecision, length, blockSize);
+					printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the compression is degraded to serial version automatically.\n");
+					#endif
+				}
+				else {
+					bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, blockSize);
+				}
+				return bytes;
+			}
+			else
 			{
-				#ifdef _OPENMP
-				bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(data, outSize, realPrecision, length,
-																							  blockSize);
-				#else
-				bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, outSize, realPrecision, length, blockSize);
-				printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the compression is degraded to serial version automatically.\n");
-				#endif
-			}
-			else {
-				bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, blockSize);
-			}
-			return bytes;
-		}
-		else
-		{
-			//compute value range
-			float* oriData = (float*)data;
-			float min = oriData[0];
-			float max = oriData[0];
-			for(i=0;i<length;i++)
-			{
-				float v = oriData[i];
-				if(min>v)
-					min = v;
-				else if(max<v)
-					max = v;
-			}
-			float valueRange = max - min;
-			float radius = valueRange/2;
-			float medianValue = min + radius;
+				//compute value range
+				
+				float radius = 0;
+				float medianValue = 0;
+				float valueRange = computeValueRange_float(data, length, &radius, &medianValue);
 
-			float realPrecision = 0;
-			if(errBoundMode==ABS)
-				realPrecision = absErrBound;
-			else if(errBoundMode==REL)
-				realPrecision = valueRange*relBoundRatio;
+				float realPrecision = 0;
+				if(errBoundMode==ABS)
+					realPrecision = absErrBound;
+				else if(errBoundMode==REL)
+					realPrecision = valueRange*relBoundRatio;
 
-			bytes = SZ_fast_compress_args_unpredictable_float(data, outSize, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);		
+				bytes = SZ_fast_compress_args_unpredictable_float(data, outSize, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);		
+			}			
 		}
+		
+
 	}
 	else if(dataType == SZ_DOUBLE)
 	{
@@ -290,18 +287,7 @@ float relBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 			float realPrecision = absErrBound;
 			if(errBoundMode==REL)
 			{
-				double* oriData = (double*)data;
-				double min = oriData[0];
-				double max = oriData[0];
-				for(i=0;i<length;i++)
-				{
-					double v = oriData[i];
-					if(min>v)
-						min = v;
-					else if(max<v)
-						max = v;
-				}
-				double valueRange = max - min;
+				double valueRange = computeValueRange_double(data, length, NULL, NULL);
 				realPrecision = valueRange*relBoundRatio;
 			}
 
@@ -327,20 +313,9 @@ float relBoundRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 		else
 		{
 			//compute value range
-			double* oriData = (double*)data;
-			double min = oriData[0];
-			double max = oriData[0];
-			for(i=0;i<length;i++)
-			{
-				double v = oriData[i];
-				if(min>v)
-					min = v;
-				else if(max<v)
-					max = v;
-			}
-			double valueRange = max - min;
-			float radius = valueRange/2;
-			float medianValue = min + radius;
+			float radius = 0;
+			float medianValue = 0;
+			double valueRange = computeValueRange_double(data, length, &radius, &medianValue);
 
 			float realPrecision = 0;
 			if(errBoundMode==ABS)

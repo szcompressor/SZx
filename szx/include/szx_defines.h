@@ -23,6 +23,7 @@
 #define ABS_OR_REL 3
 #define PSNR 4
 #define NORM 5
+#define FIX_RATE 6
 
 #define PW_REL 10
 #define ABS_AND_PW_REL 11

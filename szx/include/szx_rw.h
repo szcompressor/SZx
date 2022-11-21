@@ -60,6 +60,7 @@ float *readFloatData_systemEndian(char *srcFilePath, size_t *nbEle, int *status)
 void writeByteData(unsigned char *bytes, size_t byteLength, char *tgtFilePath, int *status);
 void writeDoubleData(double *data, size_t nbEle, char *tgtFilePath, int *status);
 void writeFloatData(float *data, size_t nbEle, char *tgtFilePath, int *status);
+void writeIntData(int *data, size_t nbEle, char *tgtFilePath, int *status);
 void writeData(void *data, int dataType, size_t nbEle, char *tgtFilePath, int *status);
 void writeFloatData_inBytes(float *data, size_t nbEle, char* tgtFilePath, int *status);
 void writeDoubleData_inBytes(double *data, size_t nbEle, char* tgtFilePath, int *status);

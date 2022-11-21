@@ -89,7 +89,9 @@ int main(int argc, char* argv[])
 	char* errBoundMode = NULL;
 	char* absErrBound = NULL;
 	char* relErrBound = NULL;
+	char* compRatio = NULL;
 	float absErrorBound = 0, relBoundRatio = 0;
+	float compressRatio = 0;
 
 	int fastMode = SZx_WITH_BLOCK_FAST_CMPR; //1: non-blocked+serial, 2: blocked+serial, 3: blocked+openmp, 4: blocked+randomaccess+serial
 	size_t r5 = 0;
@@ -205,6 +207,11 @@ int main(int argc, char* argv[])
 				usage();
 			relErrBound = argv[i];
 			break;
+		case 'S':
+			if (++i == argc)
+				usage();
+			compRatio = argv[i];
+			break;
 		default: 
 			usage();
 			break;
@@ -243,7 +250,10 @@ int main(int argc, char* argv[])
 		
 		if(relErrBound != NULL)
 			relBoundRatio = atof(relErrBound);
-		
+	
+		if(compRatio != NULL)
+			compressRatio = atof(compRatio);
+
 		size_t outSize;	
 		if(dataType == SZ_FLOAT) //single precision
 		{
@@ -271,7 +281,7 @@ int main(int argc, char* argv[])
 				exit(0);
 			}
 			cost_start();
-			bytes = SZ_fast_compress_args(fastMode, SZ_FLOAT, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
+			bytes = SZ_fast_compress_args(fastMode, SZ_FLOAT, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, compressRatio, r5, r4, r3, r2, r1);
 			cost_end();
 			if(cmpPath == NULL)
 				sprintf(outputFilePath, "%s.szx", inPath);
@@ -313,7 +323,7 @@ int main(int argc, char* argv[])
 				exit(0);
 			}
 			cost_start();
-			bytes = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
+			bytes = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, compressRatio, r5, r4, r3, r2, r1);
 			cost_end();
 			if(cmpPath == NULL)
 				sprintf(outputFilePath, "%s.szx", inPath);

@@ -838,6 +838,31 @@ void writeFloatData(float *data, size_t nbEle, char *tgtFilePath, int *status)
     *status = SZ_SCES;
 }
 
+
+void writeIntData(int *data, size_t nbEle, char *tgtFilePath, int *status)
+{
+	size_t i = 0;
+	char s[64];
+	FILE *pFile = fopen(tgtFilePath, "wb");
+    if (pFile == NULL)
+    {
+        printf("Failed to open input file. 3\n");
+        *status = SZ_FERR;
+        return;
+    }
+   
+    for(i = 0;i<nbEle;i++)
+	{
+		//printf("i=%d\n",i);
+		//printf("data[i]=%f\n",data[i]);
+		sprintf(s,"%d\n",data[i]);
+		fputs(s, pFile);
+	}
+    
+    fclose(pFile);
+    *status = SZ_SCES;
+}
+
 void writeData(void *data, int dataType, size_t nbEle, char *tgtFilePath, int *status)
 {
 	int state = SZ_SCES;

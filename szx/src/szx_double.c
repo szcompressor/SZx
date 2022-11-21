@@ -592,6 +592,28 @@ void computeStateMedianRadius_double2(double *oriData, size_t nbEle, float absEr
     }
 }
 
+double computeValueRange_double(double* oriData, size_t length, float* radius, float* medianValue)
+{
+	//compute value range
+	double min = oriData[0];
+	double max = oriData[0];
+	for(size_t i=0;i<length;i++)
+	{
+		double v = oriData[i];
+		if(min>v)
+			min = v;
+		else if(max<v)
+			max = v;
+	}
+	double valueRange = max - min;
+	if(radius!=NULL)
+	{
+		*radius = valueRange/2;
+		*medianValue = min + *radius;			
+	}
+
+	return valueRange;
+}
 
 unsigned char *
 SZ_fast_compress_args_unpredictable_blocked_double(double *oriData, size_t *outSize, float absErrBound, size_t nbEle,

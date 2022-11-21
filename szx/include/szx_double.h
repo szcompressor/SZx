@@ -31,6 +31,8 @@ void simd_max_min_double(double *x, int n, double *tmp_max, double *tmp_min);
 void computeStateMedianRadius_double2(double *oriData, size_t nbEle, float absErrBound,
                                      unsigned char *state, float *median, float *radius) ;
                                      
+double computeValueRange_double(double* oriData, size_t length, float* radius, float* medianValue);
+                                     
 unsigned char *
 SZ_fast_compress_args_unpredictable_blocked_double(double *oriData, size_t *outSize, float absErrBound, size_t nbEle,
                                                   int blockSize) ;

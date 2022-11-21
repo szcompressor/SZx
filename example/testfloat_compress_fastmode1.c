@@ -61,7 +61,7 @@ int main(int argc, char * argv[])
    
     size_t outSize; 
     cost_start();
-    unsigned char* bytes =  SZ_fast_compress_args(SZx_NO_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errorBound, 0.001, 0, 0, 0, 0, nbEle);
+    unsigned char* bytes =  SZ_fast_compress_args(SZx_NO_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errorBound, 0.001, 0, 0, 0, 0, 0, nbEle);
     cost_end();
     printf("timecost=%f, %d\n",totalCost, bytes[0]); 
     printf("compression size = %zu, CR = %f\n", outSize, 1.0f*nbEle*sizeof(float)/outSize);
