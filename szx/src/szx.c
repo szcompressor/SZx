@@ -215,21 +215,17 @@ int filterDimension(size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, size_
 }
 
 unsigned char* SZ_fast_compress_args(int fastMode, int dataType, void *data, size_t *outSize, int errBoundMode, float absErrBound,
-float relBoundRatio, float compressionRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
+float relBoundRatio, float compressionRatio, float tolerance, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 {
 	int blockSize = 128;	
 	unsigned char*  bytes = NULL;
 	size_t length = computeDataLength(r5, r4, r3, r2, r1);
-	size_t i = 0;
 	
 	if(dataType == SZ_FLOAT)
 	{
-		if(errBoundMode==FIX_RATE)
+		if(errBoundMode==FXR)
 		{
-			//estimate error bound
-			//float realPrecision = estimateErrorBoundbasedonCR_float(compressionRatio, data, blockSize, r5, r4, r3, r2, r1);
-			//perform fix-error compression
-			//bytes = SZ_fast_compress_args_unpredictable_blocked_float(data, outSize, realPrecision, length, blockSize);
+			bytes = SZ_fast_compress_args_unpredictable_blocked_fixed_rate_float(data, outSize, compressionRatio, tolerance, length, blockSize); 			
 		}
 		else //not fix rate mode
 		{

@@ -87,7 +87,7 @@ int computeDimension(size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 size_t computeDataLength(size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 int filterDimension(size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, size_t* correctedDimension);
 unsigned char* SZ_fast_compress_args(int fastMode, int dataType, void *data, size_t *outSize, int errBoundMode, float absErrBound,
-float relBoundRatio, float compressionRatio, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
+float relBoundRatio, float compressionRatio, float tolerance, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 void* SZ_fast_decompress_pred(int dataType, float* preData, unsigned char *curBytes, size_t byteLength, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 void* SZ_fast_decompress(int fastMode, int dataType, unsigned char *bytes, size_t byteLength, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 

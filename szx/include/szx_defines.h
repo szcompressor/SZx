@@ -18,6 +18,7 @@
 
 #define ABS 0
 #define REL 1
+#define FXR 2
 #define VR_REL 1  //alternative name to REL
 #define ABS_AND_REL 2
 #define ABS_OR_REL 3
