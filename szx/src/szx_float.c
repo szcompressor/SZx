@@ -572,7 +572,7 @@ size_t *sumReqNbBytes, size_t *sum_actual_leadNumbers)
 	float p_lambda = 1.0*nbConstantBlocks/nbSampledBlocks;
 	
 	float estimatedCR = 4*blockSize/(metadata + block_cost+(1 + (0.25+avgReqNbBytes)*blockSize - avg_actual_lead)*(1 - p_lambda));
-	printf("----> sum_actual_leadNumbers=%zu, nbSampledBlocks = %zu, nbConstantBlocks = %zu, sumReqNbBytes = %zu, avgReqNbBytes=%f, avg_actual_lead=%f, p_lambda=%f\n", *sum_actual_leadNumbers, nbSampledBlocks, nbConstantBlocks, *sumReqNbBytes, avgReqNbBytes, avg_actual_lead, p_lambda);
+	//printf("----> sum_actual_leadNumbers=%zu, nbSampledBlocks = %zu, nbConstantBlocks = %zu, sumReqNbBytes = %zu, avgReqNbBytes=%f, avg_actual_lead=%f, p_lambda=%f\n", *sum_actual_leadNumbers, nbSampledBlocks, nbConstantBlocks, *sumReqNbBytes, avgReqNbBytes, avg_actual_lead, p_lambda);
 	return estimatedCR;	
 }
 
@@ -668,7 +668,7 @@ float estimateCRbasedonErrorBound_float(float errorBound, float* data, int block
 	float p_lambda = 1.0*nbConstantBlocks/nbBlocks_sampled;
 	
 	float estimatedCR = 4*blockSize/(metadata + block_cost+(1 + (0.25+avgReqNbBytes)*blockSize - avg_actual_lead)*(1 - p_lambda));
-	printf("----> sum_actual_leadNumbers=%zu, nbBlocks_sampled=%zu, nbConstantBlocks = %zu, sumReqNbBytes = %zu, avgReqNbBytes=%f, avg_actual_lead=%f, p_lambda=%f\n", sum_actual_leadNumbers, nbBlocks_sampled, nbConstantBlocks, sumReqNbBytes, avgReqNbBytes, avg_actual_lead, p_lambda);
+	//printf("----> sum_actual_leadNumbers=%zu, nbBlocks_sampled=%zu, nbConstantBlocks = %zu, sumReqNbBytes = %zu, avgReqNbBytes=%f, avg_actual_lead=%f, p_lambda=%f\n", sum_actual_leadNumbers, nbBlocks_sampled, nbConstantBlocks, sumReqNbBytes, avgReqNbBytes, avg_actual_lead, p_lambda);
 	exit(0);
 	return estimatedCR;
 }
@@ -677,7 +677,7 @@ float estimateErrorBoundbasedonCR_buffered_float(float targetCompressionRatio, f
 float* buffer, float* medianArray, float* radiusArray)
 {
 	int stride = 8;
-	printf("initErrBound = %.10G\n", initErrorBound);
+	//printf("initErrBound = %.10G\n", initErrorBound);
 	int nbIterations = 10;
 	float errorBound = initErrorBound;
 	size_t sumReqNbBytes[20] = {0};
@@ -707,7 +707,7 @@ float* buffer, float* medianArray, float* radiusArray)
 	//leftward search
 	if(targetCompressionRatio<CR)
 	{
-		printf("targetCompressionRatio<CR\n");
+		//printf("targetCompressionRatio<CR\n");
 		left_error = errorBound/stride;
 		right_error = errorBound;				
 		for(i=0;i<nbIterations;i++)
@@ -718,7 +718,7 @@ float* buffer, float* medianArray, float* radiusArray)
 			errorBounds[k] = left_error;
 			ratios[k] = CR;
 			k++;
-			printf("errorBound=%.10G, CR=%f\n", left_error, CR);
+			//printf("errorBound=%.10G, CR=%f\n", left_error, CR);
 			if(fabs(CR-targetCompressionRatio) < targetTolerance)// || fabs(CR-preCR)<targetTolerance/2) //stop and convergence condition
 			{
 				foundFlag = 1;
@@ -734,7 +734,7 @@ float* buffer, float* medianArray, float* radiusArray)
 	}
 	else if(targetCompressionRatio>CR) //rightward search
 	{
-		printf("targetCompressionRatio>CR\n");
+		//printf("targetCompressionRatio>CR\n");
 		left_error = errorBound;
 		right_error = errorBound*stride;				
 		for(i=0;i<nbIterations;i++)
@@ -745,7 +745,7 @@ float* buffer, float* medianArray, float* radiusArray)
 			errorBounds[k] = right_error;
 			ratios[k] = CR;
 			k++;			
-			printf("errorBound=%.10G, CR=%f\n", right_error, CR);			
+			//printf("errorBound=%.10G, CR=%f\n", right_error, CR);			
 			if(fabs(targetCompressionRatio-CR) < targetTolerance)// || fabs(CR-preCR)<targetTolerance/2) //convergence condition
 			{
 				foundFlag = 1;
@@ -760,8 +760,8 @@ float* buffer, float* medianArray, float* radiusArray)
 		//preCR = CR;
 	}
 	
-	printf("left_error = %.10G, right_error = %.10G\n", left_error, right_error);
-	printf("foundFlag=%d, stage 1 iterations = %d, result_error = %.10G, k = %d\n", foundFlag, i, result_error, k);	
+	//printf("left_error = %.10G, right_error = %.10G\n", left_error, right_error);
+	//printf("foundFlag=%d, stage 1 iterations = %d, result_error = %.10G, k = %d\n", foundFlag, i, result_error, k);	
 	//binary search
 	if(foundFlag==0)
 	{
@@ -804,7 +804,7 @@ float* buffer, float* medianArray, float* radiusArray)
 			errorBounds[k] = errorBound;
 			ratios[k] = CR;
 			k++;			
-			printf("errorBound=%.10G, CR=%f\n", errorBound, CR);			
+			//printf("errorBound=%.10G, CR=%f\n", errorBound, CR);			
 			//check if the CR meets the targetTolerance
 			if(fabs(CR-targetCompressionRatio) < targetTolerance)// || fabs(CR-preCR)<targetTolerance/2) //convergence condition
 			{
@@ -818,7 +818,7 @@ float* buffer, float* medianArray, float* radiusArray)
 				right_error = errorBound;
 			//preCR = CR;	
 		}
-	printf("foundFlag=%d, stage 2 iterations = %d, result_error = %.10G, k=%d\n", foundFlag, i, result_error,k);						
+	//printf("foundFlag=%d, stage 2 iterations = %d, result_error = %.10G, k=%d\n", foundFlag, i, result_error,k);						
 	}
 	return result_error;
 }
@@ -966,7 +966,7 @@ size_t SZ_fast_compress_args_unpredictable_blocked_args_float(float *oriData, un
     size_t nbConstantBlocks = computeStateMedianRadius_float(oriData, nbEle, absErrBound, blockSize, stateArray,
                                                              medianArray, radiusArray);
                                                              
-    printf("nbConstantBlocks=%zu, %f\n", nbConstantBlocks, 1.0*nbConstantBlocks/actualNBBlocks);
+    //printf("nbConstantBlocks=%zu, %f\n", nbConstantBlocks, 1.0*nbConstantBlocks/actualNBBlocks);
 
     unsigned char *r = outputBytes; // + sizeof(size_t) + stateNBBytes;
     r[0] = SZx_VER_MAJOR;
@@ -985,28 +985,13 @@ size_t SZ_fast_compress_args_unpredictable_blocked_args_float(float *oriData, un
     outSize += (3 + 1 + 1 + sizeof(size_t) + stateNBBytes + sizeof(float) * nbConstantBlocks);
 
     //printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f*(nbConstantBlocks*blockSize)/nbEle);
-    float min_avg_lead = 4, sum_avg_lead = 0, max_avg_lead = 0;
-    size_t counter = 0;
-    float avg_osize = 0;
+
     for (i = 0; i < nbBlocks; i++, op += blockSize) {
         if (stateArray[i]) {
             SZ_fast_compress_args_unpredictable_one_block_float(op, blockSize, absErrBound, q, &oSize,
                                                                 leadNumberArray_int, medianArray[i], radiusArray[i]);
-            //TODO: calculate the min, average, max leadNumberLength (in form of bytes)                                                    
-            int sum = 0;
-            for(int j = 0;j<blockSize;j++)
-				sum += leadNumberArray_int[j];
-			float avg = 1.0f*sum/blockSize;
-			if(min_avg_lead > avg)
-				min_avg_lead = avg;
-			if(max_avg_lead < avg)
-				max_avg_lead = avg;
-			sum_avg_lead += avg;
-			
             q += oSize;
             outSize += oSize;
-            avg_osize+=oSize;
-            counter++;
         } else {
             floatToBytes(p, medianArray[i]);
             p += sizeof(float);
@@ -1018,40 +1003,12 @@ size_t SZ_fast_compress_args_unpredictable_blocked_args_float(float *oriData, un
             SZ_fast_compress_args_unpredictable_one_block_float(op, remainCount, absErrBound, q, &oSize,
                                                                 leadNumberArray_int, medianArray[i], radiusArray[i]);
             outSize += oSize;
-            counter++;
         } else {
             floatToBytes(p, medianArray[i]);
         }
 
     }
 
-	avg_osize = avg_osize/counter;
-	float avg_avg_lead = 1.0*sum_avg_lead/counter;
-	float avg_actual_lead = 1.0*sum_actual_leadNumbers/counter;
-	float p_lambda = 1 - 1.0*counter/nbBlocks; //percentage of constant blocks
-	printf("# unpredictable blocks = %zu, percentage = %f\n", counter, 1-p_lambda);
-	printf("min_avg_lead=%f, avg_avg_lead=%f, max_avg_lead=%f, avg_avg_lead*8=%f\n", min_avg_lead, avg_avg_lead, max_avg_lead, avg_avg_lead*8);
-	float avgReqNbBits = 1.0*sumReqNbBits/counter;
-	float avgReqNbBytes = 1.0*sumReqNbBytes/counter;
-	printf("avgReqNbBits = %f, avgReqNbBytes = %f, avg_osize = %f\n", avgReqNbBits, avgReqNbBytes, avg_osize);
-	float metadata = 9.0*blockSize/nbEle;
-	float block_cost = 33.0/8;
-	float estimatedCR = 4*blockSize/(metadata + block_cost+(1 + (0.25+avgReqNbBytes - avg_avg_lead)*blockSize)*(1 - p_lambda));
-	float estimatedCR2 = 4*nbEle/(9+1.0/8*nbBlocks+4*nbBlocks+(1+0.25*blockSize+(avgReqNbBytes - avg_avg_lead)*blockSize)*(1-p_lambda)*nbBlocks);
-	float estimatedCR3 = 4*blockSize/(metadata + block_cost+(1 + (0.25+avgReqNbBytes)*blockSize - avg_actual_lead)*(1 - p_lambda));
-	//float estimatedCR4 = 4*nbEle/(9+1.0/8*nbBlocks+4*nbBlocks+(1+0.25*blockSize+(avgReqNbBytes - avg_actual_lead/blockSize)*blockSize)*(1-p_lambda)*nbBlocks);
-		
-	printf("===> avgReqNbBytes=%f, avg_actual_lead=%f, p_lambda=%f\n", avgReqNbBytes, avg_actual_lead, p_lambda);	
-	float avg_leadNumberArray_size = 1.0*sum_leadNumberArray_size/counter;
-	float avg_residualMidBytes_size = 1.0*sum_residualMidBytes_size/counter;
-	printf("part 1: %f, part 2: %f\n", 0.25*blockSize, (avgReqNbBytes - avg_avg_lead)*blockSize);
-	printf("avg_leadNumberArray_size=%f, avg_residualMidBytes_size=%f\n", avg_leadNumberArray_size, avg_residualMidBytes_size);
-	
-	printf("estimate CR = %f, estimatedCR2 = %f, estimatedCR3 = %f\n", estimatedCR, estimatedCR2, estimatedCR3);
-
-	float sample_estimate_CR = estimateCRbasedonErrorBound_float(absErrBound, oriData, blockSize, nbEle);
-
-	printf("sample_estimateCR = %f\n", sample_estimate_CR);
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, r);
 	
     free(stateArray);
@@ -1091,8 +1048,7 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
 
     size_t nbConstantBlocks = computeStateMedianRadius_float(oriData, nbEle, absErrBound, blockSize, stateArray,
                                                              medianArray, radiusArray);
-                                                             
-    printf("nbConstantBlocks=%zu, %f\n", nbConstantBlocks, 1.0*nbConstantBlocks/actualNBBlocks);
+                                                            
 
     unsigned char *r = outputBytes; // + sizeof(size_t) + stateNBBytes;
     r[0] = SZx_VER_MAJOR;
@@ -1111,28 +1067,13 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
     *outSize += (3 + 1 + 1 + sizeof(size_t) + stateNBBytes + sizeof(float) * nbConstantBlocks);
 
     //printf("nbConstantBlocks = %zu, percent = %f\n", nbConstantBlocks, 1.0f*(nbConstantBlocks*blockSize)/nbEle);
-    float min_avg_lead = 4, sum_avg_lead = 0, max_avg_lead = 0;
-    size_t counter = 0;
-    float avg_osize = 0;
+
     for (i = 0; i < nbBlocks; i++, op += blockSize) {
         if (stateArray[i]) {
             SZ_fast_compress_args_unpredictable_one_block_float(op, blockSize, absErrBound, q, &oSize,
                                                                 leadNumberArray_int, medianArray[i], radiusArray[i]);
-            //TODO: calculate the min, average, max leadNumberLength (in form of bytes)                                                    
-            int sum = 0;
-            for(int j = 0;j<blockSize;j++)
-				sum += leadNumberArray_int[j];
-			float avg = 1.0f*sum/blockSize;
-			if(min_avg_lead > avg)
-				min_avg_lead = avg;
-			if(max_avg_lead < avg)
-				max_avg_lead = avg;
-			sum_avg_lead += avg;
-			
             q += oSize;
             *outSize += oSize;
-            avg_osize+=oSize;
-            counter++;
         } else {
             floatToBytes(p, medianArray[i]);
             p += sizeof(float);
@@ -1144,40 +1085,12 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
             SZ_fast_compress_args_unpredictable_one_block_float(op, remainCount, absErrBound, q, &oSize,
                                                                 leadNumberArray_int, medianArray[i], radiusArray[i]);
             *outSize += oSize;
-            counter++;
         } else {
             floatToBytes(p, medianArray[i]);
         }
 
     }
 
-	avg_osize = avg_osize/counter;
-	float avg_avg_lead = 1.0*sum_avg_lead/counter;
-	float avg_actual_lead = 1.0*sum_actual_leadNumbers/counter;
-	float p_lambda = 1 - 1.0*counter/nbBlocks; //percentage of constant blocks
-	printf("# unpredictable blocks = %zu, percentage = %f\n", counter, 1-p_lambda);
-	printf("min_avg_lead=%f, avg_avg_lead=%f, max_avg_lead=%f, avg_avg_lead*8=%f\n", min_avg_lead, avg_avg_lead, max_avg_lead, avg_avg_lead*8);
-	float avgReqNbBits = 1.0*sumReqNbBits/counter;
-	float avgReqNbBytes = 1.0*sumReqNbBytes/counter;
-	printf("avgReqNbBits = %f, avgReqNbBytes = %f, avg_osize = %f\n", avgReqNbBits, avgReqNbBytes, avg_osize);
-	float metadata = 9.0*blockSize/nbEle;
-	float block_cost = 33.0/8;
-	float estimatedCR = 4*blockSize/(metadata + block_cost+(1 + (0.25+avgReqNbBytes - avg_avg_lead)*blockSize)*(1 - p_lambda));
-	float estimatedCR2 = 4*nbEle/(9+1.0/8*nbBlocks+4*nbBlocks+(1+0.25*blockSize+(avgReqNbBytes - avg_avg_lead)*blockSize)*(1-p_lambda)*nbBlocks);
-	float estimatedCR3 = 4*blockSize/(metadata + block_cost+(1 + (0.25+avgReqNbBytes)*blockSize - avg_actual_lead)*(1 - p_lambda));
-	//float estimatedCR4 = 4*nbEle/(9+1.0/8*nbBlocks+4*nbBlocks+(1+0.25*blockSize+(avgReqNbBytes - avg_actual_lead/blockSize)*blockSize)*(1-p_lambda)*nbBlocks);
-		
-	printf("===> avgReqNbBytes=%f, avg_actual_lead=%f, p_lambda=%f\n", avgReqNbBytes, avg_actual_lead, p_lambda);	
-	float avg_leadNumberArray_size = 1.0*sum_leadNumberArray_size/counter;
-	float avg_residualMidBytes_size = 1.0*sum_residualMidBytes_size/counter;
-	printf("part 1: %f, part 2: %f\n", 0.25*blockSize, (avgReqNbBytes - avg_avg_lead)*blockSize);
-	printf("avg_leadNumberArray_size=%f, avg_residualMidBytes_size=%f\n", avg_leadNumberArray_size, avg_residualMidBytes_size);
-	
-	printf("estimate CR = %f, estimatedCR2 = %f, estimatedCR3 = %f\n", estimatedCR, estimatedCR2, estimatedCR3);
-
-	float sample_estimate_CR = estimateCRbasedonErrorBound_float(absErrBound, oriData, blockSize, nbEle);
-
-	printf("sample_estimateCR = %f\n", sample_estimate_CR);
     convertIntArray2ByteArray_fast_1b_args(stateArray, actualNBBlocks, r);
 	
     free(stateArray);
