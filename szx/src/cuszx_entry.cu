@@ -102,10 +102,20 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
         out_size += nbBlocks/8;
     else
         out_size += nbBlocks/8+1;
+    int s0 = 0;
+    int s1 = 0;
+    int s2 = 0;
+    int s3 = 0;
     for (int i=0; i<nbBlocks; i++){
         if (meta[i]==0 || meta[i]==1 || meta[i] == 2) nbConstantBlocks++;
         else out_size += 1+(blockSize/4)+offsets[i];
+    
+    	if(meta[i]==0) s0++;
+    	if(meta[i]==1) s1++;
+    	if(meta[i]==2) s2++;
+    	if(meta[i]==3) s3++;
     }
+    printf("%d %d %d %d\n", s0, s1, s2, s3);
     out_size += (nbBlocks-nbConstantBlocks)*sizeof(short)+(nbEle%blockSize)*sizeof(float);
 
     //outBytes = (unsigned char*)malloc(out_size);
@@ -149,6 +159,8 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
 
 unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, float threshold)
 {
+//    printf("tr thresh abs %f %f\n", threshold, absErrBound);
+  //  printf("first: %f %f %f\n", oriData[0], oriData[1], oriData[2]);
     float sparsity_level = SPARSITY_LEVEL;
 	float* d_oriData;
     cudaMalloc((void**)&d_oriData, sizeof(float)*nbEle); 

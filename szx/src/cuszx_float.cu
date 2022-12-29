@@ -225,6 +225,10 @@ __device__ void _compute_oneBlock(unsigned long bbase, int mbase, int obase, int
 
 __global__ void apply_threshold(float *data, float threshold, size_t length){
     
+    if(threadIdx.x == 0 && blockIdx.x == 0){
+	printf("tid threshold: %f\n", threshold);
+    }
+
     for (unsigned long tid = threadIdx.x+blockDim.x*blockIdx.x; tid < length; tid+=blockDim.x*gridDim.x)
     {
         if (fabs(data[tid]) <= threshold)
@@ -254,6 +258,9 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
     uchar4* cvalue = (uchar4*)shared;
     int* sums = &ivalue[bs];
 
+    //if(threadIdx.x == 0 && blockIdx.x == 0){
+//	printf("tid threshold: %f\n", threshold);
+  //  }
 
     for (unsigned long b=bid; b<nb; b+=gridDim.x){
         if (tidx ==0 && tidy ==0)
@@ -266,7 +273,8 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
         for (size_t i = b*bs+(tidx + blockDim.x*tidy); i < b*bs +bs; i+=blockDim.x*blockDim.y)
         {
             // fabs(data[tid]) <= threshold
-            if (fabs(oriData[i]) > threshold)
+            float old = oriData[i];
+	    if (fabs(oriData[i]) > threshold)
             {
                 int idx = atomicAdd(&num_sig, 1);
                 block_vals[idx] = oriData[i];
@@ -274,7 +282,9 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
             }else{
                 oriData[i] = 0.0;
             }
-            
+            //if(fabs(old) > threshold && oriData[i] ==0.0){
+		//printf("something wrong\n");
+	    //}
         }
         __syncthreads();
 
@@ -332,6 +342,7 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
 
         // state = radius <= absErrBound ? 0 : 1;
         if (tidx==0){
+	    
             meta[b] = state;
             meta[nb+b*mSize] = cvalue[1].x;
             meta[nb+b*mSize+1] = cvalue[1].y;
@@ -340,21 +351,26 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
         } 
         __syncthreads();                  
         int tid = tidx + tidy*blockDim.x;
-        if (state==2)
+        //if(tid == 0) printf("s %d %d\n", b, (int)state);
+	if (state==2)
         {
             int idx = 0;
             if (tidx ==0 && tidy == 0)
             {
+		//printf("level: %f\n", ((float)num_sig/(float)bs));
                 idx = atomicAdd(&num_state2, (uint32_t)num_sig);
                 blk_idx[b] = idx;    // Store the index of where this block has values and indices within block
                 blk_sig[b] = (uint8_t) 0xff & num_sig;
-            }
+            	index = idx;
+	    }
             __syncthreads();
+	    idx = index;
             for (int i = tid; i < num_sig; i+=blockDim.x*blockDim.y)
             {
                 blk_vals[idx+i] = block_vals[i];   // Store the value of the significant data point in the block
                 blk_subidx[idx+i] = block_idxs[i]; // Store the byte value of index within block of significant data point
-            }
+                //printf("blk %f %f , ind %d\n", block_vals[i], block_idxs[i], idx);
+	    }
             
         }
         
