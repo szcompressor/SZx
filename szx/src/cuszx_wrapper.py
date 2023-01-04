@@ -69,3 +69,5 @@ if __name__ == "__main__":
     outSize = None
 
     outbytes, f_size = cuszx_integrated_compress(outbytes, in_vector, r2r_threshold, r2r_error, DATA_SIZE, 256, outSize)
+
+    print("Success "+str(f_size))
