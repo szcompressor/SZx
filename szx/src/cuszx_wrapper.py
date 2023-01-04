@@ -1,6 +1,7 @@
 import numpy as np
 import ctypes
 from ctypes import *
+import random
 
 LIB_PATH = './cuszx_wrapper.so'
 
@@ -41,3 +42,30 @@ def cuszx_integrated_decompress(data,bytes,nbEle):
     __cuszx_decompress(data_p, bytes_p, nbEle_p)
 
     return data
+
+if __name__ == "__main__":
+    
+    DATA_SIZE = 1024
+    MAX_D = 10.0
+    MIN_D = -10.0
+    RANGE = MAX_D - MIN_D
+    r2r_threshold = 0.1
+    r2r_error = 0.1
+
+    in_vector = np.zeros((DATA_SIZE,))
+    for i in range(0,DATA_SIZE/4):
+        in_vector[i] = 0.0
+    for i in range(DATA_SIZE/4, 2*DATA_SIZE/4):
+        in_vector[i] = 5.0
+    for i in range(2*DATA_SIZE/4, 3*DATA_SIZE/4):
+        in_vector[i] = random.uniform(MIN_D, MAX_D)
+    for i in range(3*DATA_SIZE/4, 3*DATA_SIZE/4+6):
+        in_vector[i] = -7.0
+    for i in range(3*DATA_SIZE/4+6, DATA_SIZE):
+        in_vector[i] = 0.001
+
+    in_vector = in_vector.astype('float32')
+    outbytes = None
+    outSize = None
+
+    outbytes, f_size = cuszx_integrated_compress(outbytes, in_vector, r2r_threshold, r2r_error, DATA_SIZE, 256, outSize)
