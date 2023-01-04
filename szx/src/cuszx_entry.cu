@@ -397,7 +397,7 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 
 }
 
-__device__ void device_post_proc(size_t *outSize, float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, unsigned char *outBytes, size_t nbEle, int blockSize, uint64_t num_sig, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx, uint8_t *blk_sig)
+__global__ void device_post_proc(size_t *outSize, float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, unsigned char *outBytes, size_t nbEle, int blockSize, uint64_t num_sig, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx, uint8_t *blk_sig)
 {
     int out_size = 0;
 
