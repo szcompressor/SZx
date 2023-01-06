@@ -119,6 +119,7 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
     out_size += (nbBlocks-nbConstantBlocks)*sizeof(short)+(nbEle%blockSize)*sizeof(float);
 
     //outBytes = (unsigned char*)malloc(out_size);
+  //  printf("accessing outbytes now...\n");
 	unsigned char* r = outBytes;
     unsigned char* r_old = outBytes; 
 	r[0] = SZx_VER_MAJOR;
@@ -141,15 +142,19 @@ int _post_proc(float *oriData, unsigned char *meta, short *offsets, unsigned cha
     for (int i=0; i<nbBlocks; i++){
         
         if (meta[i]==0 || meta[i] == 1){
-            memcpy(c, meta+(nbBlocks+i*mSize), sizeof(float));
+	    memcpy(c, meta+(nbBlocks+i*mSize), sizeof(float));
             c += sizeof(float);
         }else if(meta[i] == 3){
             shortToBytes(o, offsets[i]);
+	   
             o += sizeof(short);
             memcpy(nc, meta+(nbBlocks+i*mSize), mSize);
-            nc += mSize; 
+            
+	    nc += mSize; 
             memcpy(nc, midBytes+(i*blockSize*sizeof(float)), offsets[i]);
-            nc += offsets[i];
+            
+	    nc += offsets[i];
+	   
         } 
     }
 
@@ -239,13 +244,16 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     checkCudaErrors(cudaMemcpy(blk_subidx,d_blk_subidx, (*num_sig)*sizeof(uint8_t), cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaMemcpy(blk_sig,d_blk_sig, (nbBlocks)*sizeof(uint8_t), cudaMemcpyDeviceToHost));
 
-
     size_t maxPreservedBufferSize = sizeof(float)*nbEle;
     unsigned char* outBytes = (unsigned char*)malloc(maxPreservedBufferSize);
     memset(outBytes, 0, maxPreservedBufferSize);
 
-    *outSize = _post_proc(oriData, meta, offsets, midBytes, outBytes, nbEle, blockSize, *num_sig, blk_idx, blk_vals, blk_subidx, blk_sig);
+    outSize = (size_t *)malloc(sizeof(size_t));
+    //outSize[0] = _post_proc(oriData, meta, offsets, midBytes, outBytes, nbEle, blockSize, *num_sig, blk_idx, blk_vals, blk_subidx, blk_sig);
 
+    *outSize = _post_proc(oriData, meta, offsets, midBytes, outBytes, nbEle, blockSize, *num_sig, blk_idx, blk_vals, blk_subidx, blk_sig);
+//    printf("Beginning free\n");
+    printf("outsize %p \n", outBytes);
     free(blk_idx);
     free(blk_subidx);
     free(blk_vals);
@@ -397,6 +405,7 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 
 }
 
+
 __global__ void device_post_proc(size_t *outSize, float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, unsigned char *outBytes, size_t nbEle, int blockSize, uint64_t num_sig, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx, uint8_t *blk_sig)
 {
     int out_size = 0;
@@ -435,9 +444,9 @@ __global__ void device_post_proc(size_t *outSize, float *oriData, unsigned char 
 	r[3] = 0; // indicates this is not a random access version
 	r[4] = (unsigned char)blockSize;
 	r=r+5; //1 byte
-	sizeToBytes(r, nbConstantBlocks);
+//	sizeToBytes(r, nbConstantBlocks);
 	r += sizeof(size_t);
-    sizeToBytes(r, (size_t) num_sig);
+    //sizeToBytes(r, (size_t) num_sig);
     r += sizeof(size_t); 
 	r += convert_state_to_out(meta, nbBlocks, r);
     r += convert_block2_to_out(r, nbBlocks,num_sig, blk_idx, blk_vals, blk_subidx, blk_sig);
@@ -452,7 +461,7 @@ __global__ void device_post_proc(size_t *outSize, float *oriData, unsigned char 
             memcpy(c, meta+(nbBlocks+i*mSize), sizeof(float));
             c += sizeof(float);
         }else if(meta[i] == 3){
-            shortToBytes(o, offsets[i]);
+     //       shortToBytes(o, offsets[i]);
             o += sizeof(short);
             memcpy(nc, meta+(nbBlocks+i*mSize), mSize);
             nc += mSize; 

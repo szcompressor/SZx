@@ -18,9 +18,11 @@ extern "C"{
         float threshold = r2r_threshold*(max-min);
         float errBound = r2r_err*(max-min);
         bytes = cuSZx_fast_compress_args_unpredictable_blocked_float(data, outSize, errBound, nbEle, blockSize, threshold);
+   	printf("outSize %p\n", bytes);
     }
 
     void cuSZx_integrated_decompress(float *data, unsigned char *bytes, size_t nbEle){
-        cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
+        printf("test\n");
+	//cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
     }
 }
