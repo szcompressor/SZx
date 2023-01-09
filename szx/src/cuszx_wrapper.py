@@ -52,7 +52,7 @@ def cuszx_device_compress(oriData, outSize, absErrBound, nbEle, blockSize,thresh
     oriData_p = ctypes.cast(oriData.data.ptr, ctypes.POINTER(c_float))
     
     o_bytes = __cuszx_device_compress(oriData_p, outSize, absErrBound, nbEle, blockSize, threshold)
-    print(outSize.contents)
+    return o_bytes, outSize
 
 def cuszx_integrated_decompress(data,bytes,nbEle):
     data_p = data.ctypes.data_as(POINTER(c_float))
