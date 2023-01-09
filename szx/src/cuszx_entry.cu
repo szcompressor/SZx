@@ -607,7 +607,7 @@ unsigned char* device_ptr_cuSZx_compress_float(float *oriData, size_t *outSize, 
     device_post_proc<<<1,1>>>(d_outSize, d_oriData, d_meta, d_offsets, d_midBytes, d_outBytes, nbEle, blockSize, *num_sig, d_blk_idx, d_blk_vals, d_blk_subidx, d_blk_sig);
 
     cudaDeviceSynchronize();
-    // checkCudaErrors(cudaMemcpy(outSize, d_outSize, sizeof(size_t), cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(outSize, d_outSize, sizeof(size_t), cudaMemcpyDeviceToHost));
 
     printf("completed compression\n");
     //free(blk_idx);
