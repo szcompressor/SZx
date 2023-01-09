@@ -609,15 +609,17 @@ unsigned char* device_ptr_cuSZx_compress_float(float *oriData, size_t *outSize, 
     cudaDeviceSynchronize();
     // checkCudaErrors(cudaMemcpy(outSize, d_outSize, sizeof(size_t), cudaMemcpyDeviceToHost));
 
-    free(blk_idx);
-    free(blk_subidx);
-    free(blk_vals);
+    printf("completed compression\n");
+    //free(blk_idx);
+    //free(blk_subidx);
+    //free(blk_vals);
     // free(meta);
     // free(offsets);
     // free(midBytes);
     checkCudaErrors(cudaFree(d_meta));
     checkCudaErrors(cudaFree(d_offsets));
     checkCudaErrors(cudaFree(d_midBytes));
+//    printf("completed compression\n");
     return d_outBytes;
 }
 

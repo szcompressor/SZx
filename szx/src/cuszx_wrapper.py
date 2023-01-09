@@ -52,7 +52,7 @@ def cuszx_device_compress(oriData, outSize, absErrBound, nbEle, blockSize,thresh
     oriData_p = ctypes.cast(oriData.data.ptr, ctypes.POINTER(c_float))
     
     o_bytes = __cuszx_device_compress(oriData_p, outSize, absErrBound, nbEle, blockSize, threshold)
-    print(o_bytes.get()[0])
+    print(outSize.contents)
 
 def cuszx_integrated_decompress(data,bytes,nbEle):
     data_p = data.ctypes.data_as(POINTER(c_float))
@@ -90,4 +90,4 @@ if __name__ == "__main__":
     # print(outbytes.contents)
     # outbytes, f_size = cuszx_integrated_compress(outbytes, in_vector, np.float32(r2r_threshold), np.float32(r2r_error), np.ulonglong(DATA_SIZE), np.int32(256), outSize)
     cuszx_device_compress(in_vector_gpu, outSize, np.float32(r2r_error), np.ulonglong(DATA_SIZE), np.int32(256),np.float32(r2r_threshold))
-    print("Success "+str(outbytes[2]))
+    print("Success ")
