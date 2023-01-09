@@ -11,4 +11,6 @@ extern "C" unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(f
 
 extern "C" void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes);
 
+extern "C" unsigned char* device_ptr_cuSZx_compress_float(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, float threshold);
+
 #endif /* ----- #ifndef CUSZX_ENTRY_H  ----- */
