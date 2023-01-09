@@ -3,6 +3,7 @@
 #include "szx_BytesToolkit.h"
 #include "szx_TypeManager.h"
 #include "timingGPU.h"
+#include "szx.h"
 
 #define SPARSITY_LEVEL 0.25
 
@@ -405,6 +406,26 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 
 }
 
+__device__ inline void longToBytes_bigEndian_d(unsigned char *b, unsigned long num) 
+{
+	b[0] = (unsigned char)(num>>56);
+	b[1] = (unsigned char)(num>>48);
+	b[2] = (unsigned char)(num>>40);
+	b[3] = (unsigned char)(num>>32);
+	b[4] = (unsigned char)(num>>24);
+	b[5] = (unsigned char)(num>>16);
+	b[6] = (unsigned char)(num>>8);
+	b[7] = (unsigned char)(num);
+//	if(dataEndianType==LITTLE_ENDIAN_DATA)
+//		symTransform_8bytes(*b);
+}
+
+__device__ inline void shortToBytes_d(unsigned char* b, short value)
+{
+	lint16 buf;
+	buf.svalue = value;
+	memcpy(b, buf.byte, 2);
+}
 
 __global__ void device_post_proc(size_t *outSize, float *oriData, unsigned char *meta, short *offsets, unsigned char *midBytes, unsigned char *outBytes, size_t nbEle, int blockSize, uint64_t num_sig, uint32_t *blk_idx, float *blk_vals, uint8_t *blk_subidx, uint8_t *blk_sig)
 {
@@ -444,9 +465,11 @@ __global__ void device_post_proc(size_t *outSize, float *oriData, unsigned char 
 	r[3] = 0; // indicates this is not a random access version
 	r[4] = (unsigned char)blockSize;
 	r=r+5; //1 byte
-//	sizeToBytes(r, nbConstantBlocks);
+	//sizeToBytes(r, nbConstantBlocks);
+    longToBytes_bigEndian_d(r, nbConstantBlocks);
 	r += sizeof(size_t);
     //sizeToBytes(r, (size_t) num_sig);
+    longToBytes_bigEndian_d(r, (unsigned long)num_sig);
     r += sizeof(size_t); 
 	r += convert_state_to_out(meta, nbBlocks, r);
     r += convert_block2_to_out(r, nbBlocks,num_sig, blk_idx, blk_vals, blk_subidx, blk_sig);
@@ -461,7 +484,7 @@ __global__ void device_post_proc(size_t *outSize, float *oriData, unsigned char 
             memcpy(c, meta+(nbBlocks+i*mSize), sizeof(float));
             c += sizeof(float);
         }else if(meta[i] == 3){
-     //       shortToBytes(o, offsets[i]);
+           shortToBytes_d(o, offsets[i]);
             o += sizeof(short);
             memcpy(nc, meta+(nbBlocks+i*mSize), mSize);
             nc += mSize; 

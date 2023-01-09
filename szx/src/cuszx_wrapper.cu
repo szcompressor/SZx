@@ -25,4 +25,9 @@ extern "C"{
         printf("test\n");
 	//cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
     }
+
+    unsigned char* cuSZx_device_compress(float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, float threshold){
+        return device_ptr_cuSZx_compress_float(oriData, outSize, absErrBound, nbEle, blockSize, threshold);
+    }
+    
 }
