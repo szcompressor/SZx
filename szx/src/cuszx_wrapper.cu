@@ -30,8 +30,8 @@ extern "C"{
         return device_ptr_cuSZx_compress_float(oriData, outSize, absErrBound, nbEle, blockSize, threshold);
     }
 
-    void cuSZx_device_decompress(float** newData, size_t nbEle, unsigned char* cmpBytes){
-        device_ptr_cuSZx_decompress_float(newData, nbEle, cmpBytes);
+    float* cuSZx_device_decompress(size_t nbEle, unsigned char* cmpBytes){
+        return device_ptr_cuSZx_decompress_float(nbEle, cmpBytes);
     }
     
 }

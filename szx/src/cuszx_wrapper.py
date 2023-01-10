@@ -34,7 +34,8 @@ def get_device_decompress():
     func = dll.cuSZx_device_decompress
     # Returns: unsigned char *bytes
     # Needs: float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, float threshold
-    func.argtypes = [POINTER(POINTER(c_float)), c_size_t, POINTER(c_ubyte)]
+    func.argtypes = [c_size_t, POINTER(c_ubyte)]
+    func.restype = POINTER(c_float)
     return func
 
 __cuszx_compress = get_cuszx_compress()

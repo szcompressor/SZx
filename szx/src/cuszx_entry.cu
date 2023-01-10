@@ -805,7 +805,7 @@ __global__ void decompress_post_proc(unsigned char *data, float **newData, int b
     }
 }
 
-void device_ptr_cuSZx_decompress_float(float** newData, size_t nbEle, unsigned char* cmpBytes)
+float* device_ptr_cuSZx_decompress_float(size_t nbEle, unsigned char* cmpBytes)
 {
     /**
      * Assume the following are device pointers
@@ -823,7 +823,7 @@ void device_ptr_cuSZx_decompress_float(float** newData, size_t nbEle, unsigned c
     int *blockSize, bs;
     size_t *nbConstantBlocks, *nbBlocks, *ncBlocks, nbBlocks_h, ncBlocks_h;
     unsigned char *stateArray, *data;
-
+    float **newData;
 	//*newData = (float*)malloc(sizeof(float)*nbEle);
     size_t *test_nbBlks;
 //    printf("cmpbytes check %d\n", (int)cmpBytes[0]);
@@ -884,6 +884,7 @@ void device_ptr_cuSZx_decompress_float(float** newData, size_t nbEle, unsigned c
     cudaFree(blk_subidx);
     cudaFree(blk_vals);
     cudaFree(blk_sig);
+    return newData;
 
 }
 
