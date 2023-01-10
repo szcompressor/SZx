@@ -51,6 +51,9 @@ SZ_fast_compress_args_unpredictable_blocked_fixed_rate_float(float *oriData, siz
 void SZ_fast_compress_args_unpredictable_blocked_fixed_rate_float2(float *oriData, size_t *outSize, unsigned char* outputBytes, float compressionRatio, float tolerance, size_t nbEle,
                                                   int blockSize) ;
 
+void SZ_fast_compress_args_unpredictable_blocked_fixed_rate_float2_openmp(float *oriData, size_t *outSize, unsigned char* outputBytes, float compressionRatio, float tolerance, size_t nbEle,
+                                                  int blockSize) ;
+
 size_t SZ_fast_compress_args_unpredictable_blocked_args_float(float *oriData, unsigned char* outputBytes, float absErrBound, size_t nbEle,
                                                   int blockSize);
 
@@ -65,7 +68,10 @@ unsigned char *
 SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *oriData, size_t *outSize, float absErrBound,
                                                                size_t nbEle, int blockSize) ;
                                                                
-                                                               
+unsigned char *
+SZ_fast_compress_args_unpredictable_blocked_randomaccess_float2_openmp(float *oriData, size_t *outSize, unsigned char* outputBytes, float absErrBound,
+                                                               size_t nbEle, int blockSize);
+
 unsigned char *
 SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, size_t *outSize, float absErrBound,
     size_t nbEle, int blockSize) ;
