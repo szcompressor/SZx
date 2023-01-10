@@ -884,7 +884,7 @@ float* device_ptr_cuSZx_decompress_float(size_t nbEle, unsigned char* cmpBytes)
     cudaFree(blk_subidx);
     cudaFree(blk_vals);
     cudaFree(blk_sig);
-    return newData;
+    return *newData;
 
 }
 
