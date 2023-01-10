@@ -700,10 +700,10 @@ __global__ void decompress_startup(float **newData, size_t nbEle, unsigned char*
     size_t ncLeading = blockSize/4;
     size_t mSize = sizeof(float)+1+ncLeading; //Number of bytes for each data block's metadata.
 	*mSizeptr = mSize;
-    unsigned char* stateArray = (unsigned char*)malloc(nbBlocks);
+    stateArray = (unsigned char*)malloc(nbBlocks);
     // unsigned char* d_stateArray;
     // cudaMalloc(&d_stateArray, nbBlocks);
-	float* constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));			
+	constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));			
 
     blk_idx = (uint32_t *)malloc(nbBlocks*sizeof(uint32_t));
     blk_vals= (float *)malloc((num_sig)*sizeof(float));
@@ -823,7 +823,7 @@ void device_ptr_cuSZx_decompress_float(float** newData, size_t nbEle, unsigned c
     float *d_newdata;
     // checkCudaErrors(cudaMalloc((void**)&d_data, ncBlocks*blockSize*sizeof(float))); 
     // checkCudaErrors(cudaMemcpy(d_data, data, ncBlocks*blockSize*sizeof(float), cudaMemcpyHostToDevice)); 
-    checkCudaErrors(cudaMalloc(&d_newdata, nbBlocks*blockSize*sizeof(float)));
+    checkCudaErrors(cudaMalloc(&d_newdata, nbBlocks_h*bs*sizeof(float)));
 
     timer_GPU.StartCounter();
     dim3 dimBlock(32, bs/32);
@@ -836,7 +836,7 @@ void device_ptr_cuSZx_decompress_float(float** newData, size_t nbEle, unsigned c
     printf("GPU decompression timing: %f ms\n", timer_GPU.GetCounter());
     cudaDeviceSynchronize();
     // checkCudaErrors(cudaMemcpy(data, d_data, ncBlocks*blockSize*sizeof(float), cudaMemcpyDeviceToHost)); 
-    checkCudaErrors(cudaMemcpy(*newData, d_newdata, nbBlocks*blockSize*sizeof(float), cudaMemcpyDeviceToDevice));
+    checkCudaErrors(cudaMemcpy(*newData, d_newdata, nbBlocks_h*bs*sizeof(float), cudaMemcpyDeviceToDevice));
     cudaFree(d_newdata);
 
     decompress_post_proc<<<1,1>>>(data, newData, bs, 
