@@ -1057,7 +1057,7 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
     size_t maxPreservedBufferSize =
             sizeof(float) * nbEle; //assume that the compressed data size would not exceed the original size
     unsigned char *outputBytes = (unsigned char *) malloc(maxPreservedBufferSize);
-    memset(outputBytes, 0, maxPreservedBufferSize);
+    // memset(outputBytes, 0, maxPreservedBufferSize);
     unsigned char *leadNumberArray_int = (unsigned char *) malloc(blockSize * sizeof(int));
 
     size_t i = 0;
@@ -1243,7 +1243,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *ori
     size_t maxPreservedBufferSize =
     sizeof(float) * nbEle; //assume that the compressed data size would not exceed the original size
     unsigned char *outputBytes = (unsigned char *) malloc(maxPreservedBufferSize);
-    memset(outputBytes, 0, maxPreservedBufferSize);
+    // memset(outputBytes, 0, maxPreservedBufferSize);
     unsigned char *r = outputBytes; // + sizeof(size_t) + stateNBBytes;
     r[0] = SZx_VER_MAJOR;
     r[1] = SZx_VER_MINOR;
@@ -1405,7 +1405,7 @@ SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(float *oriData, s
     size_t maxPreservedBufferSize =
             sizeof(float) * nbEle; //assume that the compressed data size would not exceed the original size
     unsigned char *outputBytes = (unsigned char *) malloc(maxPreservedBufferSize);
-    memset(outputBytes, 0, maxPreservedBufferSize);
+    // memset(outputBytes, 0, maxPreservedBufferSize);
     unsigned char *leadNumberArray_int = (unsigned char *) malloc(blockSize * sizeof(int));
 
     size_t i = 0;
@@ -1493,7 +1493,7 @@ SZ_fast_compress_args_unpredictable_float(float *data, size_t *outSize, float ab
             sizeof(float) * dataLength; //assume that the compressed data size would not exceed the original size
 
     unsigned char *outputBytes = (unsigned char *) malloc(maxPreservedBufferSize);
-    memset(outputBytes, 0, maxPreservedBufferSize);
+    // memset(outputBytes, 0, maxPreservedBufferSize);
     unsigned char *r = outputBytes; // + sizeof(size_t) + stateNBBytes;
     r[0] = SZx_VER_MAJOR;
     r[1] = SZx_VER_MINOR;
