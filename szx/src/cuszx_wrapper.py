@@ -75,10 +75,8 @@ def cuszx_integrated_decompress(data,bytes,nbEle):
 
 def cuszx_device_decompress(nbEle, cmpBytes):
     
-    newData_p = ctypes.c_float()
-    newData = ctypes.pointer(ctypes.pointer(newData_p))
     nbEle_p = ctypes.c_size_t(nbEle)
-    __cuszx_device_decompress(newData,nbEle_p,cmpBytes)
+    newData = __cuszx_device_decompress(nbEle_p,cmpBytes)
     return newData
 
 if __name__ == "__main__":
