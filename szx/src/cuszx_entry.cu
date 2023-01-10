@@ -668,6 +668,14 @@ __device__ inline size_t bytesToSize(unsigned char* bytes)
 	return result;
 }
 
+__device__ inline short bytesToShort(unsigned char* bytes)
+{
+	lint16 buf;
+	memcpy(buf.byte, bytes, 2);
+	
+	return buf.svalue;
+}
+
 __global__ void decompress_startup(float **newData, size_t nbEle, unsigned char* cmpBytes, 
     uint32_t *blk_idx, uint8_t *blk_subidx, uint8_t *blk_sig,
     float *blk_vals, size_t *numSigValues, int *bs,
@@ -744,7 +752,8 @@ __global__ void decompress_startup(float **newData, size_t nbEle, unsigned char*
         if (leng > blockSize*sizeof(float))
         {
             printf("Warning: compressed block is larger than the original block!\n");
-            exit(0);
+            return;
+            // exit(0);
         }
         memcpy(data+i*blockSize*sizeof(float), p, leng);
         p += leng;
