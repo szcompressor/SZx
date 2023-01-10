@@ -29,8 +29,17 @@ def get_device_compress():
     func.restype = POINTER(c_ubyte)
     return func
 
+def get_device_decompress():
+    dll = ctypes.CDLL(LIB_PATH, mode=ctypes.RTLD_GLOBAL)
+    func = dll.cuSZx_device_decompress
+    # Returns: unsigned char *bytes
+    # Needs: float *oriData, size_t *outSize, float absErrBound, size_t nbEle, int blockSize, float threshold
+    func.argtypes = [POINTER(POINTER(c_float)), c_size_t, POINTER(c_ubyte)]
+    return func
+
 __cuszx_compress = get_cuszx_compress()
 __cuszx_device_compress = get_device_compress()
+__cuszx_device_decompress=get_device_decompress()
 #__cuszx_decompress=get_cuszx_decompress()
 
 def cuszx_integrated_compress(bytes_a, data, r2r_threshold, r2r_error, nbEle, blockSize, outSize):
@@ -62,6 +71,15 @@ def cuszx_integrated_decompress(data,bytes,nbEle):
 
     return data
 
+def cuszx_device_decompress(nbEle, cmpBytes):
+    
+    newData_base = cp.asarray(np.zeros(nbEle,).astype('float32'))
+    newData_p = ctypes.cast(newData_base.data.ptr,ctypes.POINTER(c_float))
+    newData = ctypes.pointer(newData_p)
+    nbEle_p = ctypes.c_size_t(nbEle)
+    __cuszx_device_decompress(newData,nbEle_p,cmpBytes)
+    return newData
+
 if __name__ == "__main__":
     
     DATA_SIZE = 1024
@@ -83,6 +101,8 @@ if __name__ == "__main__":
     for i in range(int(3*DATA_SIZE/4)+6, DATA_SIZE):
         in_vector[i] = 0.001
 
+    a = b[0,:,:]
+
     in_vector = in_vector.astype('float32')
     in_vector_gpu = cp.asarray(in_vector)
     outbytes = POINTER(c_ubyte)()
@@ -91,5 +111,7 @@ if __name__ == "__main__":
     print(outSize.contents.value)
     # print(outbytes.contents)
     # outbytes, f_size = cuszx_integrated_compress(outbytes, in_vector, np.float32(r2r_threshold), np.float32(r2r_error), np.ulonglong(DATA_SIZE), np.int32(256), outSize)
-    cuszx_device_compress(in_vector_gpu, outSize, np.float32(r2r_error), np.ulonglong(DATA_SIZE), np.int32(256),np.float32(r2r_threshold))
-    print("Success ")
+    o_bytes, outSize = cuszx_device_compress(in_vector_gpu, outSize, np.float32(r2r_error), np.ulonglong(DATA_SIZE), np.int32(256),np.float32(r2r_threshold))
+    print("Compress Success...starting decompress")
+    d_bytes = cuszx_device_decompress(DATA_SIZE, o_bytes)
+    print("Decompress Success")
