@@ -677,23 +677,11 @@ __device__ inline short bytesToShort(unsigned char* bytes)
 	return buf.svalue;
 }
 
-__global__ void decompress_startup(float *newData, size_t nbEle, unsigned char* cmpBytes, 
-    uint32_t *blk_idx, uint8_t *blk_subidx, uint8_t *blk_sig,
-    float *blk_vals, size_t *numSigValues, int *bs,
-    size_t *numConstantBlks, size_t *numBlks, size_t *ncBlks,
-    unsigned char *stateArray, float* constantMedianArray, unsigned char *data,
-    size_t *mSizeptr
+__global__ void decompress_get_stats(float *newData, size_t nbEle, unsigned char* cmpBytes, 
+    size_t *numSigValues, int *bs,
+    size_t *numConstantBlks, size_t *numBlks,
+    size_t *mSizeptr, unsigned char *newCmpBytes
 ){
-    /**
-     * Structures to return:
-     * blk_idx, blk_subidx, blk_sig, blk_vals, numSigValues (pointer)
-     * bs (pointer to blockSize), numConstantBlks (pointer), numBlks (pointer)
-     * ncBlks (pointer), stateArray, constantMedianArray
-     */
-	
-    
-    printf("cmpbytes check %d\n", (int)cmpBytes[0]);
-    printf("new check %f\n", newData[0]);
 	unsigned char* r = cmpBytes;
     size_t num_sig;
 	r += 4;
@@ -705,7 +693,7 @@ __global__ void decompress_startup(float *newData, size_t nbEle, unsigned char* 
 	r += sizeof(size_t);
 	num_sig = bytesToSize(r);
 
-    	r += sizeof(size_t);
+    r += sizeof(size_t);
 	size_t nbBlocks = nbEle/blockSize;
     size_t ncBlocks = 0;
     size_t num_state2_blks = 0;
@@ -715,17 +703,24 @@ __global__ void decompress_startup(float *newData, size_t nbEle, unsigned char* 
     size_t mSize = sizeof(float)+1+ncLeading; //Number of bytes for each data block's metadata.
 
     *mSizeptr = mSize;
-    stateArray = (unsigned char*)malloc(nbBlocks);
-    
-    // unsigned char* d_stateArray;
-    // cudaMalloc(&d_stateArray, nbBlocks);
-	constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));			
 
-    blk_idx = (uint32_t *)malloc(nbBlocks*sizeof(uint32_t));
-    blk_vals= (float *)malloc((num_sig)*sizeof(float));
-    blk_subidx = (uint8_t *)malloc((num_sig)*sizeof(uint8_t));
-    blk_sig = (uint8_t *)malloc(nbBlocks*sizeof(uint8_t));
+    *numConstantBlks = nbConstantBlocks;
+    *numBlks = nbBlocks;
+    *numSigValues = num_sig;
+    *bs = blockSize;
+    newCmpBytes = r;
+    printf("nb blocks: %d\n", nbBlocks);
 
+}
+
+__global__ void setup_data_stateArray(float *newData, size_t nbEle, unsigned char* r, 
+    size_t num_sig, int blockSize,
+    size_t nbConstantBlocks, size_t nbBlocks, size_t *ncBlks,
+    unsigned char *stateArray, unsigned char *newR
+){
+    size_t ncBlocks = 0;
+	size_t stateNBBytes = nbBlocks%4==0 ? nbBlocks/4 : nbBlocks/4+1;
+    size_t num_state2_blks = 0;
 	printf("Converting state array\n");
     convert_out_to_state(nbBlocks, r, stateArray);
     printf("state %d\n", (int)stateArray[0]);
@@ -741,8 +736,44 @@ __global__ void decompress_startup(float *newData, size_t nbEle, unsigned char* 
     }
     
 	r += stateNBBytes;
-    data = (unsigned char*)malloc(ncBlocks*blockSize*sizeof(float));
-    memset(data, 0, ncBlocks*blockSize*sizeof(float));
+    newR = r;
+    *ncBlks = ncBlocks;
+}
+
+__global__ void decompress_startup(float *newData, size_t nbEle, unsigned char* r, 
+    uint32_t *blk_idx, uint8_t *blk_subidx, uint8_t *blk_sig,
+    float *blk_vals, size_t num_sig, int blockSize,
+    size_t nbConstantBlocks, size_t nbBlocks, size_t ncBlocks,
+    unsigned char *stateArray, float* constantMedianArray, unsigned char *data,
+    size_t mSize, unsigned char *newCmpBytes
+){
+    /**
+     * Structures to return:
+     * blk_idx, blk_subidx, blk_sig, blk_vals, numSigValues (pointer)
+     * bs (pointer to blockSize), numConstantBlks (pointer), numBlks (pointer)
+     * ncBlks (pointer), stateArray, constantMedianArray
+     */
+	
+    // size_t ncBlocks = 0;
+	// size_t stateNBBytes = nbBlocks%4==0 ? nbBlocks/4 : nbBlocks/4+1;
+    // size_t num_state2_blks = 0;
+	// printf("Converting state array\n");
+    // convert_out_to_state(nbBlocks, r, stateArray);
+    // printf("state %d\n", (int)stateArray[0]);
+    // // convertByteArray2IntArray_fast_1b_args(nbBlocks, r, stateNBBytes, stateArray); //get the stateArray
+	// for (size_t i = 0; i < nbBlocks; i++)
+    // {
+    //     if (stateArray[i] == 2)
+    //     {
+    //         num_state2_blks++;
+    //     }else if(stateArray[i] == 3){
+    //         ncBlocks++;
+    //     }
+    // }
+    
+	// r += stateNBBytes;
+    // data = (unsigned char*)malloc(ncBlocks*blockSize*sizeof(float));
+    // memset(data, 0, ncBlocks*blockSize*sizeof(float));
     printf("converting block vals %d\n", data[0]);
     size_t to_add = convert_out_to_block2(r, nbBlocks, (uint64_t)num_sig, blk_idx, blk_vals, blk_subidx, blk_sig);
     r+= to_add;
@@ -773,12 +804,9 @@ __global__ void decompress_startup(float *newData, size_t nbEle, unsigned char* 
         p += leng;
     } 
 
+    newCmpBytes = r;
     printf("before mallocs in kernel\n");
-    *numConstantBlks = nbConstantBlocks;
-    *numBlks = nbBlocks;
-    *ncBlks = ncBlocks;
-    *numSigValues = num_sig;
-    *bs = blockSize;
+
     printf("nb blocks: %d\n", nbBlocks);
 }
 
@@ -820,11 +848,13 @@ float* device_ptr_cuSZx_decompress_float(size_t nbEle, unsigned char* cmpBytes)
     uint8_t *blk_subidx;
     uint8_t *blk_sig;
     float *blk_vals, *constantMedianArray;
-    size_t *num_sig, *mSize, mSize_h;
+    size_t *num_sig, *mSize, mSize_h, num_sig_h;
     int *blockSize, bs;
-    size_t *nbConstantBlocks, *nbBlocks, *ncBlocks, nbBlocks_h, ncBlocks_h;
+    size_t *nbConstantBlocks, *nbBlocks, *ncBlocks, nbBlocks_h, ncBlocks_h, nbConstantBlocks_h;
     unsigned char *stateArray, *data;
     float *newData;
+
+    unsigned char *newCmpBytes;
 	//*newData = (float*)malloc(sizeof(float)*nbEle);
 //    printf("cmpbytes check %d\n", (int)cmpBytes[0]);
 //    printf("new check %f\n", *newData[0]);
@@ -836,6 +866,55 @@ float* device_ptr_cuSZx_decompress_float(size_t nbEle, unsigned char* cmpBytes)
     checkCudaErrors(cudaMalloc((void**)&ncBlocks, sizeof(size_t)));
     checkCudaErrors(cudaMalloc((void**)&mSize, sizeof(size_t)));    
     checkCudaErrors(cudaMalloc((void**)&newData, sizeof(float)*nbEle));
+
+    decompress_get_stats<<<1,1>>>(newData, nbEle, cmpBytes, 
+        num_sig, blockSize,
+        nbConstantBlocks, nbBlocks,
+        mSize, newCmpBytes
+    );
+    cudaDeviceSynchronize();
+
+    cudaError_t err = cudaGetLastError();        // Get error code
+    printf("CUDA Error: %s\n", cudaGetErrorString(err));
+    checkCudaErrors(cudaMemcpy(&nbBlocks_h, nbBlocks, sizeof(size_t), cudaMemcpyDeviceToHost)); 
+    checkCudaErrors(cudaMemcpy(&nbConstantBlocks_h, nbConstantBlocks, sizeof(size_t), cudaMemcpyDeviceToHost)); 
+    checkCudaErrors(cudaMemcpy(&bs, blockSize, sizeof(int), cudaMemcpyDeviceToHost)); 
+    checkCudaErrors(cudaMemcpy(&mSize_h, mSize, sizeof(size_t), cudaMemcpyDeviceToHost)); 
+    checkCudaErrors(cudaMemcpy(&num_sig_h, num_sig, sizeof(size_t), cudaMemcpyDeviceToHost)); 
+
+
+    checkCudaErrors(cudaMalloc((void**)&stateArray, nbBlocks_h));
+    checkCudaErrors(cudaMalloc((void**)&constantMedianArray, nbConstantBlocks_h*sizeof(float)));
+
+    checkCudaErrors(cudaMalloc((void**)&blk_idx, nbBlocks_h*sizeof(uint32_t)));
+    checkCudaErrors(cudaMalloc((void**)&blk_vals, num_sig_h*sizeof(float)));
+    checkCudaErrors(cudaMalloc((void**)&blk_subidx, num_sig_h*sizeof(uint8_t)));
+    checkCudaErrors(cudaMalloc((void**)&blk_sig, nbBlocks_h*sizeof(uint8_t)));
+
+    cmpBytes = newCmpBytes;
+
+    setup_data_stateArray<<<1,1>>>(float *newData, nbEle, cmpBytes, 
+        num_sig_h, bs,
+        nbConstantBlocks_h, nbBlocks_h, ncBlocks,
+        stateArray, newCmpBytes
+    );
+    cudaDeviceSynchronize();
+    checkCudaErrors(cudaMemcpy(&ncBlocks_h, ncBlocks, sizeof(size_t), cudaMemcpyDeviceToHost)); 
+
+    checkCudaErrors(cudaMalloc((void**)&data, ncBlocks_h*bs*sizeof(float)));
+    // data = (unsigned char*)malloc(ncBlocks*blockSize*sizeof(float));
+    // memset(data, 0, ncBlocks*blockSize*sizeof(float));
+    // stateArray = (unsigned char*)malloc(nbBlocks);
+    
+    // // unsigned char* d_stateArray;
+    // // cudaMalloc(&d_stateArray, nbBlocks);
+	// constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));			
+
+    // blk_idx = (uint32_t *)malloc(nbBlocks*sizeof(uint32_t));
+    // blk_vals= (float *)malloc((num_sig)*sizeof(float));
+    // blk_subidx = (uint8_t *)malloc((num_sig)*sizeof(uint8_t));
+    // blk_sig = (uint8_t *)malloc(nbBlocks*sizeof(uint8_t));
+
     //test_nbBlks = (size_t *)malloc(sizeof(size_t));
     printf("malloc\n");
     decompress_startup<<<1,1>>>(newData, nbEle, cmpBytes, 
@@ -845,12 +924,7 @@ float* device_ptr_cuSZx_decompress_float(size_t nbEle, unsigned char* cmpBytes)
     stateArray, constantMedianArray, data, mSize);
     cudaDeviceSynchronize();
 
-    cudaError_t err = cudaGetLastError();        // Get error code
-    printf("CUDA Error: %s\n", cudaGetErrorString(err));
-    checkCudaErrors(cudaMemcpy(&nbBlocks_h, nbBlocks, sizeof(size_t), cudaMemcpyDeviceToHost)); 
-    checkCudaErrors(cudaMemcpy(&ncBlocks_h, ncBlocks, sizeof(size_t), cudaMemcpyDeviceToHost)); 
-    checkCudaErrors(cudaMemcpy(&bs, blockSize, sizeof(int), cudaMemcpyDeviceToHost)); 
-    checkCudaErrors(cudaMemcpy(&mSize_h, mSize, sizeof(size_t), cudaMemcpyDeviceToHost)); 
+    
 
     // unsigned char* d_data;
     float *d_newdata;
