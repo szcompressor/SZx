@@ -61,7 +61,7 @@ def cuszx_integrated_compress(bytes_a, data, r2r_threshold, r2r_error, nbEle, bl
 def cuszx_device_compress(oriData, outSize, absErrBound, nbEle, blockSize,threshold):
     oriData_p = ctypes.cast(oriData.data.ptr, ctypes.POINTER(c_float))
     
-    o_bytes = __cuszx_device_compress(oriData_p, outSize, absErrBound, nbEle, blockSize, threshold)
+    o_bytes = __cuszx_device_compress(oriData_p, outSize,np.float32(absErrBound), np.ulonglong(DATA_SIZE), np.int32(blockSize),np.float32(threshold))
     print(o_bytes)
     return o_bytes, outSize
 
@@ -104,13 +104,13 @@ if __name__ == "__main__":
 
     in_vector = in_vector.astype('float32')
     in_vector_gpu = cp.asarray(in_vector)
-    outbytes = POINTER(c_ubyte)()
-    variable = ctypes.c_size_t(10)
+
+    variable = ctypes.c_size_t(0)
     outSize = ctypes.pointer(variable)
     #print(outSize.contents.value)
     # print(outbytes.contents)
     # outbytes, f_size = cuszx_integrated_compress(outbytes, in_vector, np.float32(r2r_threshold), np.float32(r2r_error), np.ulonglong(DATA_SIZE), np.int32(256), outSize)
-    o_bytes, outSize = cuszx_device_compress(in_vector_gpu, outSize, np.float32(r2r_error), np.ulonglong(DATA_SIZE), np.int32(256),np.float32(r2r_threshold))
+    o_bytes, outSize = cuszx_device_compress(in_vector_gpu, outSize, r2r_error, DATA_SIZE, 256, r2r_threshold)
     #print(outSize.contents.value)
     #print(o_bytes.contents.value)
     print("Compress Success...starting decompress ")
