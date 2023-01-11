@@ -718,6 +718,10 @@ __global__ void setup_data_stateArray(float *newData, size_t nbEle, unsigned cha
     size_t nbConstantBlocks, size_t nbBlocks, size_t *ncBlks,
     unsigned char *stateArray, unsigned char *newR
 ){
+    r += 4;
+    r++;
+    r += sizeof(size_t);
+    r += sizeof(size_t);
     size_t ncBlocks = 0;
 	size_t stateNBBytes = nbBlocks%4==0 ? nbBlocks/4 : nbBlocks/4+1;
     size_t num_state2_blks = 0;
@@ -772,8 +776,12 @@ __global__ void decompress_startup(float *newData, size_t nbEle, unsigned char* 
     //         ncBlocks++;
     //     }
     // }
-    
-	// r += stateNBBytes;
+    size_t stateNBBytes = nbBlocks%4==0 ? nbBlocks/4 : nbBlocks/4+1;
+	r += 4;
+    r++;
+    r += sizeof(size_t);
+    r += sizeof(size_t);
+    r += stateNBBytes;
     // data = (unsigned char*)malloc(ncBlocks*blockSize*sizeof(float));
     // memset(data, 0, ncBlocks*blockSize*sizeof(float));
     printf("converting block vals %d\n", data[0]);
