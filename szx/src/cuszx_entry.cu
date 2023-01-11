@@ -610,7 +610,7 @@ unsigned char* device_ptr_cuSZx_compress_float(float *oriData, size_t *outSize, 
     cudaDeviceSynchronize();
     checkCudaErrors(cudaMemcpy(outSize, d_outSize, sizeof(size_t), cudaMemcpyDeviceToHost));
 
-    printf("completed compression\n");
+    // printf("completed compression\n");
     //free(blk_idx);
     //free(blk_subidx);
     //free(blk_vals);
@@ -709,7 +709,7 @@ __global__ void decompress_get_stats(float *newData, size_t nbEle, unsigned char
     *numSigValues = num_sig;
     *bs = blockSize;
     newCmpBytes = r;
-    printf("nb blocks: %d\n", nbBlocks);
+    // printf("nb blocks: %d\n", nbBlocks);
 
 }
 
@@ -726,10 +726,10 @@ __global__ void setup_data_stateArray(float *newData, size_t nbEle, unsigned cha
 	size_t stateNBBytes = nbBlocks%4==0 ? nbBlocks/4 : nbBlocks/4+1;
     size_t num_state2_blks = 0;
 	printf("Converting state array\n");
-    printf("cmp %d\n", (int)r[0]);
-    printf("state %d\n", (int)stateArray[0]);
+    // printf("cmp %d\n", (int)r[0]);
+    // printf("state %d\n", (int)stateArray[0]);
     convert_out_to_state(nbBlocks, r, stateArray);
-    printf("state %d\n", (int)stateArray[0]);
+    // printf("state %d\n", (int)stateArray[0]);
     // convertByteArray2IntArray_fast_1b_args(nbBlocks, r, stateNBBytes, stateArray); //get the stateArray
 	for (size_t i = 0; i < nbBlocks; i++)
     {
@@ -784,17 +784,17 @@ __global__ void decompress_startup(float *newData, size_t nbEle, unsigned char* 
     r += stateNBBytes;
     // data = (unsigned char*)malloc(ncBlocks*blockSize*sizeof(float));
     // memset(data, 0, ncBlocks*blockSize*sizeof(float));
-    printf("converting block vals %d\n", data[0]);
+    // printf("converting block vals %d\n", data[0]);
     size_t to_add = convert_out_to_block2(r, nbBlocks, (uint64_t)num_sig, blk_idx, blk_vals, blk_subidx, blk_sig);
     r+= to_add;
 
 	size_t i = 0, j = 0, k = 0; //k is used to keep track of constant block index
     
-    printf("before mallocs in kernel\n");
+    // printf("before mallocs in kernel\n");
     
     memcpy((newData)+nbBlocks*blockSize, r, (nbEle%blockSize)*sizeof(float));
 
-    printf("before mallocs in kernel\n");
+    // printf("before mallocs in kernel\n");
     r += (nbEle%blockSize)*sizeof(float);
 	float* fr = (float*)r; //fr is the starting address of constant median values.
 	for(i = 0;i < nbConstantBlocks;i++, j+=4) //get the median values for constant-value blocks
@@ -815,9 +815,9 @@ __global__ void decompress_startup(float *newData, size_t nbEle, unsigned char* 
     } 
 
     newCmpBytes = r;
-    printf("before mallocs in kernel\n");
+    // printf("before mallocs in kernel\n");
 
-    printf("nb blocks: %d\n", nbBlocks);
+    // printf("nb blocks: %d\n", nbBlocks);
 }
 
 __global__ void decompress_post_proc(unsigned char *data, float *newData, int blockSize, 
@@ -832,7 +832,7 @@ __global__ void decompress_post_proc(unsigned char *data, float *newData, int bl
     for (i=0;i<nbBlocks;i++){
         if (stateArray[i]==0 || stateArray[i]==1){
             float Median = constantMedianArray[nb];
-            if (Median>1) printf("data%i:%f\n",i, Median);
+            // if (Median>1) printf("data%i:%f\n",i, Median);
             for (j=0;j<blockSize;j++)
                 *((newData)+i*blockSize+j) = Median;
             nb++;
