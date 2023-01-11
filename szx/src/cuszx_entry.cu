@@ -893,7 +893,7 @@ float* device_ptr_cuSZx_decompress_float(size_t nbEle, unsigned char* cmpBytes)
 
     cmpBytes = newCmpBytes;
 
-    setup_data_stateArray<<<1,1>>>(float *newData, nbEle, cmpBytes, 
+    setup_data_stateArray<<<1,1>>>(*newData, nbEle, cmpBytes, 
         num_sig_h, bs,
         nbConstantBlocks_h, nbBlocks_h, ncBlocks,
         stateArray, newCmpBytes
@@ -902,6 +902,7 @@ float* device_ptr_cuSZx_decompress_float(size_t nbEle, unsigned char* cmpBytes)
     checkCudaErrors(cudaMemcpy(&ncBlocks_h, ncBlocks, sizeof(size_t), cudaMemcpyDeviceToHost)); 
 
     checkCudaErrors(cudaMalloc((void**)&data, ncBlocks_h*bs*sizeof(float)));
+    cmpBytes = newCmpBytes;
     // data = (unsigned char*)malloc(ncBlocks*blockSize*sizeof(float));
     // memset(data, 0, ncBlocks*blockSize*sizeof(float));
     // stateArray = (unsigned char*)malloc(nbBlocks);
@@ -919,10 +920,11 @@ float* device_ptr_cuSZx_decompress_float(size_t nbEle, unsigned char* cmpBytes)
     printf("malloc\n");
     decompress_startup<<<1,1>>>(newData, nbEle, cmpBytes, 
     blk_idx, blk_subidx, blk_sig,
-    blk_vals, num_sig, blockSize,
-    nbConstantBlocks, nbBlocks, ncBlocks,
-    stateArray, constantMedianArray, data, mSize);
+    blk_vals, num_sig_h, blockSize,
+    nbConstantBlocks_h, nbBlocks_h, ncBlocks_h,
+    stateArray, constantMedianArray, data, mSize_h, newCmpBytes);
     cudaDeviceSynchronize();
+    cmpBytes = newCmpBytes;
 
     
 
