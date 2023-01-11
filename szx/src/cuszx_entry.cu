@@ -868,7 +868,7 @@ float* device_ptr_cuSZx_decompress_float(size_t nbEle, unsigned char* cmpBytes)
 	//*newData = (float*)malloc(sizeof(float)*nbEle);
 //    printf("cmpbytes check %d\n", (int)cmpBytes[0]);
 //    printf("new check %f\n", *newData[0]);
-    printf("malloc\n");
+    // printf("malloc\n");
     checkCudaErrors(cudaMalloc((void**)&num_sig, sizeof(size_t)));
     checkCudaErrors(cudaMalloc((void**)&blockSize, sizeof(int)));
     checkCudaErrors(cudaMalloc((void**)&nbConstantBlocks, sizeof(size_t)));
@@ -925,7 +925,7 @@ float* device_ptr_cuSZx_decompress_float(size_t nbEle, unsigned char* cmpBytes)
     // blk_sig = (uint8_t *)malloc(nbBlocks*sizeof(uint8_t));
 
     //test_nbBlks = (size_t *)malloc(sizeof(size_t));
-    printf("malloc\n");
+    // printf("malloc\n");
     decompress_startup<<<1,1>>>(newData, nbEle, cmpBytes, 
     blk_idx, blk_subidx, blk_sig,
     blk_vals, num_sig_h, bs,
@@ -947,12 +947,6 @@ float* device_ptr_cuSZx_decompress_float(size_t nbEle, unsigned char* cmpBytes)
     dim3 dimGrid(65536, 1);
     const int sMemsize = bs * sizeof(float) + dimBlock.y * sizeof(int);
     decompress_state2<<<nbBlocks_h, 64>>>(d_newdata, stateArray,blk_idx, blk_vals, blk_subidx, bs, blk_sig);
-
-    cudaDeviceSynchronize();
-
-    err = cudaGetLastError();        // Get error code
-    printf("CUDA Error: %s\n", cudaGetErrorString(err));
-    printf("GPU decompression timing: %f ms\n", timer_GPU.GetCounter());
     decompress_float<<<dimGrid, dimBlock, sMemsize>>>(data, bs, ncBlocks_h, mSize_h);
     //err = cudaGetLastError();        // Get error code
     //printf("CUDA Error: %s\n", cudaGetErrorString(err));

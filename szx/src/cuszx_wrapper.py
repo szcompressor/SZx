@@ -115,4 +115,5 @@ if __name__ == "__main__":
     #print(o_bytes.contents.value)
     print("Compress Success...starting decompress ")
     d_bytes = cuszx_device_decompress(DATA_SIZE, o_bytes)
+    
     print("Decompress Success")
