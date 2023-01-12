@@ -327,6 +327,124 @@ float relBoundRatio, float compressionRatio, float tolerance, size_t r5, size_t 
 
 }
 
+unsigned char* SZ_fast_compress_args2(int fastMode, int dataType, void *data, size_t *outSize, unsigned char* outputBytes, int errBoundMode, float absErrBound,
+float relBoundRatio, float compressionRatio, float tolerance, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
+{
+	int blockSize = 128;
+	unsigned char*  bytes = NULL;	
+	size_t length = computeDataLength(r5, r4, r3, r2, r1);
+	
+	if(dataType == SZ_FLOAT)
+	{
+		if(errBoundMode==FXR)
+		{
+			if(fastMode == SZx_OPENMP_FAST_CMPR)
+			{
+				SZ_fast_compress_args_unpredictable_blocked_fixed_rate_float2_openmp(data, outSize, outputBytes, compressionRatio, tolerance, length, blockSize);
+			}
+			else
+			{
+				SZ_fast_compress_args_unpredictable_blocked_fixed_rate_float2(data, outSize, outputBytes, compressionRatio, tolerance, length, blockSize); 	
+			}
+		}
+		else //not fix rate mode
+		{
+			if(fastMode == SZx_WITH_BLOCK_FAST_CMPR || fastMode == SZx_RANDOMACCESS_FAST_CMPR || fastMode == SZx_OPENMP_FAST_CMPR)
+			{
+				float realPrecision = absErrBound;
+				if(errBoundMode==REL)
+				{
+					float valueRange = computeValueRange_float(data, length, NULL, NULL);
+					realPrecision = valueRange*relBoundRatio;
+				}
+
+				if (fastMode == SZx_RANDOMACCESS_FAST_CMPR) {
+					SZ_fast_compress_args_unpredictable_blocked_randomaccess_float2(data, outSize, outputBytes, realPrecision, length, blockSize);
+				} 
+				else if(fastMode == SZx_OPENMP_FAST_CMPR)
+				{
+					#ifdef _OPENMP
+					SZ_fast_compress_args_unpredictable_blocked_randomaccess_float2_openmp(data, outSize, outputBytes, realPrecision, length,
+																								  blockSize);
+					#else
+					SZ_fast_compress_args_unpredictable_blocked_randomaccess_float2(data, outSize, outputBytes, realPrecision, length, blockSize);
+					printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the compression is degraded to serial version automatically.\n");
+					#endif
+				}
+				else {
+					SZ_fast_compress_args_unpredictable_blocked_float2(data, outSize, outputBytes, realPrecision, length, blockSize);
+				}
+			}
+			else
+			{
+				//compute value range
+				
+				float radius = 0;
+				float medianValue = 0;
+				float valueRange = computeValueRange_float(data, length, &radius, &medianValue);
+
+				float realPrecision = 0;
+				if(errBoundMode==ABS)
+					realPrecision = absErrBound;
+				else if(errBoundMode==REL)
+					realPrecision = valueRange*relBoundRatio;
+
+				SZ_fast_compress_args_unpredictable_float2(data, outSize, outputBytes, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);		
+			}			
+		}
+		
+
+	}
+	else if(dataType == SZ_DOUBLE)
+	{
+		if(fastMode == SZx_WITH_BLOCK_FAST_CMPR || fastMode == SZx_RANDOMACCESS_FAST_CMPR || fastMode == SZx_OPENMP_FAST_CMPR)
+		{
+			float realPrecision = absErrBound;
+			if(errBoundMode==REL)
+			{
+				double valueRange = computeValueRange_double(data, length, NULL, NULL);
+				realPrecision = valueRange*relBoundRatio;
+			}
+
+			int blockSize = 128;
+			if (fastMode == SZx_RANDOMACCESS_FAST_CMPR) {
+				bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_double(data, outSize, realPrecision, length, blockSize);
+			} 
+			else if(fastMode == SZx_OPENMP_FAST_CMPR)
+			{
+				#ifdef _OPENMP
+				bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_double_openmp(data, outSize, realPrecision, length,
+																							  blockSize);
+				#else
+				bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_double(data, outSize, realPrecision, length, blockSize);
+				printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the compression is degraded to serial version automatically.\n");
+				#endif
+			}
+			else {
+				bytes = SZ_fast_compress_args_unpredictable_blocked_double(data, outSize, realPrecision, length, blockSize);
+			}
+			return bytes;
+		}
+		else
+		{
+			//compute value range
+			float radius = 0;
+			float medianValue = 0;
+			double valueRange = computeValueRange_double(data, length, &radius, &medianValue);
+
+			float realPrecision = 0;
+			if(errBoundMode==ABS)
+				realPrecision = absErrBound;
+			else if(errBoundMode==REL)
+				realPrecision = valueRange*relBoundRatio;
+
+			bytes = SZ_fast_compress_args_unpredictable_double(data, outSize, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);		
+		}		
+		return bytes;
+	}
+
+}
+
 /**
  * @deprecated
  * */
