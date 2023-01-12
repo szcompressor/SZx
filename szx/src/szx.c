@@ -359,7 +359,7 @@ float relBoundRatio, float compressionRatio, float tolerance, size_t r5, size_t 
 				}
 
 				if (fastMode == SZx_RANDOMACCESS_FAST_CMPR) {
-					SZ_fast_compress_args_unpredictable_blocked_randomaccess_float2(data, outSize, outputBytes, realPrecision, length, blockSize);
+					SZ_fast_compress_args_unpredictable_blocked_float2(data, outSize, outputBytes, realPrecision, length, blockSize);
 				} 
 				else if(fastMode == SZx_OPENMP_FAST_CMPR)
 				{
@@ -367,7 +367,7 @@ float relBoundRatio, float compressionRatio, float tolerance, size_t r5, size_t 
 					SZ_fast_compress_args_unpredictable_blocked_randomaccess_float2_openmp(data, outSize, outputBytes, realPrecision, length,
 																								  blockSize);
 					#else
-					SZ_fast_compress_args_unpredictable_blocked_randomaccess_float2(data, outSize, outputBytes, realPrecision, length, blockSize);
+					SZ_fast_compress_args_unpredictable_blocked_float2(data, outSize, outputBytes, realPrecision, length, blockSize);
 					printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the compression is degraded to serial version automatically.\n");
 					#endif
 				}
@@ -389,7 +389,7 @@ float relBoundRatio, float compressionRatio, float tolerance, size_t r5, size_t 
 				else if(errBoundMode==REL)
 					realPrecision = valueRange*relBoundRatio;
 
-				SZ_fast_compress_args_unpredictable_float2(data, outSize, outputBytes, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);		
+				// SZ_fast_compress_args_unpredictable_float2(data, outSize, outputBytes, realPrecision, r5, r4, r3, r2, r1, medianValue, radius);		
 			}			
 		}
 		
