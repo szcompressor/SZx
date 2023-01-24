@@ -6,6 +6,27 @@ import cupy as cp
 
 LIB_PATH = './cuszx_wrapper.so'
 
+# unsigned char* cuSZx_integrated_compress(float *data, float r2r_threshold, float r2r_err, size_t nbEle, int blockSize, size_t *outSize)
+
+def get_host_compress():
+    dll = ctypes.CDLL(LIB_PATH, mode=ctypes.RTLD_GLOBAL)
+    func = dll.cuSZx_integrated_compress
+    # Returns: unsigned char *bytes
+    # Needs: float *data, float r2r_threshold, float r2r_err, size_t nbEle, int blockSize, size_t *outSize
+    func.argtypes = [POINTER(c_float), c_float, c_float, c_size_t, c_int, POINTER(c_size_t)]
+    func.restype = POINTER(c_ubyte)
+    return func
+
+# float* cuSZx_integrated_decompress(unsigned char *bytes, size_t nbEle)
+
+def get_host_decompress():
+    dll = ctypes.CDLL(LIB_PATH, mode=ctypes.RTLD_GLOBAL)
+    func = dll.cuSZx_integrated_decompress
+    # Returns: float *newData
+    # Needs: size_t nbEle, unsigned char *cmpBytes
+    func.argtypes = [POINTER(c_ubyte), c_size_t]
+    func.restype = POINTER(c_float)
+    return func
 
 def get_device_compress():
     dll = ctypes.CDLL(LIB_PATH, mode=ctypes.RTLD_GLOBAL)
@@ -25,19 +46,41 @@ def get_device_decompress():
     func.restype = POINTER(c_float)
     return func
 
-__cuszx_device_compress = get_device_compress()
-__cuszx_device_decompress=get_device_decompress()
 
+def cuszx_host_compress(oriData, absErrBound, nbEle, blockSize,threshold):
+    __cuszx_host_compress = get_host_compress()
 
-def cuszx_device_compress(oriData, outSize, absErrBound, nbEle, blockSize,threshold):
+    variable = ctypes.c_size_t(0)
+    outSize = ctypes.pointer(variable)
+
+    oriData_p = ctypes.cast(oriData.data.ptr, ctypes.POINTER(c_float))
+
+    o_bytes = __cuszx_host_compress(oriData_p, outSize,np.float32(absErrBound), np.ulonglong(nbEle), np.int32(blockSize),np.float32(threshold))
+
+    return o_bytes, outSize
+
+def cuszx_host_decompress(nbEle, cmpBytes):
+    __cuszx_host_decompress=get_host_decompress()
+
+    nbEle_p = ctypes.c_size_t(nbEle)
+    newData = __cuszx_host_decompress(nbEle_p,cmpBytes)
+    return newData
+
+def cuszx_device_compress(oriData, absErrBound, nbEle, blockSize,threshold):
+    __cuszx_device_compress = get_device_compress()
+
+    variable = ctypes.c_size_t(0)
+    outSize = ctypes.pointer(variable)
+
     oriData_p = ctypes.cast(oriData.data.ptr, ctypes.POINTER(c_float))
     
-    o_bytes = __cuszx_device_compress(oriData_p, outSize,np.float32(absErrBound), np.ulonglong(DATA_SIZE), np.int32(blockSize),np.float32(threshold))
-    print(o_bytes)
+    o_bytes = __cuszx_device_compress(oriData_p, outSize,np.float32(absErrBound), np.ulonglong(nbEle), np.int32(blockSize),np.float32(threshold))
+    
     return o_bytes, outSize
 
 
 def cuszx_device_decompress(nbEle, cmpBytes):
+    __cuszx_device_decompress=get_device_decompress()
     
     nbEle_p = ctypes.c_size_t(nbEle)
     newData = __cuszx_device_decompress(nbEle_p,cmpBytes)
@@ -70,10 +113,10 @@ if __name__ == "__main__":
     in_vector = in_vector.astype('float32')
     in_vector_gpu = cp.asarray(in_vector)
 
-    variable = ctypes.c_size_t(0)
-    outSize = ctypes.pointer(variable)
+    # variable = ctypes.c_size_t(0)
+    # outSize = ctypes.pointer(variable)
 
-    o_bytes, outSize = cuszx_device_compress(in_vector_gpu, outSize, r2r_error, DATA_SIZE, 256, r2r_threshold)
+    o_bytes, outSize = cuszx_device_compress(in_vector_gpu, r2r_error, DATA_SIZE, 256, r2r_threshold)
     print("Compress Success...starting decompress ")
     d_bytes = cuszx_device_decompress(DATA_SIZE, o_bytes)
     print("Decompress Success")
