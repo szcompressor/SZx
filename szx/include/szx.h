@@ -90,8 +90,11 @@ unsigned char* SZ_fast_compress_args(int fastMode, int dataType, void *data, siz
 float relBoundRatio, float compressionRatio, float tolerance, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 unsigned char* SZ_fast_compress_args2(int fastMode, int dataType, void *data, size_t *outSize, unsigned char* outputBytes, int errBoundMode, float absErrBound,
 float relBoundRatio, float compressionRatio, float tolerance, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
+unsigned char* SZ_fast_compress_args2_split(int fastMode, int dataType, void *data, size_t *outSize, unsigned char* outputBytes, unsigned char* chunk_arr, size_t chunk_iter,
+int errBoundMode, float absErrBound, float relBoundRatio, float compressionRatio, float tolerance, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 void* SZ_fast_decompress_pred(int dataType, float* preData, unsigned char *curBytes, size_t byteLength, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 void* SZ_fast_decompress(int fastMode, int dataType, unsigned char *bytes, size_t byteLength, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
+void* SZ_fast_decompress_split(int fastMode, int dataType, float *newData, unsigned char *bytes, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1);
 
 #ifdef __cplusplus
 }

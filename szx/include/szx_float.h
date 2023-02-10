@@ -62,7 +62,11 @@ SZ_fast_compress_args_unpredictable_blocked_float(float *oriData, size_t *outSiz
                                                   int blockSize) ;
                                                   
 void SZ_fast_compress_args_unpredictable_blocked_float2(float *oriData, size_t *outSize, unsigned char* outputBytes, float absErrBound, size_t nbEle,
-                                                  int blockSize) ;                                                  
+                                                  int blockSize) ; 
+
+void SZ_fast_compress_args_unpredictable_blocked_float2_split(float *oriData, size_t *outSize, unsigned char* outputBytes, 
+    unsigned char* chunk_arr, size_t chunk_iter, float absErrBound, size_t nbEle,
+                                                  int blockSize);                                                                                        
                                                   
 unsigned char *
 SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *oriData, size_t *outSize, float absErrBound,

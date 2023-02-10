@@ -2,6 +2,8 @@
 #include "mpi.h"
 #include "recursive_doubling.h"
 #include "ring.h"
+#include "ring2.h"
+#include "ring2_overlap.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
@@ -88,16 +90,18 @@ int main(int argc, char *argv[])
                         exit(1);
                 }
         }        
-        char oriFilePath[645];
+        // char oriFilePath[645];
         //ML files
         // char oriFileDire[640] = "/lcrc/project/sbi-fair/shared/gradients_saved/";
         // sprintf(oriFilePath, "%srank0_step_%d_layer_15.bin", oriFileDire, world_rank+50);
         //small aramco files 47376235 189504940 bytes
-        char oriFileDire[640] = "/lcrc/project/ECP-EZ/shdi/RtmLab-small/examples/overthrust_model/data/";
-        sprintf(oriFilePath, "%saramco-snapshot-00%d.f32", oriFileDire, world_rank+10);
+        // char oriFileDire[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab-small/examples/overthrust_model/data/";
+        // sprintf(oriFilePath, "%saramco-snapshot-00%d.f32", oriFileDire, world_rank+10);
+        // char oriFilePath[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab-small/examples/overthrust_model/data/aramco-snapshot-0001.f32";
         //big snpData files 849X849X235=169388235 677552940 bytes
         // char oriFileDire[640] = "/lcrc/project/ECP-EZ/shdi/RtmLab/examples/overthrust_model/data/";
         // sprintf(oriFilePath, "%ssnpData_0%d_849X849X235.dat", oriFileDire, world_rank*50+100);
+        char oriFilePath[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab/examples/overthrust_model/data/snpData_0020_849X849X235.dat";
 
         int status = 0;
         size_t nbEle;
@@ -195,12 +199,12 @@ int main(int argc, char *argv[])
                         }
                         else if (select == 5)
                         {
-                                MPI_Allreduce_SZx_FXR_RI(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
+                                MPI_Allreduce_SZx_FXR_RI2(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
                                                       MPI_COMM_WORLD);
                         }
                         else if (select == 6)
                         {
-                                MPI_Allreduce_SZx_FXR_RI_record(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
+                                MPI_Allreduce_SZx_FXR_RI2_record(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
                                                       MPI_COMM_WORLD);
                         }
                 }
@@ -283,7 +287,7 @@ int main(int argc, char *argv[])
                         {
                                 MPI_Barrier(MPI_COMM_WORLD);
                                 MPI_timer -= MPI_Wtime();
-                                MPI_Allreduce_SZx_FXR_RI(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
+                                MPI_Allreduce_SZx_FXR_RI2(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
                                                       MPI_COMM_WORLD);
                                 MPI_timer += MPI_Wtime();
                         }
@@ -291,10 +295,19 @@ int main(int argc, char *argv[])
                         {
                                 MPI_Barrier(MPI_COMM_WORLD);
                                 MPI_timer -= MPI_Wtime();
-                                MPI_Allreduce_SZx_FXR_RI_record(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
+                                MPI_Allreduce_SZx_FXR_RI2_record(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
                                                       MPI_COMM_WORLD);
                                 MPI_timer += MPI_Wtime();
                         }
+                        else if (select == 7)
+                        {
+                                MPI_Barrier(MPI_COMM_WORLD);
+                                MPI_timer -= MPI_Wtime();
+                                MPI_Allreduce_SZx_FXR_RI2_op_record(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
+                                                      MPI_COMM_WORLD);
+                                MPI_timer += MPI_Wtime();
+                        }
+                        
                         MPI_Barrier(MPI_COMM_WORLD);
                 }
                 double latency = (double)(MPI_timer * 1e6) / iterations;
