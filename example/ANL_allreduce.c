@@ -4,6 +4,7 @@
 #include "ring.h"
 #include "ring2.h"
 #include "ring2_overlap.h"
+#include "ring2_multithreads.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
@@ -14,8 +15,8 @@
 #define MIN_MESSAGE_LENGTH 1           // This is in length
 #define compressionRatio 20
 #define tolerance 0.08
-#define MPI_THREAD_MODE MPI_THREAD_SINGLE
-// #define MPI_THREAD_MODE MPI_THREAD_FUNNELED
+// #define MPI_THREAD_MODE MPI_THREAD_SINGLE
+#define MPI_THREAD_MODE MPI_THREAD_FUNNELED
 typedef float data_type;
 
 int main(int argc, char *argv[])
@@ -97,11 +98,11 @@ int main(int argc, char *argv[])
         //small aramco files 47376235 189504940 bytes
         // char oriFileDire[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab-small/examples/overthrust_model/data/";
         // sprintf(oriFilePath, "%saramco-snapshot-00%d.f32", oriFileDire, world_rank+10);
-        // char oriFilePath[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab-small/examples/overthrust_model/data/aramco-snapshot-0001.f32";
+        char oriFilePath[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab-small/examples/overthrust_model/data/aramco-snapshot-0001.f32";
         //big snpData files 849X849X235=169388235 677552940 bytes
         // char oriFileDire[640] = "/lcrc/project/ECP-EZ/shdi/RtmLab/examples/overthrust_model/data/";
         // sprintf(oriFilePath, "%ssnpData_0%d_849X849X235.dat", oriFileDire, world_rank*50+100);
-        char oriFilePath[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab/examples/overthrust_model/data/snpData_0020_849X849X235.dat";
+        // char oriFilePath[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab/examples/overthrust_model/data/snpData_0020_849X849X235.dat";
 
         int status = 0;
         size_t nbEle;
@@ -197,11 +198,11 @@ int main(int argc, char *argv[])
                                 MPIR_Allreduce_intra_ring(invec, inoutvec, size, MPI_FLOAT, MPI_SUM,
                                                       MPI_COMM_WORLD);
                         }
-                        else if (select == 5)
-                        {
-                                MPI_Allreduce_SZx_FXR_RI2(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
-                                                      MPI_COMM_WORLD);
-                        }
+                        // else if (select == 5)
+                        // {
+                        //         MPI_Allreduce_SZx_FXR_RI2(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
+                        //                               MPI_COMM_WORLD);
+                        // }
                         else if (select == 6)
                         {
                                 MPI_Allreduce_SZx_FXR_RI2_record(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
@@ -283,14 +284,14 @@ int main(int argc, char *argv[])
                                                       MPI_COMM_WORLD);
                                 MPI_timer += MPI_Wtime();
                         }
-                        else if (select == 5)
-                        {
-                                MPI_Barrier(MPI_COMM_WORLD);
-                                MPI_timer -= MPI_Wtime();
-                                MPI_Allreduce_SZx_FXR_RI2(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
-                                                      MPI_COMM_WORLD);
-                                MPI_timer += MPI_Wtime();
-                        }
+                        // else if (select == 5)
+                        // {
+                        //         MPI_Barrier(MPI_COMM_WORLD);
+                        //         MPI_timer -= MPI_Wtime();
+                        //         MPI_Allreduce_SZx_FXR_RI2(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
+                        //                               MPI_COMM_WORLD);
+                        //         MPI_timer += MPI_Wtime();
+                        // }
                         else if (select == 6)
                         {
                                 MPI_Barrier(MPI_COMM_WORLD);
@@ -307,6 +308,14 @@ int main(int argc, char *argv[])
                                                       MPI_COMM_WORLD);
                                 MPI_timer += MPI_Wtime();
                         }
+                        // else if (select == 8) // Multithread version
+                        // {
+                        //         MPI_Barrier(MPI_COMM_WORLD);
+                        //         MPI_timer -= MPI_Wtime();
+                        //         MPI_Allreduce_SZx_FXR_RI2_mt_record(invec, inoutvec, compressionRatio, tolerance, size, MPI_FLOAT, MPI_SUM,
+                        //                               MPI_COMM_WORLD);
+                        //         MPI_timer += MPI_Wtime();
+                        // }
                         
                         MPI_Barrier(MPI_COMM_WORLD);
                 }

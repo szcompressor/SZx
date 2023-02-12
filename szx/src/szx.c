@@ -672,16 +672,16 @@ void* SZ_fast_decompress_split(int fastMode, int dataType, float *newData, unsig
 			            
         // else if(fastMode == SZx_RANDOMACCESS_FAST_CMPR)
 			// SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(&newFloatData, nbEle, bytes);
-        // else //SZx_openmp
-        // {
-// #ifdef _OPENMP
+        else //SZx_openmp
+        {
+#ifdef _OPENMP
                 // SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(&newFloatData, nbEle, bytes);
-// #else
-                // SZ_fast_decompress_args_unpredictable_blocked_float(&newFloatData, nbEle, bytes);
-                // printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the decompression is degraded to serial version automatically.\n");
-// #endif
-        // }
-        // return newFloatData;
+				SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float2_openmp(newData, nbEle, bytes);
+#else
+                SZ_fast_decompress_args_unpredictable_blocked_float2_split(newData, nbEle, bytes); // The split does not have any special optimization compared with float2
+                printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the decompression is degraded to serial version automatically.\n");
+#endif
+        }
     }
 //     else if(dataType == SZ_DOUBLE)
 //     {
