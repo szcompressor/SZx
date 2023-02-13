@@ -476,19 +476,22 @@ int errBoundMode, float absErrBound, float relBoundRatio, float compressionRatio
 					realPrecision = valueRange*relBoundRatio;
 				}
 
-				if (fastMode == SZx_RANDOMACCESS_FAST_CMPR) {
-					SZ_fast_compress_args_unpredictable_blocked_float2(data, outSize, outputBytes, realPrecision, length, blockSize);
-				} 
-				// else if(fastMode == SZx_OPENMP_FAST_CMPR)
-				// {
-				// 	#ifdef _OPENMP
-				// 	SZ_fast_compress_args_unpredictable_blocked_randomaccess_float2_openmp(data, outSize, outputBytes, realPrecision, length,
-				// 																				  blockSize);
-				// 	#else
+				// if (fastMode == SZx_RANDOMACCESS_FAST_CMPR) {
 				// 	SZ_fast_compress_args_unpredictable_blocked_float2(data, outSize, outputBytes, realPrecision, length, blockSize);
-				// 	printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the compression is degraded to serial version automatically.\n");
-				// 	#endif
-				// }
+				// } 
+				if(fastMode == SZx_OPENMP_FAST_CMPR)
+				{
+					#ifdef _OPENMP
+					SZ_fast_compress_args_unpredictable_blocked_randomaccess_float2_openmp_split(data, outSize, outputBytes, 
+    												chunk_arr,chunk_iter, realPrecision,length,
+                                                  blockSize);
+					#else
+					SZ_fast_compress_args_unpredictable_blocked_float2_split(data, outSize, outputBytes, 
+    												chunk_arr,chunk_iter, realPrecision,length,
+                                                  blockSize);
+					printf("WARNING: It seems that you want to run the code with openmp mode but you didn't compile the code in openmp mode.\nSo, the compression is degraded to serial version automatically.\n");
+					#endif
+				}
 				else {
 					SZ_fast_compress_args_unpredictable_blocked_float2_split(data, outSize, outputBytes, 
     												chunk_arr,chunk_iter, realPrecision,length,

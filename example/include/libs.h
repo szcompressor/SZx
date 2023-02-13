@@ -12,7 +12,9 @@ typedef float data_type;
 #define MPIR_ALLGATHERV_TAG 8
 #define MPIR_CVAR_ALLGATHERV_PIPELINE_MSG_SIZE 32768
 #define MPIR_CVAR_ALLGATHERV_CPR_PIPELINE_MSG_SIZE 512000
-#define fast_mode 2
+#define SINGLETHREAD_CHUNK_SIZE 5120
+#define MULTITHREAD_CHUNK_SIZE 256000
+#define fast_mode 4
 #define cpr_mode ABS
 // #define fast_mode 2
 // #define cpr_mode FXR

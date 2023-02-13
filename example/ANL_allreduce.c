@@ -98,11 +98,11 @@ int main(int argc, char *argv[])
         //small aramco files 47376235 189504940 bytes
         // char oriFileDire[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab-small/examples/overthrust_model/data/";
         // sprintf(oriFilePath, "%saramco-snapshot-00%d.f32", oriFileDire, world_rank+10);
-        char oriFilePath[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab-small/examples/overthrust_model/data/aramco-snapshot-0001.f32";
+        // char oriFilePath[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab-small/examples/overthrust_model/data/aramco-snapshot-0001.f32";
         //big snpData files 849X849X235=169388235 677552940 bytes
         // char oriFileDire[640] = "/lcrc/project/ECP-EZ/shdi/RtmLab/examples/overthrust_model/data/";
         // sprintf(oriFilePath, "%ssnpData_0%d_849X849X235.dat", oriFileDire, world_rank*50+100);
-        // char oriFilePath[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab/examples/overthrust_model/data/snpData_0020_849X849X235.dat";
+        char oriFilePath[645] = "/lcrc/project/ECP-EZ/shdi/RtmLab/examples/overthrust_model/data/snpData_0020_849X849X235.dat";
 
         int status = 0;
         size_t nbEle;
