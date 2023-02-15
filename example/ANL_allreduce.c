@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
                         }
                         else if (select == 4)
                         {
-                                MPIR_Allreduce_intra_ring(invec, inoutvec, size, MPI_FLOAT, MPI_SUM,
+                                MPIR_Allreduce_intra_ring_record(invec, inoutvec, size, MPI_FLOAT, MPI_SUM,
                                                       MPI_COMM_WORLD);
                         }
                         // else if (select == 5)
@@ -280,7 +280,7 @@ int main(int argc, char *argv[])
                         {
                                 MPI_Barrier(MPI_COMM_WORLD);
                                 MPI_timer -= MPI_Wtime();
-                                MPIR_Allreduce_intra_ring(invec, inoutvec, size, MPI_FLOAT, MPI_SUM,
+                                MPIR_Allreduce_intra_ring_record(invec, inoutvec, size, MPI_FLOAT, MPI_SUM,
                                                       MPI_COMM_WORLD);
                                 MPI_timer += MPI_Wtime();
                         }

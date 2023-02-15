@@ -355,6 +355,8 @@ int MPIR_Allgatherv_intra_ring_RI2_record(const void *sendbuf,
     if (total_count == 0)
         goto fn_exit;
 
+
+    *MPI_timer -= MPI_Wtime();
     if (sendbuf != MPI_IN_PLACE)
     {
         /* First, load the "local" version in the recvbuf. */
@@ -364,6 +366,7 @@ int MPIR_Allgatherv_intra_ring_RI2_record(const void *sendbuf,
         memcpy((char *)recvbuf + displs[rank] * sizeof(recvtype),
                sendbuf, sizeof(data_type) * sendcount);
     }
+    *MPI_timer += MPI_Wtime();
 
     left = (comm_size + rank - 1) % comm_size;
     right = (rank + 1) % comm_size;
@@ -435,11 +438,11 @@ int MPIR_Allgatherv_intra_ring_RI2_record(const void *sendbuf,
             *MPI_timer -= MPI_Wtime();
             mpi_errno =
                 MPI_Recv(rbuf, recvnow, recvtype, left, MPIR_ALLGATHERV_TAG, comm, &status);
-            *MPI_timer += MPI_Wtime();
             if (mpi_errno)
             {
                 exit(-1);
             }
+            *MPI_timer += MPI_Wtime();
             // MPI_Get_count(&status, MPI_FLOAT, &byteLength);
             *CPR_timer -= MPI_Wtime();
             SZ_fast_decompress_split(fast_mode, SZ_FLOAT, newData, rbuf, 0, 0, 0, 0, recvnow);
@@ -464,11 +467,11 @@ int MPIR_Allgatherv_intra_ring_RI2_record(const void *sendbuf,
             *MPI_timer -= MPI_Wtime();
             mpi_errno =
                 MPI_Send((void *)bytes, outSize / sizeof(recvtype), recvtype, right, MPIR_ALLGATHERV_TAG, comm);
-            *MPI_timer += MPI_Wtime();
             if (mpi_errno)
             {
                 exit(-1);
             }
+            *MPI_timer += MPI_Wtime();
             // free(bytes);
             tosend -= sendnow;
         }
@@ -486,11 +489,11 @@ int MPIR_Allgatherv_intra_ring_RI2_record(const void *sendbuf,
             mpi_errno = MPI_Sendrecv((void *)bytes, outSize / sizeof(recvtype), recvtype, right, MPIR_ALLGATHERV_TAG,
                                      rbuf, recvnow, recvtype, left, MPIR_ALLGATHERV_TAG,
                                      comm, &status);
-            *MPI_timer += MPI_Wtime();
             if (mpi_errno)
             {
                 exit(-1);
             }
+            *MPI_timer += MPI_Wtime();
             // free(bytes);
             // MPI_Get_count(&status, MPI_FLOAT, &byteLength);
             *CPR_timer -= MPI_Wtime();
@@ -532,6 +535,8 @@ int MPI_Allreduce_SZx_FXR_RI2_record(const void *sendbuf,
                                     MPI_Op op,
                                     MPI_Comm comm)
 {
+    double MPI_total_timer = 0.0;
+    MPI_total_timer -= MPI_Wtime();
     int mpi_errno = MPI_SUCCESS, mpi_errno_ret = MPI_SUCCESS;
     int i, src, dst;
     int nranks, is_inplace, rank;
@@ -557,7 +562,7 @@ int MPI_Allreduce_SZx_FXR_RI2_record(const void *sendbuf,
     is_inplace = (sendbuf == MPI_IN_PLACE);
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &nranks);
-    double MPI_timer = 0.0;
+    double ALLGATHER_timer = 0.0;
     double ReSca_timer = 0.0;
     double CPR_timer = 0.0;
     double CPT_timer = 0.0;
@@ -593,11 +598,12 @@ int MPI_Allreduce_SZx_FXR_RI2_record(const void *sendbuf,
         displs[i] = displs[i - 1] + cnts[i - 1];
 
     /* Phase 1: copy to tmp buf */
+    ReSca_timer -= MPI_Wtime();
     if (!is_inplace)
     {
         memcpy(recvbuf, sendbuf, sizeof(datatype) * count);
     }
-
+    ReSca_timer += MPI_Wtime();
     /* Phase 2: Ring based send recv reduce scatter */
     /* Need only 2 spaces for current and previous reduce_id(s) */
 
@@ -618,9 +624,9 @@ int MPI_Allreduce_SZx_FXR_RI2_record(const void *sendbuf,
         tag = tag_base;
 
         // mpi_errno = MPI_Irecv(tmpbuf, cnts[recv_rank], datatype, src, tag, comm, &reqs[0]);
-        MPI_timer -= MPI_Wtime();
+        ReSca_timer -= MPI_Wtime();
         mpi_errno = MPI_Irecv(tmpbuf, cnts[recv_rank], datatype, src, tag, comm, &reqs[0]);
-        MPI_timer += MPI_Wtime();
+        ReSca_timer += MPI_Wtime();
         if (mpi_errno)
         {
             exit(-1);
@@ -631,26 +637,26 @@ int MPI_Allreduce_SZx_FXR_RI2_record(const void *sendbuf,
                                                      &outSize, outputBytes, cpr_mode, absErrBound, relBoundRatio, compressionRatio, tolerance, 0, 0, 0, 0, cnts[send_rank]);
         unsigned char *bytes = outputBytes;
         CPR_timer += MPI_Wtime();
-        MPI_timer -= MPI_Wtime();
+        ReSca_timer -= MPI_Wtime();
         mpi_errno = MPI_Isend(bytes, outSize / sizeof(datatype),
                               datatype, dst, tag, comm, &reqs[1]);
-        MPI_timer += MPI_Wtime();
+        ReSca_timer += MPI_Wtime();
         if (mpi_errno)
         {
             exit(-1);
         }
-        // MPI_timer -= MPI_Wtime();
+        // ReSca_timer -= MPI_Wtime();
         // mpi_errno = MPI_Waitall(2, reqs, stas);
-        // MPI_timer += MPI_Wtime();
+        // ReSca_timer += MPI_Wtime();
         if (mpi_errno)
         {
             exit(-1);
         }
-        MPI_timer -= MPI_Wtime();
+        ReSca_timer -= MPI_Wtime();
         WAIT_timer -= MPI_Wtime();
         MPI_Wait(&reqs[0], &stas[0]);
         WAIT_timer += MPI_Wtime();
-        MPI_timer += MPI_Wtime();
+        ReSca_timer += MPI_Wtime();
         // MPI_Get_count(&stas[0], MPI_FLOAT, &byteLength);
 
         MPI_Test(&reqs[1], &flag, &stas[1]);
@@ -665,10 +671,10 @@ int MPI_Allreduce_SZx_FXR_RI2_record(const void *sendbuf,
         CPT_timer += MPI_Wtime();
         
         // Wait for Isend
-        MPI_timer -= MPI_Wtime();
+        ReSca_timer -= MPI_Wtime();
         WAIT_timer -= MPI_Wtime();
         MPI_Wait(&reqs[1], &stas[1]);
-        MPI_timer += MPI_Wtime();
+        ReSca_timer += MPI_Wtime();
         WAIT_timer += MPI_Wtime();
         if (mpi_errno)
         {
@@ -677,11 +683,9 @@ int MPI_Allreduce_SZx_FXR_RI2_record(const void *sendbuf,
         // free(bytes);
         // free(data);
     }
-
-    ReSca_timer = MPI_timer;
     /* Phase 3: Allgatherv ring, so everyone has the reduced data */
     mpi_errno = MPIR_Allgatherv_intra_ring_RI2_record(MPI_IN_PLACE, -1, MPI_DATATYPE_NULL, recvbuf, cnts,
-                                                     displs, datatype, comm, outputBytes, compressionRatio, tolerance, &MPI_timer, &CPR_timer);
+                                                     displs, datatype, comm, outputBytes, compressionRatio, tolerance, &ALLGATHER_timer, &CPR_timer);
     if (mpi_errno)
     {
         exit(-1);
@@ -692,27 +696,41 @@ int MPI_Allreduce_SZx_FXR_RI2_record(const void *sendbuf,
     free(displs);
     free(tmpbuf);
     free(newData);
-    printf("For process %d, the CPR time is %f, the MPI time is %f, the WAIT time is %f, the CPT time is%f\n", rank, CPR_timer, MPI_timer, WAIT_timer, CPT_timer);
+
+    MPI_total_timer += MPI_Wtime();
+
+    double OTHER_timer = MPI_total_timer - ALLGATHER_timer - ReSca_timer - CPT_timer - CPR_timer; 
+    double ReScanowait_timer = ReSca_timer - WAIT_timer;
+    printf("For process %d, the CPR time is %f, the ALLGATHER time is %f, the ReSca time is %f, the ReSca(no wait) time is %f,  the WAIT time is %f, the CPT time is %f, the OTHER time is %f\n", rank, CPR_timer, 
+    ALLGATHER_timer, ReSca_timer, ReScanowait_timer, WAIT_timer, CPT_timer, OTHER_timer);
     double CPR_timer_all = 0.0;
-    double MPI_timer_all = 0.0;
     double CPT_timer_all = 0.0;
     double WAIT_timer_all = 0.0;
     double ReSca_timer_all = 0.0;
+    double ReScanowait_timer_all = 0.0;
+    double ALLGATHER_timer_all = 0.0;
+    double OTHER_timer_all = 0.0;
+    double MPI_total_timer_all = 0.0;
     MPI_Reduce(&CPR_timer, &CPR_timer_all, 1, MPI_DOUBLE, MPI_SUM, 0,
                MPI_COMM_WORLD);
-    MPI_Reduce(&MPI_timer, &MPI_timer_all, 1, MPI_DOUBLE, MPI_SUM, 0,
+    MPI_Reduce(&ALLGATHER_timer, &ALLGATHER_timer_all, 1, MPI_DOUBLE, MPI_SUM, 0,
                MPI_COMM_WORLD);
     MPI_Reduce(&ReSca_timer, &ReSca_timer_all, 1, MPI_DOUBLE, MPI_SUM, 0,
+               MPI_COMM_WORLD);
+    MPI_Reduce(&ReScanowait_timer, &ReScanowait_timer_all, 1, MPI_DOUBLE, MPI_SUM, 0,
                MPI_COMM_WORLD);
     MPI_Reduce(&WAIT_timer, &WAIT_timer_all, 1, MPI_DOUBLE, MPI_SUM, 0,
                MPI_COMM_WORLD);
     MPI_Reduce(&CPT_timer, &CPT_timer_all, 1, MPI_DOUBLE, MPI_SUM, 0,
                MPI_COMM_WORLD);
+    MPI_Reduce(&OTHER_timer, &OTHER_timer_all, 1, MPI_DOUBLE, MPI_SUM, 0,
+               MPI_COMM_WORLD);
+    MPI_Reduce(&MPI_total_timer, &MPI_total_timer_all, 1, MPI_DOUBLE, MPI_SUM, 0,
+               MPI_COMM_WORLD);
     if (rank == 0)
     {
-        double avg_total_time = CPR_timer_all / nranks + MPI_timer_all / nranks + CPT_timer / nranks;
-        printf("For whole allreduce, the avg CPR time is %f, the avg MPI time is %f, the avg Reduce_Scatter time is %f, the avg WAIT time is %f, the avg CPT time is %f, the avg total time is %f\n", CPR_timer_all / nranks * 1000000,
-               MPI_timer_all / nranks * 1000000, ReSca_timer_all / nranks * 1000000, WAIT_timer_all / nranks * 1000000, CPT_timer / nranks * 1000000, avg_total_time * 1000000);
+        printf("For whole allreduce, the avg CPR time is %f, the avg Allgather time is %f, the avg Reduce_Scatter time is %f, the avg Reduce_Scatter(no wait) time is %f, the avg WAIT time is %f, the avg CPT time is %f, the avg OTHER time is %f, the avg total time is %f\n", 
+        CPR_timer_all / nranks * 1000000, ALLGATHER_timer_all / nranks * 1000000, ReSca_timer_all / nranks * 1000000, ReScanowait_timer_all / nranks * 1000000, WAIT_timer_all / nranks * 1000000, CPT_timer_all / nranks * 1000000, OTHER_timer_all/ nranks * 1000000, MPI_total_timer_all / nranks * 1000000);
     }
     return mpi_errno;
 }
