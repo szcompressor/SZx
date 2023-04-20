@@ -8,6 +8,9 @@ set(SZX_TARGETS
 		testfloat_decompress_fastmode3
 		ANL_allreduce
 		main
+		test_multicomm
+		SZX_test
+		compare_data
 		)
 foreach (SZX_TARGET IN LISTS SZX_TARGETS)
 	add_executable (${SZX_TARGET} ${SZX_TARGET}.c)

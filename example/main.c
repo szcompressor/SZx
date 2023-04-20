@@ -10,7 +10,7 @@
 #define ITERATIONS_LARGE 100
 #define LARGE_MESSAGE_SIZE 1024 * 1024 // This is in bytes
 #define MIN_MESSAGE_LENGTH 1           // This is in length
-#define compressionRatio 20
+// #define compressionRatio 20
 #define tolerance 0.08
 #define chunk_size 10240
 // #define data_size 520000
@@ -21,6 +21,8 @@ int main()
     int validation = 1;
     int i = 0;
     int provided;
+    double compressionRatio = 1E-3;
+    double absErrBound = compressionRatio;
     // MPI_Init_thread(NULL, NULL, MPI_THREAD_FUNNELED, &provided);
     MPI_Init_thread(NULL, NULL, MPI_THREAD_SINGLE, &provided);
     int world_rank;

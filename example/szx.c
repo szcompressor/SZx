@@ -293,7 +293,7 @@ int main(int argc, char* argv[])
 				exit(0);
 			}
 			cost_start();
-			bytes = SZ_fast_compress_args(fastMode, SZ_FLOAT, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, compressRatio, tolerance, r5, r4, r3, r2, r1);
+			bytes = SZ_fast_compress_args_test(fastMode, SZ_FLOAT, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, compressRatio, tolerance, r5, r4, r3, r2, r1);
 			cost_end();
 			if(cmpPath == NULL)
 				sprintf(outputFilePath, "%s.szx", inPath);
@@ -335,7 +335,7 @@ int main(int argc, char* argv[])
 				exit(0);
 			}
 			cost_start();
-			bytes = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, compressRatio, tolerance, r5, r4, r3, r2, r1);
+			bytes = SZ_fast_compress_args_test(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, compressRatio, tolerance, r5, r4, r3, r2, r1);
 			cost_end();
 			if(cmpPath == NULL)
 				sprintf(outputFilePath, "%s.szx", inPath);
@@ -396,7 +396,7 @@ int main(int argc, char* argv[])
 				exit(0);
 			}
 			cost_start();
-			float *data = SZ_fast_decompress(fastMode, SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
+			float *data = SZ_fast_decompress_test(fastMode, SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
 			cost_end();
 			if(decPath == NULL)
 				sprintf(outputFilePath, "%s.out", cmpPath);	
@@ -507,7 +507,7 @@ int main(int argc, char* argv[])
 				exit(0);
 			}
 			cost_start();
-			double* data = SZ_fast_decompress(fastMode, SZ_DOUBLE, bytes, byteLength, r5, r4, r3, r2, r1);
+			double* data = SZ_fast_decompress_test(fastMode, SZ_DOUBLE, bytes, byteLength, r5, r4, r3, r2, r1);
 			cost_end();
 			if(decPath == NULL)
 				sprintf(outputFilePath, "%s.out", cmpPath);	
