@@ -93,7 +93,7 @@ bin_PROGRAMS = testfloat_compress_fastmode1$(EXEEXT) \
 	testfloat_decompress_fastmode1$(EXEEXT) \
 	testfloat_compress_fastmode3$(EXEEXT) \
 	testfloat_decompress_fastmode3$(EXEEXT) szx$(EXEEXT) \
-	testfloat_compress_fixed_rate$(EXEEXT)
+	testfloat_compress_fixed_rate$(EXEEXT) estimateCR$(EXEEXT)
 subdir = example
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -106,13 +106,16 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_szx_OBJECTS = szx.$(OBJEXT)
-szx_OBJECTS = $(am_szx_OBJECTS)
-szx_DEPENDENCIES = ../szx/.libs/libSZx.a
+am_estimateCR_OBJECTS = estimateCR.$(OBJEXT)
+estimateCR_OBJECTS = $(am_estimateCR_OBJECTS)
+estimateCR_DEPENDENCIES = ../szx/.libs/libSZx.a
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_szx_OBJECTS = szx.$(OBJEXT)
+szx_OBJECTS = $(am_szx_OBJECTS)
+szx_DEPENDENCIES = ../szx/.libs/libSZx.a
 am_testfloat_compress_fastmode1_OBJECTS =  \
 	testfloat_compress_fastmode1.$(OBJEXT)
 testfloat_compress_fastmode1_OBJECTS =  \
@@ -153,7 +156,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/szx.Po \
+am__depfiles_remade = ./$(DEPDIR)/estimateCR.Po ./$(DEPDIR)/szx.Po \
 	./$(DEPDIR)/testfloat_compress_fastmode1.Po \
 	./$(DEPDIR)/testfloat_compress_fastmode3.Po \
 	./$(DEPDIR)/testfloat_compress_fixed_rate.Po \
@@ -178,12 +181,14 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(szx_SOURCES) $(testfloat_compress_fastmode1_SOURCES) \
+SOURCES = $(estimateCR_SOURCES) $(szx_SOURCES) \
+	$(testfloat_compress_fastmode1_SOURCES) \
 	$(testfloat_compress_fastmode3_SOURCES) \
 	$(testfloat_compress_fixed_rate_SOURCES) \
 	$(testfloat_decompress_fastmode1_SOURCES) \
 	$(testfloat_decompress_fastmode3_SOURCES)
-DIST_SOURCES = $(szx_SOURCES) $(testfloat_compress_fastmode1_SOURCES) \
+DIST_SOURCES = $(estimateCR_SOURCES) $(szx_SOURCES) \
+	$(testfloat_compress_fastmode1_SOURCES) \
 	$(testfloat_compress_fastmode3_SOURCES) \
 	$(testfloat_compress_fixed_rate_SOURCES) \
 	$(testfloat_decompress_fastmode1_SOURCES) \
@@ -349,6 +354,8 @@ szx_SOURCES = szx.c
 szx_LDADD = ../szx/.libs/libSZx.a -lm
 testfloat_compress_fixed_rate_SOURCES = testfloat_compress_fixed_rate.c
 testfloat_compress_fixed_rate_LDADD = ../szx/.libs/libSZx.a -lm
+estimateCR_SOURCES = estimateCR.c
+estimateCR_LDADD = ../szx/.libs/libSZx.a -lm
 all: all-am
 
 .SUFFIXES:
@@ -432,6 +439,10 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+estimateCR$(EXEEXT): $(estimateCR_OBJECTS) $(estimateCR_DEPENDENCIES) $(EXTRA_estimateCR_DEPENDENCIES) 
+	@rm -f estimateCR$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(estimateCR_OBJECTS) $(estimateCR_LDADD) $(LIBS)
+
 szx$(EXEEXT): $(szx_OBJECTS) $(szx_DEPENDENCIES) $(EXTRA_szx_DEPENDENCIES) 
 	@rm -f szx$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(szx_OBJECTS) $(szx_LDADD) $(LIBS)
@@ -462,6 +473,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/estimateCR.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/szx.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_compress_fastmode1.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testfloat_compress_fastmode3.Po@am__quote@ # am--include-marker
@@ -632,7 +644,8 @@ clean: clean-am
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/szx.Po
+		-rm -f ./$(DEPDIR)/estimateCR.Po
+	-rm -f ./$(DEPDIR)/szx.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode1.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode3.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fixed_rate.Po
@@ -683,7 +696,8 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/szx.Po
+		-rm -f ./$(DEPDIR)/estimateCR.Po
+	-rm -f ./$(DEPDIR)/szx.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode1.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fastmode3.Po
 	-rm -f ./$(DEPDIR)/testfloat_compress_fixed_rate.Po

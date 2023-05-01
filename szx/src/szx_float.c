@@ -498,7 +498,7 @@ size_t *sumReqNbBytes, size_t *sum_actual_leadNumbers)
 	size_t nbSampledBlocks = nbEle/(blockSize*samplingRate); //ignored the last remainder block
 	size_t nbConstantBlocks = 0;
 	*sum_actual_leadNumbers = 0;
-	float metadata = 9.0*blockSize/nbEle;
+	float metadata = 13.0*blockSize/nbEle;
 	float block_cost = 33.0/8;	
 	size_t i = 0, j = 0;
 	*sumReqNbBytes = 0;
@@ -578,7 +578,7 @@ size_t *sumReqNbBytes, size_t *sum_actual_leadNumbers)
 
 float estimateCRbasedonErrorBound_float(float errorBound, float* data, int blockSize, size_t nbEle)
 {
-	float metadata = 9.0*blockSize/nbEle;
+	float metadata = 13.0*blockSize/nbEle; // 3 (version) + 1 + 1 + 8 (# blocks)
 	float block_cost = 33.0/8;
 	size_t nbBlocks = nbEle/blockSize;
 	size_t nbConstantBlocks = 0;
