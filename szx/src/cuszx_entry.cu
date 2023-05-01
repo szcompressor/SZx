@@ -3,6 +3,7 @@
 #include "szx_BytesToolkit.h"
 #include "szx_TypeManager.h"
 #include "timingGPU.h"
+#include <stdio.h>
 
 #define DO_ARTIFACT_ANALYSIS
 
@@ -345,9 +346,15 @@ unsigned char* cuSZx_fast_compress_args_artifact_aware(float *oriData, size_t *o
 
     *outSize = _post_proc(oriData, meta, offsets, midBytes, outBytes, nbEle, blockSize);
 
+    FILE *file = fopen("artifacts.bin", "wb");
+    fwrite(artifact_type, 1, nbBlocks, file);
+    fclose(file);
+
+    free(artifact_type);
     free(meta);
     free(offsets);
     free(midBytes);
+    cudaFree(d_artifact_type);
     checkCudaErrors(cudaFree(d_meta));
     checkCudaErrors(cudaFree(d_offsets));
     checkCudaErrors(cudaFree(d_midBytes));
@@ -376,6 +383,93 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 	unsigned char* data = (unsigned char*)malloc(ncBlocks*blockSize*sizeof(float));
     memset(data, 0, ncBlocks*blockSize*sizeof(float));
 		
+	convertByteArray2IntArray_fast_1b_args(nbBlocks, r, stateNBBytes, stateArray); //get the stateArray
+	
+	r += stateNBBytes;
+	size_t i = 0, j = 0, k = 0; //k is used to keep track of constant block index
+    memcpy((*newData)+nbBlocks*blockSize, r, (nbEle%blockSize)*sizeof(float));
+    r += (nbEle%blockSize)*sizeof(float);
+	float* fr = (float*)r; //fr is the starting address of constant median values.
+	for(i = 0;i < nbConstantBlocks;i++, j+=4) //get the median values for constant-value blocks
+		constantMedianArray[i] = fr[i];
+    r += nbConstantBlocks*sizeof(float);
+    unsigned char* p = r + ncBlocks * sizeof(short);
+    for(i = 0;i < ncBlocks;i++){
+        int leng = (int)bytesToShort(r)+mSize;
+        r += sizeof(short);
+        if (leng > blockSize*sizeof(float))
+        {
+            printf("Warning: compressed block is larger than the original block!\n");
+            exit(0);
+        }
+        memcpy(data+i*blockSize*sizeof(float), p, leng);
+        p += leng;
+    } 
+
+    unsigned char* d_data;
+    checkCudaErrors(cudaMalloc((void**)&d_data, ncBlocks*blockSize*sizeof(float))); 
+    checkCudaErrors(cudaMemcpy(d_data, data, ncBlocks*blockSize*sizeof(float), cudaMemcpyHostToDevice)); 
+
+    timer_GPU.StartCounter();
+    dim3 dimBlock(32, blockSize/32);
+    dim3 dimGrid(65536, 1);
+    const int sMemsize = blockSize * sizeof(float) + dimBlock.y * sizeof(int);
+    decompress_float<<<dimGrid, dimBlock, sMemsize>>>(d_data, blockSize, ncBlocks, mSize);
+    cudaError_t err = cudaGetLastError();        // Get error code
+    printf("CUDA Error: %s\n", cudaGetErrorString(err));
+    printf("GPU decompression timing: %f ms\n", timer_GPU.GetCounter());
+    checkCudaErrors(cudaMemcpy(data, d_data, ncBlocks*blockSize*sizeof(float), cudaMemcpyDeviceToHost)); 
+    float* fdata = (float*)data;
+
+    int nb=0, nc=0;
+    for (i=0;i<nbBlocks;i++){
+        if (stateArray[i]==0){
+            float Median = constantMedianArray[nb];
+            if (Median>1) printf("data%i:%f\n",i, Median);
+            for (j=0;j<blockSize;j++)
+                *((*newData)+i*blockSize+j) = Median;
+            nb++;
+        }else{
+            for (j=0;j<blockSize;j++)
+                *((*newData)+i*blockSize+j) = fdata[nc*blockSize+j];
+            nc++;
+        }
+    }
+
+	free(stateArray);
+	free(constantMedianArray);
+	free(data);
+    checkCudaErrors(cudaFree(d_data));
+
+}
+
+void cuSZx_fast_decompress_args_unpredictable_blocked_float_artifacts(float** newData, size_t nbEle, unsigned char* cmpBytes)
+{
+	*newData = (float*)malloc(sizeof(float)*nbEle);
+    memset(*newData, 0, sizeof(float)*nbEle);
+	
+	unsigned char* r = cmpBytes;
+	r += 4;
+	int blockSize = r[0];  //get block size
+	r++;
+	size_t nbConstantBlocks = bytesToLong_bigEndian(r); //get number of constant blocks
+	r += sizeof(size_t);
+		
+	size_t nbBlocks = nbEle/blockSize;
+	size_t ncBlocks = nbBlocks - nbConstantBlocks; //get number of constant blocks
+	size_t stateNBBytes = nbBlocks%8==0 ? nbBlocks/8 : nbBlocks/8+1;
+    size_t ncLeading = blockSize/4;
+    size_t mSize = sizeof(float)+1+ncLeading; //Number of bytes for each data block's metadata.
+	unsigned char* stateArray = (unsigned char*)malloc(nbBlocks);
+	float* constantMedianArray = (float*)malloc(nbConstantBlocks*sizeof(float));			
+	unsigned char* data = (unsigned char*)malloc(ncBlocks*blockSize*sizeof(float));
+    memset(data, 0, ncBlocks*blockSize*sizeof(float));
+	
+    unsigned char *artifact_type = (unsigned char*)malloc(nbBlocks*sizeof(char));
+    FILE *file = fopen("artifacts.bin", "wb");
+    fread(artifact_type, 1, nbBlocks, file);
+    fclose(file);
+
 	convertByteArray2IntArray_fast_1b_args(nbBlocks, r, stateNBBytes, stateArray); //get the stateArray
 	
 	r += stateNBBytes;
