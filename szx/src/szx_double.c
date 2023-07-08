@@ -439,16 +439,16 @@ float computeRadiusBuffer_double(double *oriData, size_t nbEle, int samplingRate
 	size_t nbBlocks = nbEle/stride;
 	*radiusArray = (float*)malloc(sizeof(float)*(nbBlocks+1));
 	*mediusArray = (float*)malloc(sizeof(float)*(nbBlocks+1));
-	*buffer = (float*)malloc(sizeof(float)*(nbBlocks+1)*blockSize);
-	float* p = *buffer;
-	float g_min = oriData[offset], g_max = oriData[offset];
+	*buffer = (double*)malloc(sizeof(double)*(nbBlocks+1)*blockSize);
+	double* p = *buffer;
+	double g_min = oriData[offset], g_max = oriData[offset];
 	for(i=0;i<nbBlocks;i++)
 	{
-		memcpy(p, &oriData[offset], blockSize*sizeof(float));
-		float min = oriData[offset];
-		float max = oriData[offset];
+		memcpy(p, &oriData[offset], blockSize*sizeof(double));
+		double min = oriData[offset];
+		double max = oriData[offset];
         for (j = 1; j < blockSize; j++) {
-		float v = oriData[offset + j];
+		double v = oriData[offset + j];
 		if (min > v)
 			min = v;
 		else if (max < v)
@@ -458,8 +458,8 @@ float computeRadiusBuffer_double(double *oriData, size_t nbEle, int samplingRate
 			g_max = max;
 		if(g_min > min)
 			g_min = min;
-        float valueRange = max - min;
-        float radius = valueRange / 2;		
+        double valueRange = max - min;
+        double radius = valueRange / 2;		
 		(*radiusArray)[i] = radius;
 		(*mediusArray)[i] = min + radius;
 		offset += stride;
@@ -496,7 +496,8 @@ size_t *sumReqNbBytes, size_t *sum_actual_leadNumbers){
 	size_t nbConstantBlocks = 0;
 	*sum_actual_leadNumbers = 0;
 	float metadata = 13.0*blockSize/nbEle;
-	float block_cost = 33.0/8;	
+	// float block_cost = 33.0/8;	
+    float block_cost = 65.0/8;
 	size_t i = 0, j = 0;
 	*sumReqNbBytes = 0;
 	for(i=0;i<nbSampledBlocks;i++) //ignored the last remainder block
@@ -514,7 +515,7 @@ size_t *sumReqNbBytes, size_t *sum_actual_leadNumbers){
 		else //non-constant
 		{
 			int reqLength;
-			short radExpo = getExponent_float(radius);
+			short radExpo = getExponent_float(radius); 
 			computeReqLength_double(errorBound, radExpo, &reqLength, &medianValue);
 			int reqBytesLength = reqLength / 8;
 			int resiBitsLength = reqLength % 8;
@@ -528,9 +529,9 @@ size_t *sumReqNbBytes, size_t *sum_actual_leadNumbers){
 			//printf("%d\n",reqBytesLength);
 			*sumReqNbBytes+=	reqBytesLength;
 			
-			register lfloat lfBuf_pre;
-			register lfloat lfBuf_cur;
-			lfBuf_pre.ivalue = 0;
+			register ldouble lfBuf_pre;
+			register ldouble lfBuf_cur;
+			lfBuf_pre.lvalue = 0;
 			register unsigned char leadingNum = 0;			
 			//int leadingNum_Array[128];
 			int s_actual_leadNumbers = 0;
@@ -538,16 +539,16 @@ size_t *sumReqNbBytes, size_t *sum_actual_leadNumbers){
 			{
                 lfBuf_cur.value = data[j] - medianValue;
 
-                lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
+                lfBuf_cur.lvalue = lfBuf_cur.lvalue >> rightShiftBits;
 
-                lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
-				
+                lfBuf_pre.lvalue = lfBuf_cur.lvalue ^ lfBuf_pre.lvalue;
+			
 				leadingNum = 0;
-                if (lfBuf_pre.ivalue >> 8 == 0)
+                if (lfBuf_pre.lvalue >> 40 == 0)
                     leadingNum = 3;
-                else if (lfBuf_pre.ivalue >> 16 == 0)
+                else if (lfBuf_pre.lvalue >> 48 == 0)
                     leadingNum = 2;
-                else if (lfBuf_pre.ivalue >> 24 == 0)
+                else if (lfBuf_pre.lvalue >> 56 == 0)
                     leadingNum = 1;
                    
                // leadingNum_Array[j] = leadingNum;    
@@ -568,14 +569,17 @@ size_t *sumReqNbBytes, size_t *sum_actual_leadNumbers){
 	
 	float p_lambda = 1.0*nbConstantBlocks/nbSampledBlocks;
 	
-	float estimatedCR = 4*blockSize/(metadata + block_cost+(1 + (0.25+avgReqNbBytes)*blockSize - avg_actual_lead)*(1 - p_lambda));
-	//printf("----> sum_actual_leadNumbers=%zu, nbSampledBlocks = %zu, nbConstantBlocks = %zu, sumReqNbBytes = %zu, avgReqNbBytes=%f, avg_actual_lead=%f, p_lambda=%f\n", *sum_actual_leadNumbers, nbSampledBlocks, nbConstantBlocks, *sumReqNbBytes, avgReqNbBytes, avg_actual_lead, p_lambda);
-	return estimatedCR;	
+	float estimatedCR = 8*blockSize/(metadata + block_cost+(1 + (0.25+avgReqNbBytes)*blockSize - avg_actual_lead)*(1 - p_lambda));
+    // printf("----> nbEle=%zu, metadata=%f, block_cost=%f\n", nbEle, metadata, block_cost);
+	// printf("----> sum_actual_leadNumbers=%zu, nbSampledBlocks = %zu, nbConstantBlocks = %zu, sumReqNbBytes = %zu, avgReqNbBytes=%f, avg_actual_lead=%f, p_lambda=%f\n", *sum_actual_leadNumbers, nbSampledBlocks, nbConstantBlocks, *sumReqNbBytes, avgReqNbBytes, avg_actual_lead, p_lambda);
+	// printf("====> estimatedCR=%f, errorBound=%f\n", estimatedCR, errorBound);
+    return estimatedCR;	
 }
 
 float estimateCRbasedonErrorBound_double(float errorBound, double* data, int blockSize, size_t nbEle){
     float metadata = 13.0*blockSize/nbEle; // 3 (version) + 1 + 1 + 8 (# blocks)
-	float block_cost = 33.0/8;
+    // float block_cost = 33.0/8;
+	float block_cost = 65.0/8;
 	size_t nbBlocks = nbEle/blockSize;
 	size_t nbConstantBlocks = 0;
 	size_t sum_actual_leadNumbers = 0;
@@ -589,17 +593,17 @@ float estimateCRbasedonErrorBound_double(float errorBound, double* data, int blo
 		size_t offset = i*blockSize;
 //		if(data[offset]!=0)
 //			printf("i=%zu\n", i);
-		float min = data[offset];
-		float max = data[offset];
+		double min = data[offset];
+		double max = data[offset];
 		for (j = 1; j < blockSize; j++) {
-			float v = data[offset + j];	
+			double v = data[offset + j];	
 			if (min > v)
 				min = v;
 			if (max < v)
 				max = v;
 		}
-		float valueRange = max - min;
-		float radius = valueRange / 2;
+		double valueRange = max - min;
+		double radius = valueRange / 2;
 		float medianValue = min + radius;
 
 		if (radius <= errorBound) {
@@ -623,26 +627,26 @@ float estimateCRbasedonErrorBound_double(float errorBound, double* data, int blo
 			//printf("%d\n",reqBytesLength);
 			sumReqNbBytes+=	reqBytesLength;
 			
-			register lfloat lfBuf_pre;
-			register lfloat lfBuf_cur;
-			lfBuf_pre.ivalue = 0;
+			register ldouble lfBuf_pre;
+			register ldouble lfBuf_cur;
+			lfBuf_pre.lvalue = 0;
 			register unsigned char leadingNum = 0;			
 			//int leadingNum_Array[128];
 			int s_actual_leadNumbers = 0;
 			for(j=0;j<blockSize;j++)
 			{
-                lfBuf_cur.value = data[offset+j] - medianValue;
+                lfBuf_cur.value = data[j] - medianValue;
 
-                lfBuf_cur.ivalue = lfBuf_cur.ivalue >> rightShiftBits;
+                lfBuf_cur.lvalue = lfBuf_cur.lvalue >> rightShiftBits;
 
-                lfBuf_pre.ivalue = lfBuf_cur.ivalue ^ lfBuf_pre.ivalue;
-				
+                lfBuf_pre.lvalue = lfBuf_cur.lvalue ^ lfBuf_pre.lvalue;
+			
 				leadingNum = 0;
-                if (lfBuf_pre.ivalue >> 8 == 0)
+                if (lfBuf_pre.lvalue >> 40 == 0)
                     leadingNum = 3;
-                else if (lfBuf_pre.ivalue >> 16 == 0)
+                else if (lfBuf_pre.lvalue >> 48 == 0)
                     leadingNum = 2;
-                else if (lfBuf_pre.ivalue >> 24 == 0)
+                else if (lfBuf_pre.lvalue >> 56 == 0)
                     leadingNum = 1;
                    
                // leadingNum_Array[j] = leadingNum;    
@@ -663,7 +667,7 @@ float estimateCRbasedonErrorBound_double(float errorBound, double* data, int blo
 	
 	float p_lambda = 1.0*nbConstantBlocks/nbBlocks_sampled;
 	
-	float estimatedCR = 4*blockSize/(metadata + block_cost+(1 + (0.25+avgReqNbBytes)*blockSize - avg_actual_lead)*(1 - p_lambda));
+	float estimatedCR = 8*blockSize/(metadata + block_cost+(1 + (0.25+avgReqNbBytes)*blockSize - avg_actual_lead)*(1 - p_lambda));
 	//printf("----> sum_actual_leadNumbers=%zu, nbBlocks_sampled=%zu, nbConstantBlocks = %zu, sumReqNbBytes = %zu, avgReqNbBytes=%f, avg_actual_lead=%f, p_lambda=%f\n", sum_actual_leadNumbers, nbBlocks_sampled, nbConstantBlocks, sumReqNbBytes, avgReqNbBytes, avg_actual_lead, p_lambda);
 	exit(0);
 	return estimatedCR;
@@ -672,12 +676,9 @@ float estimateCRbasedonErrorBound_double(float errorBound, double* data, int blo
 float estimateErrorBoundbasedonCR_buffered_double(float targetCompressionRatio, float tolerance, int samplingRate, float initErrorBound, int blockSize, size_t nbEle, 
 double* buffer, float* medianArray, float* radiusArray){
     int stride = 8;
-	// printf("initErrBound = %.10G\n", initErrorBound);
+	//printf("initErrBound = %.10G\n", initErrorBound);
 	int nbIterations = 10;
 	float errorBound = initErrorBound;
-
-    // printf("init ERRBOUND: %f\n", initErrorBound);
-
 	size_t sumReqNbBytes[20] = {0};
 	size_t sum_actual_leadNumbers[20] = {0};
 	float errorBounds[20];
@@ -688,7 +689,6 @@ double* buffer, float* medianArray, float* radiusArray){
 
 	size_t sumReqNbB = 0, sum_actual_leadNum = 0;
 	float CR = estimateCRbasedonErrorBound_buffered_double(errorBound, buffer, medianArray, radiusArray, samplingRate, blockSize, nbEle, &sumReqNbB, &sum_actual_leadNum);	
-
 	sumReqNbBytes[k] = sumReqNbB;
 	sum_actual_leadNumbers[k] = sum_actual_leadNum;
 	errorBounds[k] = errorBound;
@@ -711,8 +711,7 @@ double* buffer, float* medianArray, float* radiusArray){
 		right_error = errorBound;				
 		for(i=0;i<nbIterations;i++)
 		{
-			CR = estimateCRbasedonErrorBound_buffered_double(left_error, buffer, medianArray, radiusArray, samplingRate, blockSize, nbEle, &sumReqNbB, &sum_actual_leadNum);
-
+			CR = estimateCRbasedonErrorBound_buffered_double(left_error, buffer, medianArray, radiusArray, samplingRate, blockSize, nbEle, &sumReqNbB, &sum_actual_leadNum);	
 			sumReqNbBytes[k] = sumReqNbB;
 			sum_actual_leadNumbers[k] = sum_actual_leadNum;
 			errorBounds[k] = left_error;
@@ -739,17 +738,13 @@ double* buffer, float* medianArray, float* radiusArray){
 		right_error = errorBound*stride;				
 		for(i=0;i<nbIterations;i++)
 		{	
-			CR = estimateCRbasedonErrorBound_buffered_double(right_error, buffer, medianArray, radiusArray, samplingRate, blockSize, nbEle, &sumReqNbB, &sum_actual_leadNum);
-
-            // printf("B right search error: %f\n", right_error);
-            // printf("right search CR: %f\n", CR);
-
+			CR = estimateCRbasedonErrorBound_buffered_double(right_error, buffer, medianArray, radiusArray, samplingRate, blockSize, nbEle, &sumReqNbB, &sum_actual_leadNum);	
 			sumReqNbBytes[k] = sumReqNbB;
 			sum_actual_leadNumbers[k] = sum_actual_leadNum;
 			errorBounds[k] = right_error;
 			ratios[k] = CR;
 			k++;			
-			// printf("errorBound=%.10G, CR=%f\n", right_error, CR);			
+			//printf("errorBound=%.10G, CR=%f\n", right_error, CR);			
 			if(fabs(targetCompressionRatio-CR) < targetTolerance)// || fabs(CR-preCR)<targetTolerance/2) //convergence condition
 			{
 				foundFlag = 1;
@@ -760,13 +755,12 @@ double* buffer, float* medianArray, float* radiusArray){
 				break;
 			left_error = right_error;
 			right_error = right_error*stride;
-            // printf("A right search error: %f\n", right_error);
 		}
 		//preCR = CR;
 	}
 	
-	// printf("left_error = %.10G, right_error = %.10G\n", left_error, right_error);
-	// printf("foundFlag=%d, stage 1 iterations = %d, result_error = %.10G, k = %d\n", foundFlag, i, result_error, k);	
+	//printf("left_error = %.10G, right_error = %.10G\n", left_error, right_error);
+	//printf("foundFlag=%d, stage 1 iterations = %d, result_error = %.10G, k = %d\n", foundFlag, i, result_error, k);	
 	//binary search
 	if(foundFlag==0)
 	{
@@ -809,7 +803,7 @@ double* buffer, float* medianArray, float* radiusArray){
 			errorBounds[k] = errorBound;
 			ratios[k] = CR;
 			k++;			
-			// printf("errorBound=%.10G, CR=%f\n", errorBound, CR);			
+			//printf("errorBound=%.10G, CR=%f\n", errorBound, CR);			
 			//check if the CR meets the targetTolerance
 			if(fabs(CR-targetCompressionRatio) < targetTolerance)// || fabs(CR-preCR)<targetTolerance/2) //convergence condition
 			{
@@ -823,7 +817,7 @@ double* buffer, float* medianArray, float* radiusArray){
 				right_error = errorBound;
 			//preCR = CR;	
 		}
-	// printf("foundFlag=%d, stage 2 iterations = %d, result_error = %.10G, k=%d\n", foundFlag, i, result_error,k);						
+	//printf("foundFlag=%d, stage 2 iterations = %d, result_error = %.10G, k=%d\n", foundFlag, i, result_error,k);						
 	}
 	return result_error;
 }
@@ -918,7 +912,7 @@ unsigned char *
 SZ_fast_compress_args_unpredictable_blocked_fixed_rate_double(double *oriData, size_t *outSize, float compressionRatio, float tolerance, size_t nbEle,
                                                   int blockSize){
     *outSize = 0;
-    
+
     size_t maxPreservedBufferSize = sizeof(double) * nbEle/compressionRatio*(1+tolerance*2); //assume that the compressed data size would not exceed the original size
     unsigned char *outputBytes = (unsigned char *) malloc(maxPreservedBufferSize);
     //memset(outputBytes, 0, maxPreservedBufferSize);
@@ -926,7 +920,7 @@ SZ_fast_compress_args_unpredictable_blocked_fixed_rate_double(double *oriData, s
 	int samplingStride = 10;
 	float* radiusArray = NULL;
 	float* mediusArray = NULL;
-	float* buffer = NULL;
+	double* buffer = NULL;
 	float approximateValueRange = computeRadiusBuffer_double(oriData, nbEle, samplingStride, blockSize, &radiusArray, &mediusArray, &buffer);
 //	size_t stride = samplingStride*blockSize;
 //	size_t nbBlocks = nbEle/stride;
@@ -953,7 +947,7 @@ void SZ_fast_compress_args_unpredictable_blocked_fixed_rate_double2(double *oriD
 	int samplingStride = 10;
 	float* radiusArray = NULL;
 	float* mediusArray = NULL;
-	float* buffer = NULL;
+	double* buffer = NULL;
 	float approximateValueRange = computeRadiusBuffer_double(oriData, nbEle, samplingStride, blockSize, &radiusArray, &mediusArray, &buffer);
 //	size_t stride = samplingStride*blockSize;
 //	size_t nbBlocks = nbEle/stride;

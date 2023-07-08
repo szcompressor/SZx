@@ -32,6 +32,8 @@ void computeStateMedianRadius_double2(double *oriData, size_t nbEle, float absEr
                                      unsigned char *state, float *median, float *radius) ;
                                      
 double computeValueRange_double(double* oriData, size_t length, float* radius, float* medianValue);
+                                     
+// added
 
 float computeRadiusBuffer_double(double *oriData, size_t nbEle, int samplingRate, int blockSize, float** radiusArray, float** mediusArray, double** buffer);
 
@@ -53,6 +55,8 @@ void SZ_fast_compress_args_unpredictable_blocked_fixed_rate_double2(double *oriD
 
 void SZ_fast_compress_args_unpredictable_blocked_double2(double *oriData, size_t *outSize, unsigned char* outputBytes, float absErrBound, size_t nbEle,
                                                   int blockSize) ;   
+
+// added
 
 unsigned char *
 SZ_fast_compress_args_unpredictable_blocked_double(double *oriData, size_t *outSize, float absErrBound, size_t nbEle,
