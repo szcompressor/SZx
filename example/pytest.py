@@ -7,8 +7,8 @@ import sys
 HOME = str(Path.home())
 data = np.random.rand(10000).astype(np.float32)
 
-# init SZ (both SZ2 and SZ3 are supported)
-# Please change the path to the SZ dynamic library file in your system
+# init SZx
+# Please change the path to the SZx dynamic library file in your system
 lib_extention = {
     "darwin": "libSZx.dylib",
     "windows": "SZx.dll",
