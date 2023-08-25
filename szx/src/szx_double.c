@@ -677,16 +677,16 @@ unsigned char *
 SZ_fast_compress_args_unpredictable_blocked_randomaccess_double_openmp(double *oriData, size_t *outSize, float absErrBound,
                                                                size_t nbEle, int blockSize) {
 #ifdef _OPENMP
-    printf("use openmp\n");
+    // printf("use openmp\n");
 
 #ifdef __AVX512F__
-    printf("use avx512\n");
+    // printf("use avx512\n");
 #elif __AVX2__
-    printf("use avx2\n");
+    // printf("use avx2\n");
 #else
 #endif
-    printf("blockSize = %d\n",blockSize);
-    sz_cost_start();
+    // printf("blockSize = %d\n",blockSize);
+    // sz_cost_start();
     double *op = oriData;
 
     size_t i = 0;
