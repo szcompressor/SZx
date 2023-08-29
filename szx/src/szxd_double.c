@@ -514,7 +514,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_double(double** newData, size
 void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_double_openmp(double** newData, size_t nbEle, unsigned char* cmpBytes) {
 
 	*newData = (double *) malloc(sizeof(double) * nbEle);
-	sz_cost_start();
+	// sz_cost_start();
 	unsigned char *r = cmpBytes;
 	r += 4; //skip version information
 	int blockSize = bytesToLong_bigEndian(r);  //get block size
