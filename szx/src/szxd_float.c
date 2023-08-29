@@ -309,7 +309,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t
 void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(float** newData, size_t nbEle, unsigned char* cmpBytes) {
 
 	*newData = (float *) malloc(sizeof(float) * nbEle);
-	sz_cost_start();
+	// sz_cost_start();
 	unsigned char *r = cmpBytes;
 	r += 4; //skip version information
 	int blockSize = bytesToLong_bigEndian(r);  //get block size
@@ -340,17 +340,17 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
     float *op = *newData;
 
 	size_t nonConstantBlockID = 0, constantBlockID = 0;
-    sz_cost_end_msg("sequential-1 malloc");
+    // sz_cost_end_msg("sequential-1 malloc");
 
-    sz_cost_start();
+    // sz_cost_start();
     size_t i = 0;// k = 0; //k is used to keep track of constant block index
 //    for (i = 0; i < nbConstantBlocks; i++, k += 4) //get the median values for constant-value blocks
 //        constantMedianArray[i] = bytesToFloat(p + k);
 
     convertByteArray2IntArray_fast_1b_args(actualNBBlocks, R, stateNBBytes, stateArray); //get the stateArray
-    sz_cost_end_msg("sequential-2 byte to int");
+    // sz_cost_end_msg("sequential-2 byte to int");
 
-    sz_cost_start();
+    // sz_cost_start();
     for (i = 0; i < actualNBBlocks; i++) {
 		if (stateArray[i]) {
 			qarray[i] = q;
@@ -361,8 +361,8 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 		}
 	}
 
-    sz_cost_end_msg("sequential-3 sum");
-	sz_cost_start();
+    // sz_cost_end_msg("sequential-3 sum");
+	// sz_cost_start();
 #pragma omp parallel for schedule(static)
 	for (i = 0; i < nbBlocks; i++) {
 		if (stateArray[i]) {//non-constant block
@@ -372,9 +372,9 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 				op[i * blockSize + j] = parray[i];
 		}
 	}
-	sz_cost_end_msg("parallel-1");
+	// sz_cost_end_msg("parallel-1");
 
-	sz_cost_start();
+	// sz_cost_start();
 	if (remainCount) {
         i = nbBlocks;
         if (stateArray[i]) { //non-constant block
@@ -389,7 +389,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 	free(qarray);
 	free(stateArray);
 //	free(constantMedianArray);
-	sz_cost_end_msg("sequence-3 free");
+	// sz_cost_end_msg("sequence-3 free");
 }
 
 
