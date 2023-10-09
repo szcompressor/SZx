@@ -6,6 +6,9 @@
 
 namespace cg = cooperative_groups;
 
+namespace szx
+{
+
 __device__ int _deshfl_scan(int lznum, int *sums)
 {
     // Below is the basic structure of using a shfl instruction
@@ -291,4 +294,6 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
 
         fbytes[b*bs+tid] = value[tid] + medianValue;
     }
+}
+
 }

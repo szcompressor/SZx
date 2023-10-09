@@ -56,8 +56,8 @@ int main(int argc, char * argv[])
 
     int status = 0;
     size_t nbEle;
-    float *data = readFloatData(oriFilePath, &nbEle, &status);
-    if(status != SZ_SCES)
+    float *data = SZx_readFloatData(oriFilePath, &nbEle, &status);
+    if(status != SZx_SCES)
     {
 		printf("Error: data file %s cannot be read!\n", oriFilePath);
 		exit(0);
@@ -67,13 +67,13 @@ int main(int argc, char * argv[])
 
     size_t outSize;
     cost_start();
-    //unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float(data, &outSize, errBound, nbEle, blockSize);
-    unsigned char* bytes = SZ_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(data, &outSize, errBound, nbEle, blockSize);
+    //unsigned char* bytes = SZx_fast_compress_args_unpredictable_blocked_randomaccess_float(data, &outSize, errBound, nbEle, blockSize);
+    unsigned char* bytes = SZx_fast_compress_args_unpredictable_blocked_randomaccess_openmp(data, SZx_FLOAT, &outSize, errBound, nbEle, blockSize);
     cost_end();
     printf("\ntimecost=%f, total fastmode2\n",totalCost);
     printf("compression size = %zu, CR = %f\n", outSize, 1.0f*nbEle*sizeof(float)/outSize);
-    writeByteData(bytes, outSize, outputFilePath, &status);
-    if(status != SZ_SCES)
+    SZx_writeByteData(bytes, outSize, outputFilePath, &status);
+    if(status != SZx_SCES)
     {
         printf("Error: data file %s cannot be written!\n", outputFilePath);
         exit(0);

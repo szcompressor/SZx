@@ -15,9 +15,6 @@
 #include <inttypes.h>
 #include "szx.h"
 #include "szx_rw.h"
-#ifdef _OPENMP
-#include "omp.h"
-#endif
 
 struct timeval startTime;
 struct timeval endTime;  /* Start and end times */
@@ -47,48 +44,46 @@ int main(int argc, char * argv[])
     char zipFilePath[640], outputFilePath[645];
     if(argc < 2)
     {
-		printf("Usage: testfloat_decompress_fastmode3 [srcFilePath] [nbEle]\n");
-		printf("Example: testfloat_decompress_fastmode3 testfloat_8_8_128.dat.sz 8192\n");
+		printf("Usage: testfloat_decompress_fastmode1 [srcFilePath] [nbEle]\n");
+		printf("Example: testfloat_decompress_fastmode1 testfloat_8_8_128.dat.sz 8192\n");
 		exit(0);
-	}
-
+	}	
+   
     sprintf(zipFilePath, "%s", argv[1]);
 //    nbEle = atoi(argv[2]);
     nbEle = strtoimax(argv[2], NULL, 10);
 
     sprintf(outputFilePath, "%s.out", zipFilePath);
-
-    size_t byteLength;
+    
+    size_t byteLength; 
     int status;
-    unsigned char *bytes = readByteData(zipFilePath, &byteLength, &status);
-    if(status!=SZ_SCES)
+    unsigned char *bytes = SZx_readByteData(zipFilePath, &byteLength, &status);
+    if(status!=SZx_SCES)
     {
         printf("Error: %s cannot be read!\n", zipFilePath);
         exit(0);
     }
-
-
+  
+ 
     cost_start();
-    float *data = NULL;
-    //SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(&data, nbEle, bytes);
-    SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(&data, nbEle, bytes);
+    float *data = (float*)SZx_fast_decompress(SZx_NO_BLOCK_FAST_CMPR, SZx_FLOAT, bytes, byteLength, 0, 0, 0, 0, nbEle);
     cost_end();
-
-    free(bytes);
-    printf("timecost=%f\n",totalCost);
-    writeFloatData_inBytes(data, nbEle, outputFilePath, &status);
-    if(status!=SZ_SCES)
+    
+    free(bytes); 
+    printf("timecost=%f\n",totalCost); 
+    SZx_writeFloatData_inBytes(data, nbEle, outputFilePath, &status);
+    if(status!=SZx_SCES)
     {
 	printf("Error: %s cannot be written!\n", outputFilePath);
 	exit(0);
     }
     printf("done\n");
-
+    
     char oriFilePath[645];
     strcpy(oriFilePath, zipFilePath);
     oriFilePath[strlen(zipFilePath)-4] = '\0';
-    float *ori_data = readFloatData(oriFilePath, &totalNbEle, &status);
-    if(status!=SZ_SCES)
+    float *ori_data = SZx_readFloatData(oriFilePath, &totalNbEle, &status);
+    if(status!=SZx_SCES)
     {
         printf("Error: %s cannot be read!\n", oriFilePath);
         exit(0);
@@ -110,13 +105,13 @@ int main(int argc, char * argv[])
 
     double sum3 = 0, sum4 = 0;
     double sum = 0, prodSum = 0, relerr = 0;
-
-    double maxpw_relerr = 0;
+   
+    double maxpw_relerr = 0; 
     for (i = 0; i < nbEle; i++)
     {
         if (Max < ori_data[i]) Max = ori_data[i];
         if (Min > ori_data[i]) Min = ori_data[i];
-
+        
         float err = fabs(data[i] - ori_data[i]);
 	if(ori_data[i]!=0)
 	{
@@ -128,7 +123,7 @@ int main(int argc, char * argv[])
 			maxpw_relerr = relerr;
         }
 
-	/*if(err > 1600000)
+	/*if(err > 0.0001)
 	{
 		printf("i=%zu, ori=%f, dec=%f, diff=%f\n", i, ori_data[i], data[i], err);
 		exit(0);
@@ -138,19 +133,19 @@ int main(int argc, char * argv[])
         prodSum += (ori_data[i]-mean1)*(data[i]-mean2);
         sum3 += (ori_data[i] - mean1)*(ori_data[i]-mean1);
         sum4 += (data[i] - mean2)*(data[i]-mean2);
-	sum += err*err;
+	sum += err*err;	
     }
     double std1 = sqrt(sum3/nbEle);
     double std2 = sqrt(sum4/nbEle);
     double ee = prodSum/nbEle;
     double acEff = ee/std1/std2;
-
+ 
     double mse = sum/nbEle;
     double range = Max - Min;
     double psnr = 20*log10(range)-10*log10(mse);
     double nrmse = sqrt(mse)/range;
-
-    double compressionRatio = 1.0*nbEle*sizeof(float)/byteLength;
+     
+    double compressionRatio = 1.0*nbEle*sizeof(float)/byteLength;	
 
     printf ("Min=%.20G, Max=%.20G, range=%.20G\n", Min, Max, range);
     printf ("Max absolute error = %.10f\n", diffMax);

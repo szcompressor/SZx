@@ -4,6 +4,8 @@
 #include "szx_TypeManager.h"
 #include "timingGPU.h"
 
+using namespace szx;
+
 TimingGPU timer_GPU;
 void bin(unsigned n)
 {

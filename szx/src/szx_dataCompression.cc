@@ -14,6 +14,9 @@
 #include "szx.h"
 #include "szx_dataCompression.h"
 #include "szx_BytesToolkit.h"
+#include <szx_defines.h>
+
+namespace szx{	
 
 int computeByteSizePerIntValue(long valueRangeSize)
 {
@@ -30,67 +33,88 @@ int computeByteSizePerIntValue(long valueRangeSize)
 long computeRangeSize_int(void* oriData, int dataType, size_t size, int64_t* valueRangeSize)
 {
 	size_t i = 0;
-	long max = 0, min = 0;
 
-	if(dataType==SZ_UINT8)
+	if(dataType==SZx_UINT8)
 	{
+		unsigned char max = 0, min = 0;
 		unsigned char* data = (unsigned char*)oriData;
 		unsigned char data_; 
 		min = data[0], max = min;
 		computeMinMax(data);
+		*valueRangeSize = max - min;
+		return (long)min;
 	}
-	else if(dataType == SZ_INT8)
+	else if(dataType == SZx_INT8)
 	{
+		char max = 0, min = 0;
 		char* data = (char*)oriData;
 		char data_;
 		min = data[0], max = min;
 		computeMinMax(data);
+		*valueRangeSize = max - min;
+		return (long)min;
 	}
-	else if(dataType == SZ_UINT16)
+	else if(dataType == SZx_UINT16)
 	{
+		unsigned short max = 0, min = 0;
 		unsigned short* data = (unsigned short*)oriData;
 		unsigned short data_; 
 		min = data[0], max = min;
 		computeMinMax(data);
+		*valueRangeSize = max - min;
+		return (long)min;
 	}
-	else if(dataType == SZ_INT16)
+	else if(dataType == SZx_INT16)
 	{ 
+		short max = 0, min = 0;
 		short* data = (short*)oriData;
 		short data_; 
 		min = data[0], max = min;
 		computeMinMax(data);
+		*valueRangeSize = max - min;
+		return (long)min;
 	}
-	else if(dataType == SZ_UINT32)
+	else if(dataType == SZx_UINT32)
 	{
+		unsigned int max = 0, min = 0;
 		unsigned int* data = (unsigned int*)oriData;
 		unsigned int data_; 
 		min = data[0], max = min;
 		computeMinMax(data);
+		*valueRangeSize = max - min;
+		return (long)min;
 	}
-	else if(dataType == SZ_INT32)
+	else if(dataType == SZx_INT32)
 	{
+		int max = 0, min = 0;
 		int* data = (int*)oriData;
 		int data_; 
 		min = data[0], max = min;
 		computeMinMax(data);
+		*valueRangeSize = max - min;
+		return (long)min;
 	}
-	else if(dataType == SZ_UINT64)
+	else if(dataType == SZx_UINT64)
 	{
+		unsigned long max = 0, min = 0;
 		unsigned long* data = (unsigned long*)oriData;
 		unsigned long data_; 
 		min = data[0], max = min;
 		computeMinMax(data);
+		*valueRangeSize = max - min;
+		return (long)min;	
 	}
-	else if(dataType == SZ_INT64)
+	else// if(dataType == SZx_INT64)
 	{
+		long max = 0, min = 0;
 		long* data = (long *)oriData;
 		long data_; 
 		min = data[0], max = min;
 		computeMinMax(data);
+		*valueRangeSize = max - min;
+		return (long)min;	
 	}
-
-	*valueRangeSize = max - min;
-	return min;	
+	
 }
 
 float computeRangeSize_float(float* oriData, size_t size, float* valueRangeSize, float* medianValue)
@@ -165,7 +189,7 @@ float max_f(float a, float b)
 
 double getRealPrecision_double(double valueRangeSize, int errBoundMode, double absErrBound, double relBoundRatio, int *status)
 {
-	int state = SZ_SCES;
+	int state = SZx_SCES;
 	double precision = 0;
 	if(errBoundMode==ABS||errBoundMode==ABS_OR_PW_REL||errBoundMode==ABS_AND_PW_REL)
 		precision = absErrBound; 
@@ -180,7 +204,7 @@ double getRealPrecision_double(double valueRangeSize, int errBoundMode, double a
 	else
 	{
 		printf("Error: error-bound-mode is incorrect!\n");
-		state = SZ_BERR;
+		state = SZx_BERR;
 	}
 	*status = state;
 	return precision;
@@ -188,7 +212,7 @@ double getRealPrecision_double(double valueRangeSize, int errBoundMode, double a
 
 double getRealPrecision_float(float valueRangeSize, int errBoundMode, double absErrBound, double relBoundRatio, int *status)
 {
-	int state = SZ_SCES;
+	int state = SZx_SCES;
 	double precision = 0;
 	if(errBoundMode==ABS||errBoundMode==ABS_OR_PW_REL||errBoundMode==ABS_AND_PW_REL)
 		precision = absErrBound; 
@@ -203,7 +227,7 @@ double getRealPrecision_float(float valueRangeSize, int errBoundMode, double abs
 	else
 	{
 		printf("Error: error-bound-mode is incorrect!\n");
-		state = SZ_BERR;
+		state = SZx_BERR;
 	}
 	*status = state;
 	return precision;
@@ -211,7 +235,7 @@ double getRealPrecision_float(float valueRangeSize, int errBoundMode, double abs
 
 double getRealPrecision_int(long valueRangeSize, int errBoundMode, double absErrBound, double relBoundRatio, int *status)
 {
-	int state = SZ_SCES;
+	int state = SZx_SCES;
 	double precision = 0;
 	if(errBoundMode==ABS||errBoundMode==ABS_OR_PW_REL||errBoundMode==ABS_AND_PW_REL)
 		precision = absErrBound; 
@@ -226,13 +250,13 @@ double getRealPrecision_int(long valueRangeSize, int errBoundMode, double absErr
 	else
 	{
 		printf("Error: error-bound-mode is incorrect!\n");
-		state = SZ_BERR;
+		state = SZx_BERR;
 	}
 	*status = state;
 	return precision;
 }
 
-inline void symTransform_8bytes(unsigned char data[8])
+void symTransform_8bytes(unsigned char data[8])
 {
 	unsigned char tmp = data[0];
 	data[0] = data[7];
@@ -251,14 +275,14 @@ inline void symTransform_8bytes(unsigned char data[8])
 	data[4] = tmp;
 }
 
-inline void symTransform_2bytes(unsigned char data[2])
+void symTransform_2bytes(unsigned char data[2])
 {
 	unsigned char tmp = data[0];
 	data[0] = data[1];
 	data[1] = tmp;
 }
 
-inline void symTransform_4bytes(unsigned char data[4])
+void symTransform_4bytes(unsigned char data[4])
 {
 	unsigned char tmp = data[0];
 	data[0] = data[3];
@@ -269,13 +293,13 @@ inline void symTransform_4bytes(unsigned char data[4])
 	data[2] = tmp;
 }
 
-inline void compressInt8Value(int8_t tgtValue, int8_t minValue, int byteSize, unsigned char* bytes)
+void compressInt8Value(int8_t tgtValue, int8_t minValue, int byteSize, unsigned char* bytes)
 {
 	uint8_t data = tgtValue - minValue;
 	memcpy(bytes, &data, byteSize); //byteSize==1
 }
 
-inline void compressInt16Value(int16_t tgtValue, int16_t minValue, int byteSize, unsigned char* bytes)
+void compressInt16Value(int16_t tgtValue, int16_t minValue, int byteSize, unsigned char* bytes)
 {
 	uint16_t data = tgtValue - minValue;
 	unsigned char tmpBytes[2];
@@ -283,7 +307,7 @@ inline void compressInt16Value(int16_t tgtValue, int16_t minValue, int byteSize,
 	memcpy(bytes, tmpBytes + 2 - byteSize, byteSize);
 }
 
-inline void compressInt32Value(int32_t tgtValue, int32_t minValue, int byteSize, unsigned char* bytes)
+void compressInt32Value(int32_t tgtValue, int32_t minValue, int byteSize, unsigned char* bytes)
 {
 	uint32_t data = tgtValue - minValue;
 	unsigned char tmpBytes[4];
@@ -291,7 +315,7 @@ inline void compressInt32Value(int32_t tgtValue, int32_t minValue, int byteSize,
 	memcpy(bytes, tmpBytes + 4 - byteSize, byteSize);
 }
 
-inline void compressInt64Value(int64_t tgtValue, int64_t minValue, int byteSize, unsigned char* bytes)
+void compressInt64Value(int64_t tgtValue, int64_t minValue, int byteSize, unsigned char* bytes)
 {
 	uint64_t data = tgtValue - minValue;
 	unsigned char tmpBytes[8];
@@ -299,13 +323,13 @@ inline void compressInt64Value(int64_t tgtValue, int64_t minValue, int byteSize,
 	memcpy(bytes, tmpBytes + 8 - byteSize, byteSize);
 }
 
-inline void compressUInt8Value(uint8_t tgtValue, uint8_t minValue, int byteSize, unsigned char* bytes)
+void compressUInt8Value(uint8_t tgtValue, uint8_t minValue, int byteSize, unsigned char* bytes)
 {
 	uint8_t data = tgtValue - minValue;
 	memcpy(bytes, &data, byteSize); //byteSize==1
 }
 
-inline void compressUInt16Value(uint16_t tgtValue, uint16_t minValue, int byteSize, unsigned char* bytes)
+ void compressUInt16Value(uint16_t tgtValue, uint16_t minValue, int byteSize, unsigned char* bytes)
 {
 	uint16_t data = tgtValue - minValue;
 	unsigned char tmpBytes[2];
@@ -313,7 +337,7 @@ inline void compressUInt16Value(uint16_t tgtValue, uint16_t minValue, int byteSi
 	memcpy(bytes, tmpBytes + 2 - byteSize, byteSize);
 }
 
-inline void compressUInt32Value(uint32_t tgtValue, uint32_t minValue, int byteSize, unsigned char* bytes)
+ void compressUInt32Value(uint32_t tgtValue, uint32_t minValue, int byteSize, unsigned char* bytes)
 {
 	uint32_t data = tgtValue - minValue;
 	unsigned char tmpBytes[4];
@@ -321,7 +345,7 @@ inline void compressUInt32Value(uint32_t tgtValue, uint32_t minValue, int byteSi
 	memcpy(bytes, tmpBytes + 4 - byteSize, byteSize);
 }
 
-inline void compressUInt64Value(uint64_t tgtValue, uint64_t minValue, int byteSize, unsigned char* bytes)
+ void compressUInt64Value(uint64_t tgtValue, uint64_t minValue, int byteSize, unsigned char* bytes)
 {
 	uint64_t data = tgtValue - minValue;
 	unsigned char tmpBytes[8];
@@ -342,7 +366,7 @@ int compIdenticalLeadingBytesCount_double(unsigned char* preBytes, unsigned char
 }
 
 
-inline int compIdenticalLeadingBytesCount_float(unsigned char* preBytes, unsigned char* curBytes)
+ int compIdenticalLeadingBytesCount_float(unsigned char* preBytes, unsigned char* curBytes)
 {
 	int i, n = 0;
 	for(i=0;i<4;i++)
@@ -352,4 +376,6 @@ inline int compIdenticalLeadingBytesCount_float(unsigned char* preBytes, unsigne
 			break;
 	if(n>3) n = 3;
 	return n;
+}
+
 }

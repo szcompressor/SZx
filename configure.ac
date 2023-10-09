@@ -2,13 +2,15 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT(SZx, 1.0, sdi1@anl.gov)
+AC_INIT(SZx, 1.1, sdi1@anl.gov)
 AM_INIT_AUTOMAKE([foreign -Wall -Werror subdir-objects])
-AC_CONFIG_SRCDIR([szx/src/szx.c])
+AC_CONFIG_SRCDIR([szx/src/szx.cc])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 : ${CFLAGS=-O3 -std=c99 -Wall}
+: ${CPPFLAGS=-O3 -Wall}
+AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_FC
 AC_PROG_RANLIB

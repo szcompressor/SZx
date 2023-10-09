@@ -10,20 +10,16 @@
 #ifndef _SZXD_Double_H
 #define _SZXD_Double_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace szx{	
 
-int SZ_fast_decompress_args_unpredictable_one_block_double(double* newData, size_t blockSize, unsigned char* cmpBytes);
-void SZ_fast_decompress_args_unpredictable_blocked_double(double** newData, size_t nbEle, unsigned char* cmpBytes);
-void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_double(double** newData, size_t nbEle, unsigned char* cmpBytes);
-void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_double_openmp(double** newData, size_t nbEle, unsigned char* cmpBytes);
+int SZx_fast_decompress_args_unpredictable_one_block_double(double* newData, size_t blockSize, unsigned char* cmpBytes);
+void SZx_fast_decompress_args_unpredictable_blocked_double(double** newData, size_t nbEle, unsigned char* cmpBytes);
+double* SZx_fast_decompress_args_unpredictable_blocked_randomaccess_double(size_t nbEle, unsigned char* cmpBytes);
+double* SZx_fast_decompress_args_unpredictable_blocked_randomaccess_double_openmp(size_t nbEle, unsigned char* cmpBytes);
 
-void SZ_fast_decompress_args_unpredictable_double(double** newData, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, unsigned char* cmpBytes, 
+void SZx_fast_decompress_args_unpredictable_double(double** newData, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, unsigned char* cmpBytes, 
 size_t cmpSize);
 
-#ifdef __cplusplus
 }
-#endif
 
 #endif /* ----- #ifndef _SZXD_Double_H  ----- */

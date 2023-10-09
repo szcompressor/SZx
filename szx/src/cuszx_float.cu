@@ -6,6 +6,8 @@
 
 namespace cg = cooperative_groups;
 
+namespace szx{
+
 __device__
 void gridReduction_cg(double *results) 
 {
@@ -293,5 +295,7 @@ __global__ void compress_float(float *oriData, unsigned char *meta, short *offse
         }
 
     }
+
+}
 
 }

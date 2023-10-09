@@ -1,4 +1,4 @@
-file(GLOB source_files "src/*.c")
+file(GLOB source_files "src/*.cc")
 if (CMAKE_CUDA_COMPILER)
     file(GLOB cuda_source_files "src/*.cu")
     list(APPEND source_files ${cuda_source_files})

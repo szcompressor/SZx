@@ -4,9 +4,10 @@ set(SZX_TARGETS
 		testfloat_compress_fastmode3
 		testfloat_decompress_fastmode1
 		testfloat_decompress_fastmode3
+		estimateCR
 		)
 foreach (SZX_TARGET IN LISTS SZX_TARGETS)
-	add_executable (${SZX_TARGET} ${SZX_TARGET}.c)
+	add_executable (${SZX_TARGET} ${SZX_TARGET}.cc)
 	target_link_libraries (${SZX_TARGET} SZx)
 endforeach ()
 

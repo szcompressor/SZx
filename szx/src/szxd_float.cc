@@ -7,6 +7,8 @@
  *      See COPYRIGHT in top-level directory.
  */
 
+#include <szx_globals.h>
+#include <szx_defines.h>
 #include <stdlib.h> 
 #include <stdio.h>
 #include <string.h>
@@ -18,16 +20,18 @@
 #include "omp.h"
 #endif
 
-void SZ_fast_decompress_args_with_prediction_float(float** newData, float* pred, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, unsigned char* cmpBytes, size_t cmpSize)
+namespace szx{	
+
+void SZx_fast_decompress_args_with_prediction_float(float** newData, float* pred, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, unsigned char* cmpBytes, size_t cmpSize)
 {
-	size_t nbEle = computeDataLength(r5, r4, r3, r2, r1);
-	SZ_fast_decompress_args_unpredictable_float(newData, r5, r4, r3, r2, r1, cmpBytes, cmpSize);
+	size_t nbEle = SZx_computeDataLength(r5, r4, r3, r2, r1);
+	SZx_fast_decompress_args_unpredictable_float(newData, r5, r4, r3, r2, r1, cmpBytes, cmpSize);
 	size_t i = 0;
 	for(i=0;i<nbEle;i++)
 		(*newData)[i] += pred[i];
 }
 
-int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t blockSize, unsigned char* cmpBytes)
+int SZx_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t blockSize, unsigned char* cmpBytes)
 {
 	int cmpSize = 0;
 	size_t nbEle = blockSize;
@@ -240,13 +244,13 @@ int SZ_fast_decompress_args_unpredictable_one_block_float(float* newData, size_t
 }
 
 
-void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes)
+void SZx_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t nbEle, unsigned char* cmpBytes)
 {
 	*newData = (float*)malloc(sizeof(float)*nbEle);
 
 	unsigned char* r = cmpBytes;
 	r += 4;
-	int blockSize = r[0];  //get block size
+	size_t blockSize = r[0];  //get block size
 	r++;
 	size_t nbConstantBlocks = bytesToLong_bigEndian(r); //get number of constant blocks
 	r += sizeof(size_t);
@@ -274,7 +278,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t
 		unsigned char state = stateArray[i];
 		if(state) //non-constant block
 		{
-			int cmpSize = SZ_fast_decompress_args_unpredictable_one_block_float(op, blockSize, q);
+			int cmpSize = SZx_fast_decompress_args_unpredictable_one_block_float(op, blockSize, q);
 			q += cmpSize;
 		}
 		else //constant block
@@ -292,7 +296,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t
 		unsigned char state = stateArray[i];
 		if(state) //non-constant block
 		{
-			SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q);
+			SZx_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q);
 		}
 		else //constant block
 		{
@@ -306,13 +310,13 @@ void SZ_fast_decompress_args_unpredictable_blocked_float(float** newData, size_t
 	free(constantMedianArray);
 }
 
-void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(float** newData, size_t nbEle, unsigned char* cmpBytes) {
+float* SZx_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(size_t nbEle, unsigned char* cmpBytes) {
 
-	*newData = (float *) malloc(sizeof(float) * nbEle);
+	float *newData = (float *) malloc(sizeof(float) * nbEle);
 	// sz_cost_start();
 	unsigned char *r = cmpBytes;
 	r += 4; //skip version information
-	int blockSize = bytesToLong_bigEndian(r);  //get block size
+	size_t blockSize = bytesToLong_bigEndian(r);  //get block size
     r += sizeof(size_t);
 	size_t nbConstantBlocks = bytesToLong_bigEndian(r); //get number of constant blocks
 	r += sizeof(size_t);
@@ -337,7 +341,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
     unsigned char *p = R + stateNBBytes; //p is the starting address of constant median values.
     float *constantMedianArray = (float *) p;
     unsigned char *q = p + sizeof(float) * nbConstantBlocks; //q is the starting address of the non-constant data blocks
-    float *op = *newData;
+    float *op = newData;
 
 	size_t nonConstantBlockID = 0, constantBlockID = 0;
     // sz_cost_end_msg("sequential-1 malloc");
@@ -366,9 +370,9 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 #pragma omp parallel for schedule(static)
 	for (i = 0; i < nbBlocks; i++) {
 		if (stateArray[i]) {//non-constant block
-			SZ_fast_decompress_args_unpredictable_one_block_float(op + i * blockSize, blockSize, qarray[i]);
+			SZx_fast_decompress_args_unpredictable_one_block_float(op + i * blockSize, blockSize, qarray[i]);
 		} else {//constant block
-			for (int j = 0; j < blockSize; j++)
+			for (size_t j = 0; j < blockSize; j++)
 				op[i * blockSize + j] = parray[i];
 		}
 	}
@@ -378,9 +382,9 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 	if (remainCount) {
         i = nbBlocks;
         if (stateArray[i]) { //non-constant block
-			SZ_fast_decompress_args_unpredictable_one_block_float(op + i * blockSize, remainCount, qarray[i]);
+			SZx_fast_decompress_args_unpredictable_one_block_float(op + i * blockSize, remainCount, qarray[i]);
 		} else {//constant block
-			for (int j = 0; j < remainCount; j++)
+			for (size_t j = 0; j < remainCount; j++)
 				op[i * blockSize + j] = parray[i];
 		}
 	}
@@ -390,15 +394,17 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float_openmp(flo
 	free(stateArray);
 //	free(constantMedianArray);
 	// sz_cost_end_msg("sequence-3 free");
+	
+	return newData;
 }
 
 
-void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** newData, size_t nbEle, unsigned char* cmpBytes){
-	*newData = (float*)malloc(sizeof(float)*nbEle);
+float* SZx_fast_decompress_args_unpredictable_blocked_randomaccess_float(size_t nbEle, unsigned char* cmpBytes){
+	float *newData = (float*)malloc(sizeof(float)*nbEle);
 	
 	unsigned char* r = cmpBytes;
 	r+=4; //skip version information
-    int blockSize = bytesToLong_bigEndian(r);  //get block size
+    size_t blockSize = bytesToLong_bigEndian(r);  //get block size
     r += sizeof(size_t);
 	size_t nbConstantBlocks = bytesToLong_bigEndian(r); //get number of constant blocks
 	r += sizeof(size_t);
@@ -426,7 +432,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
 		constantMedianArray[i] = bytesToFloat(p+j);
 
 	unsigned char* q = p + sizeof(float)*nbConstantBlocks; //q is the starting address of the non-constant data blocks
-	float* op = *newData;
+	float* op = newData;
 
 	size_t nonConstantBlockID=0;
 	for(i=0;i<nbBlocks;i++, op += blockSize)
@@ -434,7 +440,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
 		unsigned char state = stateArray[i];
 		if(state) //non-constant block
 		{
-            SZ_fast_decompress_args_unpredictable_one_block_float(op, blockSize, q);
+            SZx_fast_decompress_args_unpredictable_one_block_float(op, blockSize, q);
             q += O[nonConstantBlockID];
             nonConstantBlockID++;
 		}
@@ -453,7 +459,7 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
 		unsigned char state = stateArray[i];
 		if(state) //non-constant block
 		{
-			SZ_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q);	
+			SZx_fast_decompress_args_unpredictable_one_block_float(op, remainCount, q);	
 		}
 		else //constant block
 		{
@@ -465,12 +471,14 @@ void SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(float** ne
 	
 	free(stateArray);
 	free(constantMedianArray);
+	
+	return newData;
 }
 
-void SZ_fast_decompress_args_unpredictable_float(float** newData, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, unsigned char* cmpBytes,
+void SZx_fast_decompress_args_unpredictable_float(float** newData, size_t r5, size_t r4, size_t r3, size_t r2, size_t r1, unsigned char* cmpBytes,
 size_t cmpSize)
 {
-	size_t nbEle = computeDataLength(r5, r4, r3, r2, r1);
+	size_t nbEle = SZx_computeDataLength(r5, r4, r3, r2, r1);
 	*newData = (float*)malloc(sizeof(float)*nbEle);	
 	
 	register float medianValue;
@@ -650,5 +658,7 @@ size_t cmpSize)
 	//sz_cost_end();
 	//printf("totalCost = %f\n", sz_totalCost);
 	//free(leadNum);
-	
+
+}
+
 }

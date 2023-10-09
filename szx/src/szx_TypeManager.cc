@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include "szx.h"
 
+namespace szx{	
+
 size_t convertIntArray2ByteArray_fast_1b_args(unsigned char* intArray, size_t intArrayLength, unsigned char *result)
 {
 	size_t byteLength = 0;
@@ -193,10 +195,11 @@ void convertByteArray2IntArray_fast_1b(size_t intArrayLength, unsigned char* byt
 }
 
 
-inline size_t convertIntArray2ByteArray_fast_2b_args(unsigned char* timeStepType, size_t timeStepTypeLength, unsigned char *result)
+size_t convertIntArray2ByteArray_fast_2b_args(unsigned char* timeStepType, size_t timeStepTypeLength, unsigned char *result)
 {
 	register unsigned char tmp = 0;
-	size_t i, j = 0, byteLength = 0;
+	size_t i, byteLength = 0;
+	int j = 0;
 	if(timeStepTypeLength%4==0)
 		byteLength = timeStepTypeLength*2/8;
 	else
@@ -373,9 +376,10 @@ void convertByteArray2IntArray_fast_2b(size_t stepLength, unsigned char* byteArr
 }
 
 
-inline int getLeftMovingSteps(size_t k, unsigned char resiBitLength)
+int getLeftMovingSteps(size_t k, unsigned char resiBitLength)
 {
 	return 8 - k%8 - resiBitLength;
 }
 
+}
 

@@ -10,13 +10,11 @@
 #ifndef _SZX_ByteToolkit_H
 #define _SZX_ByteToolkit_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+namespace szx{	
 
 void sz_writeBits_Fast_int8(unsigned char* buffer,uint64_t *bitPosPtr, int numBits, unsigned char data);
 void sz_writeBits_Fast_int32(unsigned char* buffer,uint64_t *bitPosPtr, int numBits, int32_t data);
@@ -67,9 +65,7 @@ void convertULongArrayToBytes(uint64_t* states, size_t stateLength, unsigned cha
 size_t bytesToSize(unsigned char* bytes);
 void sizeToBytes(unsigned char* outBytes, size_t size);
 
-#ifdef __cplusplus
 }
-#endif
 
 #endif /* ----- #ifndef _SZX_ByteToolkit_H  ----- */
 

@@ -10,13 +10,11 @@
 #ifndef _SZX_TypeManager_H
 #define _SZX_TypeManager_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdio.h>
 #include <stdint.h>
 
+namespace szx{	
+	
 size_t convertIntArray2ByteArray_fast_1b_args(unsigned char* intArray, size_t intArrayLength, unsigned char *result);
 size_t convertIntArray2ByteArray_fast_1b(unsigned char* intArray, size_t intArrayLength, unsigned char **result);
 size_t convertIntArray2ByteArray_fast_1b_to_result(unsigned char* intArray, size_t intArrayLength, unsigned char *result);
@@ -27,9 +25,7 @@ size_t convertIntArray2ByteArray_fast_2b(unsigned char* timeStepType, size_t tim
 void convertByteArray2IntArray_fast_2b(size_t stepLength, unsigned char* byteArray, size_t byteArrayLength, unsigned char **intArray);
 int getLeftMovingSteps(size_t k, unsigned char resiBitLength);
 
-#ifdef __cplusplus
 }
-#endif
 
 #endif /* ----- #ifndef _SZX_TypeManager_H  ----- */
 

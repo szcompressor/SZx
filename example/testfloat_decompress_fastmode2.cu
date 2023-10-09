@@ -23,13 +23,13 @@ struct timeval costStart; /*only used for recording the cost*/
 double totalCost = 0;
 
 
-void cost_start()
+void szx_cost_start()
 {
 	totalCost = 0;
         gettimeofday(&costStart, NULL);
 }
 
-void cost_end()
+void szx_cost_end()
 {
         double elapsed;
         struct timeval costEnd;
@@ -60,8 +60,8 @@ int main(int argc, char * argv[])
 
     size_t byteLength;
     int status;
-    unsigned char *bytes = readByteData(zipFilePath, &byteLength, &status);
-    if(status!=SZ_SCES)
+    unsigned char *bytes = SZx_readByteData(zipFilePath, &byteLength, &status);
+    if(status!=SZx_SCES)
     {
         printf("Error: %s cannot be read!\n", zipFilePath);
         exit(0);
@@ -73,16 +73,16 @@ int main(int argc, char * argv[])
     {
         cuSZx_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
     }else{
-        cost_start();
-        SZ_fast_decompress_args_unpredictable_blocked_float(&data, nbEle, bytes);
+        szx_cost_start();
+        SZx_fast_decompress_args_unpredictable_blocked(&data, SZx_FLOAT, nbEle, bytes);
 //    SZ_fast_decompress_args_unpredictable_blocked_randomaccess_float(&data, nbEle, bytes);
-        cost_end();
+        szx_cost_end();
         printf("timecost=%f\n",totalCost);
     }
 
     free(bytes);
-    writeFloatData_inBytes(data, nbEle, outputFilePath, &status);
-    if(status!=SZ_SCES)
+    SZx_writeFloatData_inBytes(data, nbEle, outputFilePath, &status);
+    if(status!=SZx_SCES)
     {
 	printf("Error: %s cannot be written!\n", outputFilePath);
 	exit(0);
@@ -92,8 +92,8 @@ int main(int argc, char * argv[])
     char oriFilePath[645];
     strcpy(oriFilePath, zipFilePath);
     oriFilePath[strlen(zipFilePath)-4] = '\0';
-    float *ori_data = readFloatData(oriFilePath, &totalNbEle, &status);
-    if(status!=SZ_SCES)
+    float *ori_data = SZx_readFloatData(oriFilePath, &totalNbEle, &status);
+    if(status!=SZx_SCES)
     {
         printf("Error: %s cannot be read!\n", oriFilePath);
         exit(0);

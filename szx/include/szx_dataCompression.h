@@ -10,13 +10,11 @@
 #ifndef _SZX_DataCompression_H
 #define _SZX_DataCompression_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "szx.h"
 #include <stdio.h>
 #include <stdbool.h>
+
+namespace szx{	
 
 #define computeMinMax(data) \
         for(i=1;i<size;i++)\
@@ -59,9 +57,7 @@ void compressUInt64Value(uint64_t tgtValue, uint64_t minValue, int byteSize, uns
 int compIdenticalLeadingBytesCount_double(unsigned char* preBytes, unsigned char* curBytes);
 int compIdenticalLeadingBytesCount_float(unsigned char* preBytes, unsigned char* curBytes);
 
-#ifdef __cplusplus
 }
-#endif
 
 #endif /* ----- #ifndef _SZX_DataCompression_H  ----- */
 

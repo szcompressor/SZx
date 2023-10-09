@@ -12,9 +12,7 @@
 
 #include "szx.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace szx{	
 
 //sihuan added: use a assistant struct to do sorting and swap that are easy to implement: should
 //consider optimizing the performance later.
@@ -30,8 +28,6 @@ void sz_cost_start();
 void sz_cost_end();
 void sz_cost_end_msg(char *);
 
-#ifdef __cplusplus
 }
-#endif
 
 #endif /* ----- #ifndef _SZX_UTILITY_H  ----- */

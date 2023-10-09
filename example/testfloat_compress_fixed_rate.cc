@@ -38,35 +38,44 @@ void cost_end()
 int main(int argc, char * argv[])
 {
     char oriFilePath[640], outputFilePath[645];
-    
-    if(argc < 2)
+ 
+    if(argc < 3)
     {
-		printf("Usage: testfloat_compress_fastmode1 [srcFilePath] [err bound]\n");
-		printf("Example: testfloat_compress_fastmode1 testfloat_8_8_128.dat 1E-3\n");
+		printf("Usage: testfloat_compress_fixed_rate [srcFilePath] [target ratio] [tolerance]\n");
+		printf("Example: testfloat_compress_fixed_rate testfloat_8_8_128.dat 10 0.1\n");
 		exit(0);
     }
    
     sprintf(oriFilePath, "%s", argv[1]);
-    float errorBound = atof(argv[2]); 
+    float targetCompressionRatio = atof(argv[2]); 
+    float tolerance = atof(argv[3]);
     sprintf(outputFilePath, "%s.szx", oriFilePath);
   
     int status = 0; 
     size_t nbEle;
-    float *data = readFloatData(oriFilePath, &nbEle, &status);
-    if(status != SZ_SCES)
+    float *data = SZx_readFloatData(oriFilePath, &nbEle, &status);
+    if(status != SZx_SCES)
     {
 		printf("Error: data file %s cannot be read!\n", oriFilePath);
 		exit(0);
     }
    
-    size_t outSize; 
+    int blockSize = 128;
+    float radius = 0, medianValue = 0;
+    float valueRange = SZx_computeValueRange(data, SZx_FLOAT, nbEle, &radius, &medianValue);
+    float initErrorBound = valueRange*1E-3;
     cost_start();
-    unsigned char* bytes =  SZ_fast_compress_args(SZx_NO_BLOCK_FAST_CMPR, SZ_FLOAT, data, &outSize, ABS, errorBound, 0.001, 0, 0, 0, 0, nbEle);
+
+    float errorBound = SZx_estimateErrorBoundbasedonCR(SZx_FLOAT, targetCompressionRatio, tolerance, data, initErrorBound, blockSize, nbEle);
     cost_end();
+    printf("searched error bound = %.30G\n", errorBound);
+    size_t outSize = 0;
+    unsigned char* bytes = SZx_fast_compress_args_unpredictable_blocked(data, SZx_FLOAT, &outSize, errorBound, nbEle, blockSize);
+
     printf("timecost=%f, %d\n",totalCost, bytes[0]); 
     printf("compression size = %zu, CR = %f\n", outSize, 1.0f*nbEle*sizeof(float)/outSize);
-    writeByteData(bytes, outSize, outputFilePath, &status);
-    if(status != SZ_SCES)
+    SZx_writeByteData(bytes, outSize, outputFilePath, &status);
+    if(status != SZx_SCES)
     {
         printf("Error: data file %s cannot be written!\n", outputFilePath);
         exit(0);

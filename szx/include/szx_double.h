@@ -9,14 +9,12 @@
 
 #include <szx_float.h>
 
-#ifndef _SZ_Double_H
-#define _SZ_Double_H
+#ifndef _SZx_Double_H
+#define _SZx_Double_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void SZ_fast_compress_args_unpredictable_one_block_double(double *oriData, size_t nbEle, float absErrBound,
+namespace szx{	
+	
+void SZx_fast_compress_args_unpredictable_one_block_double(double *oriData, size_t nbEle, float absErrBound,
                                                                 unsigned char *outputBytes, int *outSize,
                                                                 unsigned char *leadNumberArray_int, float medianValue,
                                                                 float radius);
@@ -31,32 +29,55 @@ void simd_max_min_double(double *x, int n, double *tmp_max, double *tmp_min);
 void computeStateMedianRadius_double2(double *oriData, size_t nbEle, float absErrBound,
                                      unsigned char *state, float *median, float *radius) ;
                                      
+double computeValueRange_double(double* oriData, size_t length, float* radius, float* medianValue);
+                                     
+// added
+
+float computeRadiusBuffer_double(double *oriData, size_t nbEle, int samplingRate, int blockSize, float** radiusArray, float** mediusArray, double** buffer);
+
+float estimateCRbasedonErrorBound_buffered_double(float errorBound, double* buffer, float* medianArray, float* radiusArray, int samplingRate, int blockSize, size_t nbEle, 
+size_t *sumReqNbBytes, size_t *sum_actual_leadNumbers);
+
+float estimateCRbasedonErrorBound_double(float errorBound, double* data, int blockSize, size_t nbEle);                                     
+
+float estimateErrorBoundbasedonCR_buffered_double(float targetCompressionRatio, float tolerance, int samplingRate, float initErrorBound, int blockSize, size_t nbEle, 
+double* buffer, float* medianArray, float* radiusArray);
+
+float estimateErrorBoundbasedonCR_double(float targetCompressionRatio, float tolerance, double* data, float initErrorBound, int blockSize, size_t nbEle);
 unsigned char *
-SZ_fast_compress_args_unpredictable_blocked_double(double *oriData, size_t *outSize, float absErrBound, size_t nbEle,
+SZx_fast_compress_args_unpredictable_blocked_fixed_rate_double(double *oriData, size_t *outSize, float compressionRatio, float tolerance, size_t nbEle,
+                                                  int blockSize) ;
+
+void SZx_fast_compress_args_unpredictable_blocked_fixed_rate_double2(double *oriData, size_t *outSize, unsigned char* outputBytes, float compressionRatio, float tolerance, size_t nbEle,
+                                                  int blockSize) ;
+
+void SZx_fast_compress_args_unpredictable_blocked_double2(double *oriData, size_t *outSize, unsigned char* outputBytes, float absErrBound, size_t nbEle,
+                                                  int blockSize) ;   
+
+// added
+
+unsigned char *
+SZx_fast_compress_args_unpredictable_blocked_double(double *oriData, size_t *outSize, float absErrBound, size_t nbEle,
                                                   int blockSize) ;
                                                   
 unsigned char *
-SZ_fast_compress_args_unpredictable_blocked_randomaccess_double_openmp(double *oriData, size_t *outSize, 
+SZx_fast_compress_args_unpredictable_blocked_randomaccess_double_openmp(double *oriData, size_t *outSize, 
 									float absErrBound, size_t nbEle, int blockSize) ;
                                                                
                                                                
 unsigned char *
-SZ_fast_compress_args_unpredictable_blocked_randomaccess_double(double *oriData, size_t *outSize, 
+SZx_fast_compress_args_unpredictable_blocked_randomaccess_double(double *oriData, size_t *outSize, 
 								float absErrBound, size_t nbEle, int blockSize) ;
     
 unsigned char *
-SZ_fast_compress_args_unpredictable_double(double *data, size_t *outSize, float absErrBound, size_t r5, size_t r4,
+SZx_fast_compress_args_unpredictable_double(double *data, size_t *outSize, float absErrBound, size_t r5, size_t r4,
                                           size_t r3, size_t r2, size_t r1, float mValue, float radius);
                                           
-unsigned char *SZ_skip_compress_double(double *data, size_t dataLength, size_t *outSize) ;
+unsigned char *SZx_skip_compress_double(double *data, size_t dataLength, size_t *outSize) ;
 
 void computeReqLength_double(float realPrecision, short radExpo, int *reqLength, float *medianValue) ;
 
-
-
-#ifdef __cplusplus
 }
-#endif
 
-#endif /* ----- #ifndef _SZ_Double_H  ----- */
+#endif /* ----- #ifndef _SZx_Double_H  ----- */
 

@@ -13,7 +13,6 @@ struct timeval endTime;  /* Start and end times */
 struct timeval costStart; /*only used for recording the cost*/
 double totalCost = 0;
 
-
 void cost_start()
 {
 	totalCost = 0;
@@ -51,11 +50,14 @@ void usage()
 	printf("		-m 3: blocked+openmp\n");
 	printf("		-m 4: blocked+randomaccess+serial\n");
 	printf("* error control: (the error control parameters here will overwrite the setting in sz.config)\n");
-	printf("	-M <error bound mode> : 2 options as follows. \n");
+	printf("	-M <error bound mode> : 3 options as follows. \n");
 	printf("		ABS (absolute error bound)\n");
 	printf("		REL (value range based error bound, so a.k.a., VR_REL)\n");
+	printf("		FXR (fix ratio)\n");
 	printf("	-A <absolute error bound>: specifying absolute error bound\n");
 	printf("	-R <value_range based relative error bound>: specifying relative error bound\n");
+	printf("	-C <compression ratio>: specifying the compression ratio.\n");
+	printf("	-T <tolerance of fixed compression ratio>: specifying the acceptable relative tolerance\n");
 	printf("* input data file:\n");
 	printf("	-i <original data file> : original data file\n");
 	printf("	-s <compressed data file> : compressed data file in decompression\n");
@@ -72,6 +74,7 @@ void usage()
 	printf("* examples: \n");
 	printf("	sz -z -f -i testdata/x86/testfloat_8_8_128.dat -3 8 8 128 -M ABS -A 1E-3\n");
 	printf("	sz -x -f -s testdata/x86/testfloat_8_8_128.dat.sz -3 8 8 128 -a\n");
+	printf("	sz -z -f -i ~/Data/Hurricane-ISA/CLOUDf48.bin.dat -3 500 500 100 -M FXR -C 10 -T 0.1\n");
 	exit(0);
 }
 
@@ -89,7 +92,10 @@ int main(int argc, char* argv[])
 	char* errBoundMode = NULL;
 	char* absErrBound = NULL;
 	char* relErrBound = NULL;
+	char* compRatio = NULL;
 	float absErrorBound = 0, relBoundRatio = 0;
+	float compressRatio = 0;
+	float tolerance = 0;
 
 	int fastMode = SZx_WITH_BLOCK_FAST_CMPR; //1: non-blocked+serial, 2: blocked+serial, 3: blocked+openmp, 4: blocked+randomaccess+serial
 	size_t r5 = 0;
@@ -98,7 +104,7 @@ int main(int argc, char* argv[])
 	size_t r2 = 0; 
 	size_t r1 = 0;
 	
-	size_t i = 0;
+	int i = 0;
 	int status;
 	size_t nbEle;
 	if(argc==1)
@@ -205,6 +211,16 @@ int main(int argc, char* argv[])
 				usage();
 			relErrBound = argv[i];
 			break;
+		case 'C':
+			if (++i == argc)
+				usage();
+			compRatio = argv[i];
+			break;
+		case 'T':
+			if (++i == argc)
+				usage();
+			tolerance = atof(argv[i]);
+			break;
 		default: 
 			usage();
 			break;
@@ -225,6 +241,8 @@ int main(int argc, char* argv[])
 			errorBoundMode = ABS;
 		else if(strcmp(errBoundMode, "REL")==0||strcmp(errBoundMode, "VR_REL")==0)
 			errorBoundMode = REL;
+		else if(strcmp(errBoundMode, "FXR")==0)
+			errorBoundMode = FXR;
 		else
 		{
 			printf("Error: wrong error bound mode setting by using the option '-M'\n");
@@ -243,11 +261,14 @@ int main(int argc, char* argv[])
 		
 		if(relErrBound != NULL)
 			relBoundRatio = atof(relErrBound);
-		
+	
+		if(compRatio != NULL)
+			compressRatio = atof(compRatio);
+
 		size_t outSize;	
-		if(dataType == SZ_FLOAT) //single precision
+		if(dataType == SZx_FLOAT) //single precision
 		{
-			float *data = readFloatData(inPath, &nbEle, &status);
+			float *data = SZx_readFloatData(inPath, &nbEle, &status);
 			
 			//exclude the value range calculation time from the compression to get more accurate evaluation for performance
 			if(errorBoundMode == REL)
@@ -265,21 +286,21 @@ int main(int argc, char* argv[])
 				errorBoundMode = ABS;
 			}
 			
-			if(status!=SZ_SCES)
+			if(status!=SZx_SCES)
 			{
 				printf("Error: cannot read the input file: %s\n", inPath);
 				exit(0);
 			}
 			cost_start();
-			bytes = SZ_fast_compress_args(fastMode, SZ_FLOAT, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
+			bytes = SZx_fast_compress_args(fastMode, SZx_FLOAT, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, compressRatio, tolerance, r5, r4, r3, r2, r1);
 			cost_end();
 			if(cmpPath == NULL)
 				sprintf(outputFilePath, "%s.szx", inPath);
 			else
 				strcpy(outputFilePath, cmpPath);
-			writeByteData(bytes, outSize, outputFilePath, &status);		
+			SZx_writeByteData(bytes, outSize, outputFilePath, &status);		
 			free(data);
-			if(status != SZ_SCES)
+			if(status != SZx_SCES)
 			{
 				printf("Error: data file %s cannot be written!\n", outputFilePath);
 				exit(0);
@@ -289,7 +310,7 @@ int main(int argc, char* argv[])
 		}
 		else //dataType == 1: double precision
 		{
-			double *data = readDoubleData(inPath, &nbEle, &status);	
+			double *data = SZx_readDoubleData(inPath, &nbEle, &status);	
 			
 			//exclude the value range calculation time from the compression to get more accurate evaluation for performance
 			if(errorBoundMode == REL)
@@ -307,21 +328,21 @@ int main(int argc, char* argv[])
 				errorBoundMode = ABS;
 			}			
 			
-			if(status!=SZ_SCES)
+			if(status!=SZx_SCES)
 			{
 				printf("Error: cannot read the input file: %s\n", inPath);
 				exit(0);
 			}
 			cost_start();
-			bytes = SZ_fast_compress_args(fastMode, SZ_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, r5, r4, r3, r2, r1);
+			bytes = SZx_fast_compress_args(fastMode, SZx_DOUBLE, data, &outSize, errorBoundMode, absErrorBound, relBoundRatio, compressRatio, tolerance, r5, r4, r3, r2, r1);
 			cost_end();
 			if(cmpPath == NULL)
 				sprintf(outputFilePath, "%s.szx", inPath);
 			else
 				strcpy(outputFilePath, cmpPath);
-			writeByteData(bytes, outSize, outputFilePath, &status);		
+			SZx_writeByteData(bytes, outSize, outputFilePath, &status);		
 			free(data);
-			if(status != SZ_SCES)
+			if(status != SZx_SCES)
 			{
 				printf("Error: data file %s cannot be written!\n", outputFilePath);
 				exit(0);
@@ -359,33 +380,33 @@ int main(int argc, char* argv[])
 		else
 			nbEle = r1*r2*r3*r4*r5;
 
-		if(checkFileExistance(cmpPath)==0)
+		if(SZx_checkFileExistance(cmpPath)==0)
 		{
 			printf("Error: compression file (%s) is not readable.\n", cmpPath);
 			exit(0);
 		}
 
-		if(dataType == SZ_FLOAT)
+		if(dataType == SZx_FLOAT)
 		{
-			bytes = readByteData(cmpPath, &byteLength, &status);
-			if(status!=SZ_SCES)
+			bytes = SZx_readByteData(cmpPath, &byteLength, &status);
+			if(status!=SZx_SCES)
 			{
 				printf("Error: %s cannot be read!\n", cmpPath);
 				exit(0);
 			}
 			cost_start();
-			float *data = SZ_fast_decompress(fastMode, SZ_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
+			float *data = (float*)SZx_fast_decompress(fastMode, SZx_FLOAT, bytes, byteLength, r5, r4, r3, r2, r1);
 			cost_end();
 			if(decPath == NULL)
 				sprintf(outputFilePath, "%s.out", cmpPath);	
 			else
 				strcpy(outputFilePath, decPath);
 			if(binaryOutput==1)		
-				writeFloatData_inBytes(data, nbEle, outputFilePath, &status);
+				SZx_writeFloatData_inBytes(data, nbEle, outputFilePath, &status);
 			else //txt output
-				writeFloatData(data, nbEle, outputFilePath, &status);
+				SZx_writeFloatData(data, nbEle, outputFilePath, &status);
 
-			if(status!=SZ_SCES)
+			if(status!=SZx_SCES)
 			{
 				printf("Error: %s cannot be written!\n", outputFilePath);
 				exit(0);
@@ -400,8 +421,8 @@ int main(int argc, char* argv[])
 				}
 				//compute the distortion / compression errors...
 				size_t totalNbEle;
-				float *ori_data = readFloatData(inPath, &totalNbEle, &status);
-				if(status!=SZ_SCES)
+				float *ori_data = SZx_readFloatData(inPath, &totalNbEle, &status);
+				if(status!=SZx_SCES)
 				{
 					printf("Error: %s cannot be read!\n", inPath);
 					exit(0);
@@ -478,24 +499,24 @@ int main(int argc, char* argv[])
 		}
 		else //double-data
 		{
-			bytes = readByteData(cmpPath, &byteLength, &status);
-			if(status!=SZ_SCES)
+			bytes = SZx_readByteData(cmpPath, &byteLength, &status);
+			if(status!=SZx_SCES)
 			{
 				printf("Error: %s cannot be read!\n", cmpPath);
 				exit(0);
 			}
 			cost_start();
-			double* data = SZ_fast_decompress(fastMode, SZ_DOUBLE, bytes, byteLength, r5, r4, r3, r2, r1);
+			double* data = (double*)SZx_fast_decompress(fastMode, SZx_DOUBLE, bytes, byteLength, r5, r4, r3, r2, r1);
 			cost_end();
 			if(decPath == NULL)
 				sprintf(outputFilePath, "%s.out", cmpPath);	
 			else
 				strcpy(outputFilePath, decPath);
 			if(binaryOutput==1)		
-				writeDoubleData_inBytes(data, nbEle, outputFilePath, &status);
+				SZx_writeDoubleData_inBytes(data, nbEle, outputFilePath, &status);
 			else //txt output
-				writeDoubleData(data, nbEle, outputFilePath, &status);			
-			if(status!=SZ_SCES)
+				SZx_writeDoubleData(data, nbEle, outputFilePath, &status);			
+			if(status!=SZx_SCES)
 			{
 				printf("Error: %s cannot be written!\n", outputFilePath);
 				exit(0);
@@ -514,8 +535,8 @@ int main(int argc, char* argv[])
 				size_t totalNbEle;
 
 				//compute the distortion / compression errors...
-				double *ori_data = readDoubleData(inPath, &totalNbEle, &status);
-				if(status!=SZ_SCES)
+				double *ori_data = SZx_readDoubleData(inPath, &totalNbEle, &status);
+				if(status!=SZx_SCES)
 				{
 					printf("Error: %s cannot be read!\n", inPath);
 					exit(0);

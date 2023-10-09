@@ -135,20 +135,13 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libSZx_la_LIBADD =
 am__dirstamp = $(am__leading_dot)dirstamp
-am_libSZx_la_OBJECTS = src/libSZx_la-szx.lo src/libSZx_la-szx_float.lo \
-	src/libSZx_la-szx_rw.lo src/libSZx_la-szx_BytesToolkit.lo \
-	src/libSZx_la-szx_TypeManager.lo \
+am_libSZx_la_OBJECTS = src/libSZx_la-szx_BytesToolkit.lo \
+	src/libSZx_la-szx.lo src/libSZx_la-szx_float.lo \
+	src/libSZx_la-szx_rw.lo src/libSZx_la-szx_TypeManager.lo \
 	src/libSZx_la-szx_dataCompression.lo \
 	src/libSZx_la-szxd_float.lo src/libSZx_la-szx_utility.lo \
 	src/libSZx_la-szx_double.lo src/libSZx_la-szxd_double.lo
 libSZx_la_OBJECTS = $(am_libSZx_la_OBJECTS)
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
-libSZx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libSZx_la_CFLAGS) \
-	$(CFLAGS) $(libSZx_la_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -175,24 +168,28 @@ am__depfiles_remade = src/$(DEPDIR)/libSZx_la-szx.Plo \
 	src/$(DEPDIR)/libSZx_la-szxd_double.Plo \
 	src/$(DEPDIR)/libSZx_la-szxd_float.Plo
 am__mv = mv -f
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
+CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) \
 	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_CFLAGS) $(CFLAGS)
-AM_V_CC = $(am__v_CC_@AM_V@)
-am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
-am__v_CC_0 = @echo "  CC      " $@;
-am__v_CC_1 = 
-CCLD = $(CC)
-LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-AM_V_CCLD = $(am__v_CCLD_@AM_V@)
-am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
-am__v_CCLD_0 = @echo "  CCLD    " $@;
-am__v_CCLD_1 = 
+	$(AM_CXXFLAGS) $(CXXFLAGS)
+AM_V_CXX = $(am__v_CXX_@AM_V@)
+am__v_CXX_ = $(am__v_CXX_@AM_DEFAULT_V@)
+am__v_CXX_0 = @echo "  CXX     " $@;
+am__v_CXX_1 = 
+CXXLD = $(CXX)
+CXXLINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
+am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
+am__v_CXXLD_0 = @echo "  CXXLD   " $@;
+am__v_CXXLD_1 = 
 SOURCES = $(libSZx_la_SOURCES)
 DIST_SOURCES = $(libSZx_la_SOURCES)
 am__can_run_installinfo = \
@@ -235,6 +232,10 @@ CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+CXXDEPMODE = @CXXDEPMODE@
+CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
@@ -295,6 +296,7 @@ abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
+ac_ct_CXX = @ac_ct_CXX@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 ac_ct_FC = @ac_ct_FC@
 am__include = @am__include@
@@ -343,16 +345,16 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
-include_HEADERS = include/szx.h include/szx_rw.h include/szx_defines.h include/szx_float.h include/szx_BytesToolkit.h include/szx_TypeManager.h include/szx_dataCompression.h include/szxd_float.h include/szx_utility.h include/szx_double.h include/szxd_double.h
+include_HEADERS = include/szx.h include/szx_rw.h include/szx_defines.h include/szx_float.h include/szx_BytesToolkit.h include/szx_TypeManager.h include/szx_dataCompression.h include/szxd_float.h include/szx_utility.h include/szx_double.h include/szxd_double.h include/szx_globals.h
 lib_LTLIBRARIES = libSZx.la
-libSZx_la_CFLAGS = -I./include $(am__append_1)
+libSZx_la_CXXFLAGS = -I./include $(am__append_1)
 libSZx_la_LDFLAGS = -version-info  1:0:0
-libSZx_la_SOURCES = src/szx.c src/szx_float.c src/szx_rw.c src/szx_BytesToolkit.c src/szx_TypeManager.c src/szx_dataCompression.c src/szxd_float.c src/szx_utility.c src/szx_double.c src/szxd_double.c
-libSZ_la_LINK = $(AM_V_CC)$(LIBTOOL) --tag=CC --mode=link $(CCLD) $(libSZx_la_CFLAGS) -O3 $(libSZx_la_LDFLAGS) -o $(lib_LTLIBRARIES)
+libSZx_la_SOURCES = src/szx_BytesToolkit.cc src/szx.cc src/szx_float.cc src/szx_rw.cc  src/szx_TypeManager.cc src/szx_dataCompression.cc src/szxd_float.cc src/szx_utility.cc src/szx_double.cc src/szxd_double.cc
+libSZx_la_LINK = $(AM_V_CXX)$(LIBTOOL) --tag=CXX --mode=link $(CXXLD) $(libSZx_la_CXXFLAGS) -O3 $(libSZx_la_LDFLAGS) -o $(lib_LTLIBRARIES)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .cc .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -423,13 +425,13 @@ src/$(am__dirstamp):
 src/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/$(DEPDIR)
 	@: > src/$(DEPDIR)/$(am__dirstamp)
+src/libSZx_la-szx_BytesToolkit.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/libSZx_la-szx.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libSZx_la-szx_float.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libSZx_la-szx_rw.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libSZx_la-szx_BytesToolkit.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libSZx_la-szx_TypeManager.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -445,7 +447,7 @@ src/libSZx_la-szxd_double.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 
 libSZx.la: $(libSZx_la_OBJECTS) $(libSZx_la_DEPENDENCIES) $(EXTRA_libSZx_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libSZx_la_LINK) -rpath $(libdir) $(libSZx_la_OBJECTS) $(libSZx_la_LIBADD) $(LIBS)
+	$(AM_V_GEN)$(libSZx_la_LINK) -rpath $(libdir) $(libSZx_la_OBJECTS) $(libSZx_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -472,99 +474,99 @@ $(am__depfiles_remade):
 
 am--depfiles: $(am__depfiles_remade)
 
-.c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
+.cc.o:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
 
-.c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+.cc.obj:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
-.c.lo:
-@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+.cc.lo:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
-src/libSZx_la-szx.lo: src/szx.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -MT src/libSZx_la-szx.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx.Tpo -c -o src/libSZx_la-szx.lo `test -f 'src/szx.c' || echo '$(srcdir)/'`src/szx.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx.Tpo src/$(DEPDIR)/libSZx_la-szx.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/szx.c' object='src/libSZx_la-szx.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -c -o src/libSZx_la-szx.lo `test -f 'src/szx.c' || echo '$(srcdir)/'`src/szx.c
+src/libSZx_la-szx_BytesToolkit.lo: src/szx_BytesToolkit.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -MT src/libSZx_la-szx_BytesToolkit.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_BytesToolkit.Tpo -c -o src/libSZx_la-szx_BytesToolkit.lo `test -f 'src/szx_BytesToolkit.cc' || echo '$(srcdir)/'`src/szx_BytesToolkit.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_BytesToolkit.Tpo src/$(DEPDIR)/libSZx_la-szx_BytesToolkit.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/szx_BytesToolkit.cc' object='src/libSZx_la-szx_BytesToolkit.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -c -o src/libSZx_la-szx_BytesToolkit.lo `test -f 'src/szx_BytesToolkit.cc' || echo '$(srcdir)/'`src/szx_BytesToolkit.cc
 
-src/libSZx_la-szx_float.lo: src/szx_float.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -MT src/libSZx_la-szx_float.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_float.Tpo -c -o src/libSZx_la-szx_float.lo `test -f 'src/szx_float.c' || echo '$(srcdir)/'`src/szx_float.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_float.Tpo src/$(DEPDIR)/libSZx_la-szx_float.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/szx_float.c' object='src/libSZx_la-szx_float.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -c -o src/libSZx_la-szx_float.lo `test -f 'src/szx_float.c' || echo '$(srcdir)/'`src/szx_float.c
+src/libSZx_la-szx.lo: src/szx.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -MT src/libSZx_la-szx.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx.Tpo -c -o src/libSZx_la-szx.lo `test -f 'src/szx.cc' || echo '$(srcdir)/'`src/szx.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx.Tpo src/$(DEPDIR)/libSZx_la-szx.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/szx.cc' object='src/libSZx_la-szx.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -c -o src/libSZx_la-szx.lo `test -f 'src/szx.cc' || echo '$(srcdir)/'`src/szx.cc
 
-src/libSZx_la-szx_rw.lo: src/szx_rw.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -MT src/libSZx_la-szx_rw.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_rw.Tpo -c -o src/libSZx_la-szx_rw.lo `test -f 'src/szx_rw.c' || echo '$(srcdir)/'`src/szx_rw.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_rw.Tpo src/$(DEPDIR)/libSZx_la-szx_rw.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/szx_rw.c' object='src/libSZx_la-szx_rw.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -c -o src/libSZx_la-szx_rw.lo `test -f 'src/szx_rw.c' || echo '$(srcdir)/'`src/szx_rw.c
+src/libSZx_la-szx_float.lo: src/szx_float.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -MT src/libSZx_la-szx_float.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_float.Tpo -c -o src/libSZx_la-szx_float.lo `test -f 'src/szx_float.cc' || echo '$(srcdir)/'`src/szx_float.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_float.Tpo src/$(DEPDIR)/libSZx_la-szx_float.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/szx_float.cc' object='src/libSZx_la-szx_float.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -c -o src/libSZx_la-szx_float.lo `test -f 'src/szx_float.cc' || echo '$(srcdir)/'`src/szx_float.cc
 
-src/libSZx_la-szx_BytesToolkit.lo: src/szx_BytesToolkit.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -MT src/libSZx_la-szx_BytesToolkit.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_BytesToolkit.Tpo -c -o src/libSZx_la-szx_BytesToolkit.lo `test -f 'src/szx_BytesToolkit.c' || echo '$(srcdir)/'`src/szx_BytesToolkit.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_BytesToolkit.Tpo src/$(DEPDIR)/libSZx_la-szx_BytesToolkit.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/szx_BytesToolkit.c' object='src/libSZx_la-szx_BytesToolkit.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -c -o src/libSZx_la-szx_BytesToolkit.lo `test -f 'src/szx_BytesToolkit.c' || echo '$(srcdir)/'`src/szx_BytesToolkit.c
+src/libSZx_la-szx_rw.lo: src/szx_rw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -MT src/libSZx_la-szx_rw.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_rw.Tpo -c -o src/libSZx_la-szx_rw.lo `test -f 'src/szx_rw.cc' || echo '$(srcdir)/'`src/szx_rw.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_rw.Tpo src/$(DEPDIR)/libSZx_la-szx_rw.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/szx_rw.cc' object='src/libSZx_la-szx_rw.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -c -o src/libSZx_la-szx_rw.lo `test -f 'src/szx_rw.cc' || echo '$(srcdir)/'`src/szx_rw.cc
 
-src/libSZx_la-szx_TypeManager.lo: src/szx_TypeManager.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -MT src/libSZx_la-szx_TypeManager.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_TypeManager.Tpo -c -o src/libSZx_la-szx_TypeManager.lo `test -f 'src/szx_TypeManager.c' || echo '$(srcdir)/'`src/szx_TypeManager.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_TypeManager.Tpo src/$(DEPDIR)/libSZx_la-szx_TypeManager.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/szx_TypeManager.c' object='src/libSZx_la-szx_TypeManager.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -c -o src/libSZx_la-szx_TypeManager.lo `test -f 'src/szx_TypeManager.c' || echo '$(srcdir)/'`src/szx_TypeManager.c
+src/libSZx_la-szx_TypeManager.lo: src/szx_TypeManager.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -MT src/libSZx_la-szx_TypeManager.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_TypeManager.Tpo -c -o src/libSZx_la-szx_TypeManager.lo `test -f 'src/szx_TypeManager.cc' || echo '$(srcdir)/'`src/szx_TypeManager.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_TypeManager.Tpo src/$(DEPDIR)/libSZx_la-szx_TypeManager.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/szx_TypeManager.cc' object='src/libSZx_la-szx_TypeManager.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -c -o src/libSZx_la-szx_TypeManager.lo `test -f 'src/szx_TypeManager.cc' || echo '$(srcdir)/'`src/szx_TypeManager.cc
 
-src/libSZx_la-szx_dataCompression.lo: src/szx_dataCompression.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -MT src/libSZx_la-szx_dataCompression.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_dataCompression.Tpo -c -o src/libSZx_la-szx_dataCompression.lo `test -f 'src/szx_dataCompression.c' || echo '$(srcdir)/'`src/szx_dataCompression.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_dataCompression.Tpo src/$(DEPDIR)/libSZx_la-szx_dataCompression.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/szx_dataCompression.c' object='src/libSZx_la-szx_dataCompression.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -c -o src/libSZx_la-szx_dataCompression.lo `test -f 'src/szx_dataCompression.c' || echo '$(srcdir)/'`src/szx_dataCompression.c
+src/libSZx_la-szx_dataCompression.lo: src/szx_dataCompression.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -MT src/libSZx_la-szx_dataCompression.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_dataCompression.Tpo -c -o src/libSZx_la-szx_dataCompression.lo `test -f 'src/szx_dataCompression.cc' || echo '$(srcdir)/'`src/szx_dataCompression.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_dataCompression.Tpo src/$(DEPDIR)/libSZx_la-szx_dataCompression.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/szx_dataCompression.cc' object='src/libSZx_la-szx_dataCompression.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -c -o src/libSZx_la-szx_dataCompression.lo `test -f 'src/szx_dataCompression.cc' || echo '$(srcdir)/'`src/szx_dataCompression.cc
 
-src/libSZx_la-szxd_float.lo: src/szxd_float.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -MT src/libSZx_la-szxd_float.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szxd_float.Tpo -c -o src/libSZx_la-szxd_float.lo `test -f 'src/szxd_float.c' || echo '$(srcdir)/'`src/szxd_float.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szxd_float.Tpo src/$(DEPDIR)/libSZx_la-szxd_float.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/szxd_float.c' object='src/libSZx_la-szxd_float.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -c -o src/libSZx_la-szxd_float.lo `test -f 'src/szxd_float.c' || echo '$(srcdir)/'`src/szxd_float.c
+src/libSZx_la-szxd_float.lo: src/szxd_float.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -MT src/libSZx_la-szxd_float.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szxd_float.Tpo -c -o src/libSZx_la-szxd_float.lo `test -f 'src/szxd_float.cc' || echo '$(srcdir)/'`src/szxd_float.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szxd_float.Tpo src/$(DEPDIR)/libSZx_la-szxd_float.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/szxd_float.cc' object='src/libSZx_la-szxd_float.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -c -o src/libSZx_la-szxd_float.lo `test -f 'src/szxd_float.cc' || echo '$(srcdir)/'`src/szxd_float.cc
 
-src/libSZx_la-szx_utility.lo: src/szx_utility.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -MT src/libSZx_la-szx_utility.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_utility.Tpo -c -o src/libSZx_la-szx_utility.lo `test -f 'src/szx_utility.c' || echo '$(srcdir)/'`src/szx_utility.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_utility.Tpo src/$(DEPDIR)/libSZx_la-szx_utility.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/szx_utility.c' object='src/libSZx_la-szx_utility.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -c -o src/libSZx_la-szx_utility.lo `test -f 'src/szx_utility.c' || echo '$(srcdir)/'`src/szx_utility.c
+src/libSZx_la-szx_utility.lo: src/szx_utility.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -MT src/libSZx_la-szx_utility.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_utility.Tpo -c -o src/libSZx_la-szx_utility.lo `test -f 'src/szx_utility.cc' || echo '$(srcdir)/'`src/szx_utility.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_utility.Tpo src/$(DEPDIR)/libSZx_la-szx_utility.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/szx_utility.cc' object='src/libSZx_la-szx_utility.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -c -o src/libSZx_la-szx_utility.lo `test -f 'src/szx_utility.cc' || echo '$(srcdir)/'`src/szx_utility.cc
 
-src/libSZx_la-szx_double.lo: src/szx_double.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -MT src/libSZx_la-szx_double.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_double.Tpo -c -o src/libSZx_la-szx_double.lo `test -f 'src/szx_double.c' || echo '$(srcdir)/'`src/szx_double.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_double.Tpo src/$(DEPDIR)/libSZx_la-szx_double.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/szx_double.c' object='src/libSZx_la-szx_double.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -c -o src/libSZx_la-szx_double.lo `test -f 'src/szx_double.c' || echo '$(srcdir)/'`src/szx_double.c
+src/libSZx_la-szx_double.lo: src/szx_double.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -MT src/libSZx_la-szx_double.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szx_double.Tpo -c -o src/libSZx_la-szx_double.lo `test -f 'src/szx_double.cc' || echo '$(srcdir)/'`src/szx_double.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szx_double.Tpo src/$(DEPDIR)/libSZx_la-szx_double.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/szx_double.cc' object='src/libSZx_la-szx_double.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -c -o src/libSZx_la-szx_double.lo `test -f 'src/szx_double.cc' || echo '$(srcdir)/'`src/szx_double.cc
 
-src/libSZx_la-szxd_double.lo: src/szxd_double.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -MT src/libSZx_la-szxd_double.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szxd_double.Tpo -c -o src/libSZx_la-szxd_double.lo `test -f 'src/szxd_double.c' || echo '$(srcdir)/'`src/szxd_double.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szxd_double.Tpo src/$(DEPDIR)/libSZx_la-szxd_double.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='src/szxd_double.c' object='src/libSZx_la-szxd_double.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CFLAGS) $(CFLAGS) -c -o src/libSZx_la-szxd_double.lo `test -f 'src/szxd_double.c' || echo '$(srcdir)/'`src/szxd_double.c
+src/libSZx_la-szxd_double.lo: src/szxd_double.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -MT src/libSZx_la-szxd_double.lo -MD -MP -MF src/$(DEPDIR)/libSZx_la-szxd_double.Tpo -c -o src/libSZx_la-szxd_double.lo `test -f 'src/szxd_double.cc' || echo '$(srcdir)/'`src/szxd_double.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libSZx_la-szxd_double.Tpo src/$(DEPDIR)/libSZx_la-szxd_double.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/szxd_double.cc' object='src/libSZx_la-szxd_double.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libSZx_la_CXXFLAGS) $(CXXFLAGS) -c -o src/libSZx_la-szxd_double.lo `test -f 'src/szxd_double.cc' || echo '$(srcdir)/'`src/szxd_double.cc
 
 mostlyclean-libtool:
 	-rm -f *.lo
