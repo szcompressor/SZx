@@ -348,7 +348,7 @@ void convertByteArray2IntArray_fast_2b(size_t stepLength, unsigned char* byteArr
 	}
 	else
 	{
-		size_t t = byteArrayLength - mod4;
+		size_t t = byteArrayLength - 1;
 		for (i = 0; i < t; i++) {
 			unsigned char tmp = byteArray[i];
 			(*intArray)[n++] = (tmp & 0xC0) >> 6;
