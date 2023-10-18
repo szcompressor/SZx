@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <math.h>
 #include "cuszx_float.h"
+#include "cuszx_impl.h"
 
 #include <cooperative_groups.h>
-
-namespace cg = cooperative_groups;
 
 namespace szx{
 

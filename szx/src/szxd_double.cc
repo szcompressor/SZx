@@ -27,7 +27,7 @@ int SZx_fast_decompress_args_unpredictable_one_block_double(double* newData, siz
 	int cmpSize = 0;
 	size_t nbEle = blockSize;
 	
-	register double medianValue;
+	double medianValue;
 	size_t leadNumArray_size = nbEle%4==0?nbEle/4:nbEle/4+1;
 	
 	size_t k = 0;
@@ -46,13 +46,13 @@ int SZx_fast_decompress_args_unpredictable_one_block_double(double* newData, siz
 	size_t i = 0, j = 0;
 	k = 0;
 	
-	register ldouble lfBuf_pre;
-	register ldouble lfBuf_cur;
+	ldouble lfBuf_pre;
+	ldouble lfBuf_cur;
 	
 	lfBuf_pre.lvalue = 0;
 
 	int reqBytesLength, resiBitsLength; 
-	register unsigned char leadingNum;
+	unsigned char leadingNum;
 
 	reqBytesLength = reqLength/8;
 	resiBitsLength = reqLength%8;
@@ -686,7 +686,7 @@ size_t cmpSize)
 	size_t nbEle = SZx_computeDataLength(r5, r4, r3, r2, r1);
 	*newData = (double*)malloc(sizeof(double)*nbEle);	
 	
-	register double medianValue;
+	double medianValue;
 	size_t leadNumArray_size;
 
     unsigned char *r = cmpBytes;
@@ -708,13 +708,13 @@ size_t cmpSize)
 	size_t i = 0, j = 0;
 	k = 0;
 	
-	register ldouble lfBuf_pre;
-	register ldouble lfBuf_cur;
+	ldouble lfBuf_pre;
+	ldouble lfBuf_cur;
 	
 	lfBuf_pre.lvalue = 0;
 
 	int reqBytesLength, resiBitsLength; 
-	register unsigned char leadingNum;
+	unsigned char leadingNum;
 
 	reqBytesLength = reqLength/8;
 	resiBitsLength = reqLength%8;

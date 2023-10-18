@@ -3,7 +3,7 @@ libdir=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@
 
 Name: SZx
 Description: The SZx Error Bounded Lossy Compressor
-Version: @SZx_VERSION@
+Version: @szx_VERSION@
 URL: https://github.com/szcompressor/SZx
 Cflags: -I${includedir}
 Libs: -L${libdir} -lSZx

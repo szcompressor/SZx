@@ -179,10 +179,7 @@ __global__ void decompress_float(unsigned char *data, int bs, size_t nc, size_t 
 	int rightShiftBits;
 
 
-    bool bi = false;
     for (int b=bid; b<nc; b+=gridDim.x){
-        bi = false;
-        if (b==26192) bi=true;
         value[tid] = fbytes[b*bs+tid];
         __syncthreads();                  
         medianValue = value[0];

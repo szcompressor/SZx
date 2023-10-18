@@ -2,10 +2,6 @@
 #define CUSZX_ENTRY_H
 
 #include <stdio.h>
-#include "cuszx_float.h"
-#include "cuszxd_float.h"
-
-#define GPU
 
 #ifdef __cplusplus
 extern "C" {

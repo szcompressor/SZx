@@ -11,11 +11,13 @@ Makefile
 build*/
 data/
 logs/
+autom4te.cache/
+config.log
+config.status
+config.h.in~
+configure~
+confdefs.h
+config.h
+libtool
+stamp-h1
 
-szx
-testfloat_compress_fastmode1
-testfloat_decompress_fastmode1
-testfloat_compress_fastmode2
-testfloat_decompress_fastmode2
-testfloat_compress_fastmode3
-testfloat_decompress_fastmode3

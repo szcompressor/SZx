@@ -197,7 +197,7 @@ void convertByteArray2IntArray_fast_1b(size_t intArrayLength, unsigned char* byt
 
 size_t convertIntArray2ByteArray_fast_2b_args(unsigned char* timeStepType, size_t timeStepTypeLength, unsigned char *result)
 {
-	register unsigned char tmp = 0;
+	unsigned char tmp = 0;
 	size_t i, byteLength = 0;
 	int j = 0;
 	if(timeStepTypeLength%4==0)

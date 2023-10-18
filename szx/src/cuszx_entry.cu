@@ -1,4 +1,7 @@
 #include "cuszx_entry.h"
+#include "cuszx_impl.h"
+#include "cuszx_float.h"
+#include "cuszxd_float.h"
 #include "szx_defines.h"
 #include "szx_BytesToolkit.h"
 #include "szx_TypeManager.h"
@@ -10,7 +13,7 @@ TimingGPU timer_GPU;
 void bin(unsigned n)
 {
     unsigned i;
-    for (i = 1 << 31; i > 0; i = i / 2)
+    for (i = 1u << 31u; i > 0u; i = i / 2u)
         (n & i) ? printf("1") : printf("0");
 }
 
@@ -74,8 +77,6 @@ unsigned char* cuSZx_fast_compress_args_unpredictable_blocked_float(float *oriDa
     cudaMemcpy(d_oriData, oriData, sizeof(float)*nbEle, cudaMemcpyHostToDevice); 
 
 	size_t nbBlocks = nbEle/blockSize;
-	size_t remainCount = nbEle%blockSize;
-	size_t actualNBBlocks = remainCount==0 ? nbBlocks : nbBlocks+1;
 
     size_t ncBytes = blockSize/4;
     //ncBytes = (blockSize+1)%4==0 ? ncBytes : ncBytes+1; //Bytes to store one non-constant block data.
@@ -150,7 +151,7 @@ void cuSZx_fast_decompress_args_unpredictable_blocked_float(float** newData, siz
 	convertByteArray2IntArray_fast_1b_args(nbBlocks, r, stateNBBytes, stateArray); //get the stateArray
 	
 	r += stateNBBytes;
-	size_t i = 0, j = 0, k = 0; //k is used to keep track of constant block index
+	size_t i = 0, j = 0; //k is used to keep track of constant block index
     memcpy((*newData)+nbBlocks*blockSize, r, (nbEle%blockSize)*sizeof(float));
     r += (nbEle%blockSize)*sizeof(float);
 	float* fr = (float*)r; //fr is the starting address of constant median values.

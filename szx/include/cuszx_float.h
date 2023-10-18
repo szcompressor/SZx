@@ -1,14 +1,6 @@
 #ifndef CUSZX_FLOAT_H
 #define CUSZX_FLOAT_H
 
-#include <cuda_runtime.h>
-
-// Utilities and system includes
-#include <helper_cuda.h>  // helper function CUDA error checking and initialization
-#include <helper_functions.h>  // helper for shared functions common to CUDA Samples
-
-#define FULL_MASK 0xffffffff
-
 namespace szx{
 
 __device__

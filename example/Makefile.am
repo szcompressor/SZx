@@ -3,6 +3,7 @@ AM_CPPFLAGS = -I../szx/include
 AM_FCFLAGS = -I../szx/include -I../szx
 if OPENMP
 AM_CPPFLAGS+=-fopenmp
+AM_LDFLAGS=-fopenmp
 endif
 
 bin_PROGRAMS=testfloat_compress_fastmode1 testfloat_decompress_fastmode1 testfloat_compress_fastmode3 testfloat_decompress_fastmode3 szx testfloat_compress_fixed_rate estimateCR

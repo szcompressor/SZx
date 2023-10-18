@@ -65,8 +65,8 @@ void SZx_fast_compress_args_unpredictable_one_block_float(float *oriData, size_t
 
     size_t leadNumberArray_size = nbEle % 4 == 0 ? nbEle / 4 : nbEle / 4 + 1;
 
-    register lfloat lfBuf_pre;
-    register lfloat lfBuf_cur;
+    lfloat lfBuf_pre;
+    lfloat lfBuf_cur;
     lfBuf_pre.ivalue = 0;
 
     unsigned char *leadNumberArray = outputBytes + 1 + sizeof(float);
@@ -81,7 +81,7 @@ void SZx_fast_compress_args_unpredictable_one_block_float(float *oriData, size_t
     sumReqNbBits += reqLength;
     sumReqNbBytes += reqBytesLength;    
 
-    register unsigned char leadingNum = 0;
+    unsigned char leadingNum = 0;
     size_t residualMidBytes_size = 0;
     if (sysEndianType == LITTLE_ENDIAN_SYSTEM) {
         if (reqBytesLength == 2) {
@@ -538,10 +538,10 @@ size_t *sumReqNbBytes, size_t *sum_actual_leadNumbers)
 			//printf("%d\n",reqBytesLength);
 			*sumReqNbBytes+=	reqBytesLength;
 			
-			register lfloat lfBuf_pre;
-			register lfloat lfBuf_cur;
+			lfloat lfBuf_pre;
+			lfloat lfBuf_cur;
 			lfBuf_pre.ivalue = 0;
-			register unsigned char leadingNum = 0;			
+			unsigned char leadingNum = 0;			
 			//int leadingNum_Array[128];
 			int s_actual_leadNumbers = 0;
 			for(j=0;j<blockSize;j++)
@@ -635,10 +635,10 @@ float estimateCRbasedonErrorBound_float(float errorBound, float* data, int block
 			//printf("%d\n",reqBytesLength);
 			sumReqNbBytes+=	reqBytesLength;
 			
-			register lfloat lfBuf_pre;
-			register lfloat lfBuf_cur;
+			lfloat lfBuf_pre;
+			lfloat lfBuf_cur;
 			lfBuf_pre.ivalue = 0;
-			register unsigned char leadingNum = 0;			
+			unsigned char leadingNum = 0;			
 			//int leadingNum_Array[128];
 			int s_actual_leadNumbers = 0;
 			for(j=0;j<blockSize;j++)
@@ -1219,10 +1219,10 @@ unsigned char *
 SZx_fast_compress_args_unpredictable_blocked_randomaccess_float_openmp(float *oriData, size_t *outSize, float absErrBound,
                                                                size_t nbEle, int blockSize) {
 #ifdef _OPENMP
-    printf("use openmp\n");
+//    printf("use openmp\n");
 
 #ifdef __AVX512F__
-    printf("use avx512\n");
+//    printf("use avx512\n");
 #elif __AVX2__
     printf("use avx2\n");
 #else
@@ -1521,8 +1521,8 @@ SZx_fast_compress_args_unpredictable_float(float *data, size_t *outSize, float a
 
     size_t leadNumberArray_size = dataLength % 4 == 0 ? dataLength / 4 : dataLength / 4 + 1;
 
-    register lfloat lfBuf_pre;
-    register lfloat lfBuf_cur;
+    lfloat lfBuf_pre;
+    lfloat lfBuf_cur;
     lfBuf_pre.ivalue = 0;
 
     unsigned char *leadNumberArray = outputBytes + 4 + 1 + sizeof(float) + sizeof(size_t);
@@ -1534,7 +1534,7 @@ SZx_fast_compress_args_unpredictable_float(float *data, size_t *outSize, float a
         reqBytesLength++;
     }
 
-    register unsigned char leadingNum = 0;
+    unsigned char leadingNum = 0;
 
     unsigned char *leadNumberArray_int = (unsigned char *) malloc(dataLength);
 

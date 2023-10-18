@@ -1,21 +1,26 @@
-cmake_minimum_required (VERSION 3.10.2)
+cmake_minimum_required (VERSION 3.20)
 #define the project
 project (szx
         VERSION 1.1.0
         DESCRIPTION "SZx Error Bounded Lossy Compressor"
         )
 
-include(CheckLanguage)
-check_language(CUDA)
-if(CMAKE_CUDA_COMPILER)
-    enable_language(CUDA)
-endif()
 
+set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 #disable in-source builds
 set (CMAKE_DISABLE_SOURCE_CHANGES ON)
 set (CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+#set the Compiler ID for clang on macOS to AppleClang
+if (POLICY CMP0025)
+  cmake_policy (SET CMP0025 NEW)
+endif()
 
-enable_testing()
+include(CTest)
+include(GNUInstallDirs)
+find_package(OpenMP)
+
+option(BUILD_SHARED_LIBS "build shared libraries over static libraries" ON)
+option(SZx_BUILD_CUDA "build the cuda version of SZx" OFF)
 
 #correct was to set a default build type
 # https://blog.kitware.com/cmake-and-the-default-build-type/
@@ -28,85 +33,37 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
-#set the Compiler ID for clang on macOS to AppleClang
-if (POLICY CMP0025)
-  cmake_policy (SET CMP0025 NEW)
+add_library(SZx
+    szx/src/szx.cc
+    szx/src/szx_BytesToolkit.cc
+    szx/src/szx_TypeManager.cc
+    szx/src/szx_dataCompression.cc
+    szx/src/szx_double.cc
+    szx/src/szx_float.cc
+    szx/src/szx_rw.cc
+    szx/src/szx_utility.cc
+    szx/src/szxd_double.cc
+    szx/src/szxd_float.cc
+    )
+target_include_directories(SZx PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/szx/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/szx>
+    )
+target_compile_features(SZx PUBLIC cxx_std_14 c_std_99)
+target_link_libraries(SZx PUBLIC OpenMP::OpenMP_CXX)
+
+if(SZx_BUILD_CUDA)
+    enable_language(CUDA)
+    target_sources(SZx PRIVATE
+        szx/src/cuszx_entry.cu
+        szx/src/cuszx_float.cu
+        szx/src/cuszxd_float.cu
+        szx/src/timingGPU.cu
+        )
+    target_include_directories(SZx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/szx/src/)
 endif()
 
-#compile with C-99 and standard C++14
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-set (CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-set (LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=-Wall")
-
-include_directories (${CMAKE_CURRENT_SOURCE_DIR}/szx/include)
-if (CMAKE_CUDA_COMPILER)
-  find_package(CUDAToolkit  REQUIRED)
-  include_directories("${CUDAToolkit_INCLUDE_DIRS}")
-  include_directories (${CUDAToolkit_LIBRARY_ROOT}/samples/common/inc)
-  include_directories (/usr/local/cuda/samples/common/inc)
-endif()
-
-if (NOT DEFINED CMAKE_CUDA_STANDARD)
-    set(CMAKE_CUDA_STANDARD 11)
-    set(CMAKE_CUDA_STANDARD_REQUIRED True)
-endif ()
-#generate tags for the project if tags exist
-option(BUILD_CTAGS "enable ctags generation target" OFF)
-if(BUILD_CTAGS)
-  find_program(TAGS ctags)
-  if(TAGS)
-    add_custom_target(tags ALL
-      COMMAND ${TAGS} --exclude=${CMAKE_BINARY_DIR} -f ${CMAKE_BINARY_DIR}/tags --c++-kinds=+p --fields=+iaS -R
-      COMMENT Generating Tag files
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-      )
-  endif()
-endif()
-
-option(BUILD_SHARED_LIBS "build shared libraries over static libraries" ON)
-
-#find dependencies
-include(GNUInstallDirs)
-find_package(PkgConfig)
-pkg_search_module(ZSTD  IMPORTED_TARGET libzstd)
-
-#by default pass no 3rd party exports
-set(thirdparty_export "")
-
-find_package(OpenMP)
-
-add_subdirectory(szx)
 add_subdirectory(example)
-
-option(BUILD_PYTHON_WRAPPER "build python wrapper" OFF)
-if(BUILD_PYTHON_WRAPPER)
-  add_subdirectory(swig)
-endif()
-
-if(BUILD_DOCKER_CONTAINERS)
-  foreach(CONTAINER Centos Fedora Ubuntu Travis CentosPackaged)
-    set(BuildSentinel ${CMAKE_BINARY_DIR}/${CONTAINER}-built)
-    set(Dockerfile docker/Dockerfile-${CONTAINER})
-    string(TOLOWER "szx${CONTAINER}" CONTAINER_TAG)
-    add_custom_command(OUTPUT ${BuildSentinel}
-      COMMAND sudo docker build -t ${CONTAINER_TAG} -f ${Dockerfile} .
-      COMMAND touch ${BuildSentinel}
-      MAIN_DEPENDENCY ${Dockerfile}
-      DEPENDS SZx
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-      COMMENT "DOCKER ${Dockerfile}"
-      )
-    list(APPEND DOCKER_CONTAINERS ${BuildSentinel})
-  endforeach()
-  add_custom_target(docker DEPENDS ${DOCKER_CONTAINERS} COMMENT "building docker containers")
-endif()
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/szx.pc.in
@@ -114,4 +71,28 @@ configure_file(
   @ONLY
 )
 install(FILES ${CMAKE_BINARY_DIR}/szx.pc DESTINATION ${CMAKE_INSTALL_PREFIX}/share/pkgconfig)
+
+install(TARGETS SZx EXPORT SZxTargets
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
+install(DIRECTORY szx/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/szx)
+install(EXPORT SZxTargets NAMESPACE SZx:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/SZx/)
+export(EXPORT SZxTargets FILE ${CMAKE_CURRENT_BINARY_DIR}/cmake/SZxTargets.cmake NAMESPACE SZx::)
+include(CMakePackageConfigHelpers)
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/SZxConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/SZxConfig.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/SZx
+)
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/SZxConfigVersion.cmake"
+  VERSION "${PROJECT_VERSION}"
+  COMPATIBILITY AnyNewerVersion
+)
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/SZxConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/SZxConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/SZx
+)
 

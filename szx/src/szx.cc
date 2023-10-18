@@ -53,7 +53,7 @@ int SZx_computeDimension(size_t r5, size_t r4, size_t r3, size_t r2, size_t r1)
 	else if(r3==0)
 	{
 		dimension = 2;
-		printf("hello\n");
+		//printf("hello\n");
 	}
 	else if(r4==0)
 	{
