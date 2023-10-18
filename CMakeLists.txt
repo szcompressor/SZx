@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.20)
 #define the project
 project (szx
-        VERSION 1.1.0
+        VERSION 1.1.1
         DESCRIPTION "SZx Error Bounded Lossy Compressor"
         )
 
