@@ -70,7 +70,7 @@ int main(int argc, char * argv[])
     //unsigned char* bytes = SZx_fast_compress_args_unpredictable_blocked_randomaccess_float(data, &outSize, errBound, nbEle, blockSize);
     unsigned char* bytes = SZx_fast_compress_args_unpredictable_blocked_randomaccess_openmp(data, SZx_FLOAT, &outSize, errBound, nbEle, blockSize);
     cost_end();
-    printf("\ntimecost=%f, total fastmode2\n",totalCost);
+    printf("compression time=%f\n",totalCost);
     printf("compression size = %zu, CR = %f\n", outSize, 1.0f*nbEle*sizeof(float)/outSize);
     SZx_writeByteData(bytes, outSize, outputFilePath, &status);
     if(status != SZx_SCES)
