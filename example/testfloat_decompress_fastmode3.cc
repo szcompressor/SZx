@@ -76,7 +76,7 @@ int main(int argc, char * argv[])
     cost_end();
 
     free(bytes);
-    printf("decompression time=%f\n",totalCost);
+    printf("decompression time = %f\n",totalCost);
     SZx_writeFloatData_inBytes(data, nbEle, outputFilePath, &status);
     if(status!=SZx_SCES)
     {
