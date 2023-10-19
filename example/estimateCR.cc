@@ -72,7 +72,7 @@ int main(int argc, char * argv[])
     printf("timecost=%f\n",totalCost); 
     printf("estimated compression ratio = %f\n", CR);
 
-    printf("done\n");
+//    printf("done\n");
     free(data);
     
     return 0;

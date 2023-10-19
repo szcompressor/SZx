@@ -79,7 +79,7 @@ int main(int argc, char * argv[])
         exit(0);
     }
 
-    printf("done\n");
+//    printf("done\n");
     free(bytes);
     free(data);
 

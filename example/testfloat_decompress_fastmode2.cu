@@ -87,7 +87,7 @@ int main(int argc, char * argv[])
 	printf("Error: %s cannot be written!\n", outputFilePath);
 	exit(0);
     }
-    printf("done\n");
+//    printf("done\n");
 
     char oriFilePath[645];
     strcpy(oriFilePath, zipFilePath);
