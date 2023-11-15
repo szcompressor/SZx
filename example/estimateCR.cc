@@ -65,7 +65,7 @@ int main(int argc, char * argv[])
     float* radiusArray = NULL;
     float* mediusArray = NULL;
     float* buffer = NULL;
-    //float approximateValueRange = computeRadiusBuffer(data, SZx_FLOAT, nbEle, samplingStride, blockSize, &radiusArray, &mediusArray, &buffer);    
+    float approximateValueRange = computeRadiusBuffer(data, SZx_FLOAT, nbEle, samplingStride, blockSize, &radiusArray, &mediusArray, &buffer);    
     size_t sumReqNbB = 0, sum_actual_leadNum = 0;
     float CR = estimateCRbasedonErrorBound_buffered(SZx_FLOAT, errorBound, buffer, mediusArray, radiusArray, samplingStride, blockSize, nbEle, &sumReqNbB, &sum_actual_leadNum);	
     szx_cost_end();
