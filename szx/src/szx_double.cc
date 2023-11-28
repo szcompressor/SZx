@@ -1087,15 +1087,15 @@ void simd_max_min_double(double *x, int n, double *tmp_max, double *tmp_min) {
     int n16 = n & -16, i = 0;
     if (n > 16) {
         double *ptr_x = x;
-        __m256 max1 = _mm256_loadu_ps(ptr_x);
-        __m256 max2 = _mm256_loadu_ps(ptr_x + 8);
+        __m256 max1 = _mm256_loadu_ps((float const *)ptr_x);
+        __m256 max2 = _mm256_loadu_ps((float const *)ptr_x + 8);
         __m256 min1 = max1;
         __m256 min2 = max2;
         for (; i < n16; i += 16) {
-            max1 = _mm256_max_ps(_mm256_loadu_ps(ptr_x), max1);
-            min1 = _mm256_min_ps(_mm256_loadu_ps(ptr_x), min1);
-            max2 = _mm256_max_ps(_mm256_loadu_ps(ptr_x + 8), max2);
-            min2 = _mm256_min_ps(_mm256_loadu_ps(ptr_x + 8), min2);
+            max1 = _mm256_max_ps(_mm256_loadu_ps((float const *)ptr_x), max1);
+            min1 = _mm256_min_ps(_mm256_loadu_ps((float const *)ptr_x), min1);
+            max2 = _mm256_max_ps(_mm256_loadu_ps((float const *)ptr_x + 8), max2);
+            min2 = _mm256_min_ps(_mm256_loadu_ps((float const *)ptr_x + 8), min2);
             ptr_x += 16;
         }
 //        printf("%d %d %d\n", n, n16, i);
